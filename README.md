@@ -6,10 +6,10 @@ The primary objective of this project is to implement a Database Management Syst
 The project will be broken into 4 phases, and a group evaluation. Each phase will build
 on the prior phase.<br />
 A basic description of each phase is outlined here:<br />
-&nbsp;- [Phase1](#a-idphase1aphase1)<br />
-&nbsp;- [Phase2](#a-idphase2aphase2)<br />
-&nbsp;- [Phase3](#a-idphase3aphase3)<br />
-&nbsp;- [Phase4](#a-idphase4aphase4)<br />
+&nbsp;- [Phase1](#phase1)<br />
+&nbsp;- [Phase2](#phase2)<br />
+&nbsp;- [Phase3](#phase3)<br />
+&nbsp;- [Phase4](#phase4)<br />
 
 # <a id="phase1"></a>Phase1
 During this phase you will implement a basic storage manager. Details can be found in the
