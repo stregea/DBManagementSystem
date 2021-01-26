@@ -38,8 +38,8 @@ int create_database( char * db_loc, int page_size, int buffer_size, bool restart
  * @return 0 if the database is restarted successfully, otherwise -1;
  */
 int restart_database( char * db_loc ){
-    int success = EXIT_SUCCESS;
-    return success;
+    int result = EXIT_SUCCESS;
+    return result;
 }
 
 /*
@@ -51,8 +51,8 @@ int restart_database( char * db_loc ){
  * @return 0 if the database is started successfully, otherwise -1;
  */
 int new_database( char * db_loc, int page_size, int buffer_size ){
-    int success = EXIT_SUCCESS;
-    return success;
+    int result = EXIT_SUCCESS;
+    return result;
 }
 
 /*
@@ -66,8 +66,8 @@ int new_database( char * db_loc, int page_size, int buffer_size ){
  * @return the number of records in the output, -1 upon error
  */
 int get_records( int table_id, union record_item *** table ){
-    int success = EXIT_SUCCESS;
-    return success;
+    int result = EXIT_SUCCESS;
+    return result;
 }
 
 /*
@@ -81,8 +81,8 @@ int get_records( int table_id, union record_item *** table ){
  * @return the number of records in the output, -1 upon error
  */
 int get_page( int page_id, union record_item *** page ){
-    int success = EXIT_SUCCESS;
-    return success;
+    int result = EXIT_SUCCESS;
+    return result;
 }
 
 /*
@@ -98,8 +98,8 @@ int get_page( int page_id, union record_item *** page ){
  * @return 0 if successful, -1 otherwise
  */
 int get_record( int table_id, union record_item * key_values, union record_item ** data ){
-    int success = EXIT_SUCCESS;
-    return success;
+    int result = EXIT_SUCCESS;
+    return result;
 }
 
 /*
@@ -111,8 +111,8 @@ int get_record( int table_id, union record_item * key_values, union record_item 
  * @return 0 if successfully inserted, -1 otherwise
  */
 int insert_record( int table_id, union record_item * record ){
-    int success = EXIT_SUCCESS;
-    return success;
+    int result = EXIT_SUCCESS;
+    return result;
 }
 
 /*
@@ -124,8 +124,8 @@ int insert_record( int table_id, union record_item * record ){
  * @return 0 if successfully updated, -1 otherwise
  */
 int update_record( int table_id, union record_item * record ){
-    int success = EXIT_SUCCESS;
-    return success;
+    int result = EXIT_SUCCESS;
+    return result;
 }
 
 /*
@@ -136,8 +136,8 @@ int update_record( int table_id, union record_item * record ){
  * @return 0 if successfully removed, -1 otherwise
  */
 int remove_record( int table_id, union record_item * key_values ){
-    int success = EXIT_SUCCESS;
-    return success;
+    int result = EXIT_SUCCESS;
+    return result;
 }
 
 
@@ -149,8 +149,8 @@ int remove_record( int table_id, union record_item * key_values ){
  * @return 0 if table successfully dropped, -1 otherwise.
  */
 int drop_table( int table_id ){
-    int success = EXIT_SUCCESS;
-    return success;
+    int result = EXIT_SUCCESS;
+    return result;
 }
 
 /*
@@ -160,8 +160,8 @@ int drop_table( int table_id ){
  * @return 0 if table successfully cleared, -1 otherwise.
  */
 int clear_table( int table_id ){
-    int success = EXIT_SUCCESS;
-    return success;
+    int result = EXIT_SUCCESS;
+    return result;
 }
 
 /*
@@ -178,8 +178,8 @@ int clear_table( int table_id ){
  * @return the id of the table created, -1 upon error.
  */
 int add_table( int * data_types, int * key_indices, int data_types_size, int key_indices_size ){
-    int success = EXIT_SUCCESS;
-    return success;
+    int result = EXIT_SUCCESS;
+    return result;
 }
 
 /*
@@ -187,8 +187,8 @@ int add_table( int * data_types, int * key_indices, int data_types_size, int key
  * @return 0 on success, -1 on failure.
  */
 int purge_buffer(){
-    int success = EXIT_SUCCESS;
-    return success;
+    int result = EXIT_SUCCESS;
+    return result;
 }
 
 /*
@@ -196,6 +196,6 @@ int purge_buffer(){
  * @return 0 on success, -1 on failure.
  */
 int terminate_database(){
-    int success = EXIT_SUCCESS;
-    return success;
+    int result = EXIT_SUCCESS;
+    return result;
 }
