@@ -40,7 +40,7 @@ in myCourses. No late or emailed submissions will be accepted. Only one group me
 required to submit. Only the last submission is graded.
 
 # Authors
-Samuel Tregea<br/>
 Kyle Collins<br/>
 Geoffrey Moss<br/>
-Sam Tillinghast<br/>
+Samuel Tillinghast<br/>
+Samuel Tregea<br/>
