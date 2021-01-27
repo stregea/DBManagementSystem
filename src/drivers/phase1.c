@@ -7,7 +7,7 @@
  *
  * @authors Samuel Tregea, Kyle Collins, Geoffrey Moss, Sam Tillinghast
  */
-#include "src/headers/storagemanager.h"
+#include "../headers/storagemanager.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
