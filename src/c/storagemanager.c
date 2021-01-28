@@ -6,13 +6,19 @@
  *      This file will serve as the interface to the database, ultimately allowing for a client program to connect
  *      and interact with the database and serve as the 'storage manager'.
  *
- * @authors Samuel Tregea, Kyle Collins, Geoffrey Moss, Sam Tillinghast
+ * @author Kyle Collins  (kxc1981@rit.edu)
+ * @author Geoffrey Moss (gbm2613@rit.edu)
+ * @author Sam Tillinghast  (sft6463@rit.edu)
+ * @author Samuel Tregea  (sdt1093@rit.edu)
  */
 #include "../headers/storagemanager.h"
+#include "../headers/stringhelpers.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+
+#define PAGE_NAME "page"
 
 /*
  * Create or restarts an instance of the database at the
@@ -20,7 +26,7 @@
  * If restart is true this function will call the restart_database function.
  * If restart is false this function will call the new database function.
  * @param db_loc - the absolute path for the database.
- * @param page_size - the pages size for the database.
+ * @param page_size - the pagezs size for the database.
  * @param buffer_size - the maximum number of pages the
  *                      database can hold in its page buffer at one time.
  * @param restart - if true it will attempt to restart the database at the
@@ -57,8 +63,30 @@ int restart_database( char * db_loc ){
  *                      database can hold in its page buffer at one time.
  * @return 0 if the database is started successfully, otherwise -1;
  */
-int new_database( char * db_loc, int page_size, int buffer_size ){
+int new_database( char* db_loc, int page_size, int buffer_size ){
     int result = EXIT_SUCCESS;
+    FILE* file;
+    unsigned char sizeForPage[ page_size ];
+
+    for ( int i = 0; i < buffer_size; i++ ) {
+        
+        // append an integer to the name of the pages (binary files).
+        char* filename = appendIntToString(PAGE_NAME, i);
+
+        // create the new filepath string.
+        char* filepath = malloc( ( strlen(db_loc) + strlen(filename) ) + 1 );
+        strcpy( filepath, db_loc );
+        strcat( filepath, filename );
+        
+        // create the pages (binary files).
+        file = fopen( filepath, "wb" );
+        fwrite( sizeForPage, sizeof( sizeForPage ), 1 , file ); // write 10 bytes from our buffer (page size).
+        
+        // free the used up memory space.
+        free(filename);
+        free(filepath);
+    }
+    
     return result;
 }
 
@@ -98,10 +126,10 @@ int get_page( int page_id, union record_item *** page ){
  * @param table_id - the id of the table to find the record in.
  * @param key_values - an array of record_items that make up the key of the
                        record to be found. The order of the values matches
-                       the primary key indices order of the table.
+					   the primary key indices order of the table.
  * @param data - a pointer to an array of record_item values that represent the tuple matching
                  the key values provided. (output parameter)
-                 The user is responsible for freeing this.
+				 The user is responsible for freeing this.
  * @return 0 if successful, -1 otherwise
  */
 int get_record( int table_id, union record_item * key_values, union record_item ** data ){
@@ -178,8 +206,8 @@ int clear_table( int table_id ){
                        in a tuple in the table.
  * @param key_indices - an integer array representing the indices that
                         make up the primary key. The order of the indices
-                        in this array determine the ordering of the attributes
-                        in the primary key.
+						in this array determine the ordering of the attributes
+						in the primary key.
  * @param data_types_size - the size of the data types array
  * @param key_indices_size - the size of the key indices array.
  * @return the id of the table created, -1 upon error.
