@@ -8,4 +8,8 @@ include_directories(src)
 include_directories(src/headers)
 
 add_executable(DBManagementSystem
-        src/headers/storagemanager.h src/c/storagemanager.c src/drivers/phase1.c)
+        src/headers/storagemanager.h
+        src/headers/stringhelpers.h
+        src/c/stringhelpers.c
+        src/c/storagemanager.c
+        src/drivers/phase1.c)
