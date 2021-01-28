@@ -29,6 +29,13 @@
  */
 int create_database( char * db_loc, int page_size, int buffer_size, bool restart){
     int result = EXIT_SUCCESS;
+    
+    if( restart ){
+        result = restart_database( db_loc );
+    }else{
+        result = new_database( db_loc, page_size, buffer_size );
+    }
+    
     return result;
 }
 
@@ -91,10 +98,10 @@ int get_page( int page_id, union record_item *** page ){
  * @param table_id - the id of the table to find the record in.
  * @param key_values - an array of record_items that make up the key of the
                        record to be found. The order of the values matches
-					   the primary key indices order of the table.
+                       the primary key indices order of the table.
  * @param data - a pointer to an array of record_item values that represent the tuple matching
                  the key values provided. (output parameter)
-				 The user is responsible for freeing this.
+                 The user is responsible for freeing this.
  * @return 0 if successful, -1 otherwise
  */
 int get_record( int table_id, union record_item * key_values, union record_item ** data ){
@@ -171,8 +178,8 @@ int clear_table( int table_id ){
                        in a tuple in the table.
  * @param key_indices - an integer array representing the indices that
                         make up the primary key. The order of the indices
-						in this array determine the ordering of the attributes
-						in the primary key.
+                        in this array determine the ordering of the attributes
+                        in the primary key.
  * @param data_types_size - the size of the data types array
  * @param key_indices_size - the size of the key indices array.
  * @return the id of the table created, -1 upon error.
