@@ -16,7 +16,15 @@
 #include <string.h>
 #include <stdbool.h>
 
+
+
 int main(int argc, char * argv[]){
+    
+    new_database("/Users/samueltregea/desktop/CSCI-421/project/DBMS/DBMS/src/drivers/", 10, 1);
+//    sprintf(number_str, "%d", number);
+//    printf("Converted to string : %s\n", appendInt("hello", 999));
+    
+//    return 0;
     printf("Hideous Jimmies!!\n");
     return EXIT_SUCCESS;
 }
