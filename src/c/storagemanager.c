@@ -22,10 +22,15 @@
 
 /// This will represent a Table within a linked list of tables.
 struct Table_Node{
+    int * primary_key;
+    
+    int * data_types;
     
     /// The id of a table.
     int table_id;
     
+    int data_types_size;
+    int key_indices_size;
     /// pointer for a table that may exist on another page.
     struct Table_Node * nextTable;
     
@@ -39,11 +44,11 @@ struct Page_S{
     /// The id of a page.
     int page_id;
     
-    /// The current size of the page.
-    size_t size;
+    /// The current size of the records within the page.
+    size_t record_size;
     
     /// The max size of the page.
-    size_t max_size;
+    size_t max_record_size;
     
     /// Linked list of tables.
     Table head;
@@ -58,7 +63,10 @@ struct Buffer_S{
     /// Array that will contain the pages
     Page* buffer;
 }; typedef struct Buffer_S Buffer;
+
 Buffer BUFFER;
+int PAGE_INDEX = 0;
+int TABLE_ID = 0;
 
 /*
  * Create or restarts an instance of the database at the
@@ -75,13 +83,13 @@ Buffer BUFFER;
  */
 int create_database( char * db_loc, int page_size, int buffer_size, bool restart){
     int result = EXIT_SUCCESS;
-        
+    
     if( restart ){
         result = restart_database( db_loc );
     }else{
         result = new_database( db_loc, page_size, buffer_size );
     }
-        
+    
     return result;
 }
 
@@ -92,6 +100,8 @@ int create_database( char * db_loc, int page_size, int buffer_size, bool restart
  */
 int restart_database( char * db_loc ){
     int result = EXIT_SUCCESS;
+    PAGE_INDEX = 0;
+    
     return result;
 }
 
@@ -107,14 +117,14 @@ int new_database( char* db_loc, int page_size, int buffer_size ){
     int result = EXIT_SUCCESS;
     
     if( isProperSize( page_size, buffer_size ) ){
-        
+        PAGE_INDEX = 0;
         // initialize a buffer
         Page tmpBuffer[buffer_size];
         
         // initialize a page
-        Page new_page = { .page_id=0, .size=0, .max_size=page_size, .head=NULL };
+        Page new_page = { .page_id=0, .record_size=0, .max_record_size=page_size, .head=NULL };
         
-        tmpBuffer[0] = new_page;
+        tmpBuffer[PAGE_INDEX] = new_page;
         
         // set the buffer to point to a location in memory.
         BUFFER.db_location = db_loc;
@@ -184,6 +194,12 @@ int get_record( int table_id, union record_item * key_values, union record_item 
  */
 int insert_record( int table_id, union record_item * record ){
     int result = EXIT_SUCCESS;
+    
+    // be sure to increment page record size here.
+    
+    // if record size > max_record_size
+    // create new page and insert information there
+    
     return result;
 }
 
@@ -250,8 +266,33 @@ int clear_table( int table_id ){
  * @return the id of the table created, -1 upon error.
  */
 int add_table( int * data_types, int * key_indices, int data_types_size, int key_indices_size ){
-    int result = EXIT_SUCCESS;
-    return result;
+    Table cursor = BUFFER.buffer[PAGE_INDEX].head;
+    // move to next available table slot
+    while(cursor->nextTable){
+        cursor = cursor->nextTable;
+    }
+    
+    // creating the new table.
+    Table newTable = malloc(sizeof(struct Table_Node) + data_types_size + key_indices_size);
+    
+    // not to sure how much memory to allocate atm (due to my rustiness of C), that's why one line variation is commented out.
+    
+    // need to free these later on within the clear_table() and drop_table() functions (or db shutdown/restart) to prevent memory leaks
+    newTable->primary_key = malloc(key_indices_size);
+    //    newTable->primary_key = malloc(key_indices_size * sizeof(int));
+    newTable->data_types = malloc(data_types_size);
+    //    newTable->data_types = malloc(data_types_size * sizeof(int));
+    
+    // store the values into memory
+    memcpy(newTable->primary_key, key_indices, key_indices_size); // store the primary key
+//    memcpy(newTable->primary_key, key_indices, key_indices_size * sizeof(int));
+    memcpy(newTable->data_types, data_types, data_types_size); // store the data types
+//    memcpy(newTable->data_types, data_types, data_types_size * sizeof(int));
+    
+    newTable->table_id = ++TABLE_ID;
+        
+    cursor->nextTable = newTable;
+    return TABLE_ID;
 }
 
 /*
