@@ -13,8 +13,22 @@
 #include "../headers/storagemanager.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#define PAGE_SIZE 10   
+#define BUFFER_SIZE 1
+
 
 int main(int argc, char * argv[]){
-    create_database("/Users/samueltregea/desktop/CSCI-421/project/DBMS/DBMS/src/drivers/", 10, 5, false);
+
+    // check that the database path is passed in as an argument to the driver
+    if (argc < 2) {
+        fprintf(stderr, "usage: %s /<DatabasePath>\n", argv[0]), exit(1);
+    }
+
+    char* databasePath = argv[1];
+    
+    new_database(databasePath, PAGE_SIZE, BUFFER_SIZE);
+    printf("Hideous Jimmies!!\n");
     return EXIT_SUCCESS;
 }
