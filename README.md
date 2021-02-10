@@ -39,6 +39,13 @@ Your solution must be zipped, named phase5.zip, and placed in the Phase5 assignm
 in myCourses. No late or emailed submissions will be accepted. Only one group member is
 required to submit. Only the last submission is graded.
 
+# Compilation
+To create the executable move to the DBManagementSystem directory and enter on commandline: gcc -o name_of_exe src/drivers/phase1.c src/c/*.c
+
+# Run Program
+Once the executable is created enter: ./name_of_exe  /<DatabasePath> 
+to run the program.
+
 # Authors
 Kyle Collins<br/>
 Geoffrey Moss<br/>
