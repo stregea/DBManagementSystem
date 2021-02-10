@@ -2,7 +2,7 @@
  * CSCI-421 Project
  * @file stringhelpers.h
  * Description:
- *      Header file for ../c/stringhelpers.c. This file allows ffor string operations to perform
+ *      Header file for ../c/stringhelpers.c. This file allows for string operations to perform
  *      that aren't native to the C language.
  *
  * @author Kyle Collins  (kxc1981@rit.edu)

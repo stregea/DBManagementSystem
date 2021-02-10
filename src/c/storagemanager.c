@@ -13,12 +13,52 @@
  */
 #include "../headers/storagemanager.h"
 #include "../headers/stringhelpers.h"
+#include "../headers/boolhelpers.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 
 #define PAGE_NAME "page"
+
+/// This will represent a Table within a linked list of tables.
+struct Table_Node{
+    
+    /// The id of a table.
+    int table_id;
+    
+    /// pointer for a table that may exist on another page.
+    struct Table_Node * nextTable;
+    
+    /// array that will be used to contain records.
+    union record_item records[];
+}; typedef struct Table_Node * Table;
+
+/// This will represent a Page that will store the table and record entries.
+struct Page_S{
+    
+    /// The id of a page.
+    int page_id;
+    
+    /// The current size of the page.
+    size_t size;
+    
+    /// The max size of the page.
+    size_t max_size;
+    
+    /// Linked list of tables.
+    Table head;
+}; typedef struct Page_S Page;
+
+/// This will be the buffer to hold all of the pages and the DB location.
+struct Buffer_S{
+    
+    /// The database location
+    char* db_location;
+    
+    /// Array that will contain the pages
+    Page* buffer;
+}; typedef struct Buffer_S Buffer;
+Buffer BUFFER;
 
 /*
  * Create or restarts an instance of the database at the
@@ -35,13 +75,13 @@
  */
 int create_database( char * db_loc, int page_size, int buffer_size, bool restart){
     int result = EXIT_SUCCESS;
-    
+        
     if( restart ){
         result = restart_database( db_loc );
     }else{
         result = new_database( db_loc, page_size, buffer_size );
     }
-    
+        
     return result;
 }
 
@@ -65,26 +105,23 @@ int restart_database( char * db_loc ){
  */
 int new_database( char* db_loc, int page_size, int buffer_size ){
     int result = EXIT_SUCCESS;
-    FILE* file;
-    unsigned char sizeForPage[ page_size ];
-
-    for ( int i = 0; i < buffer_size; i++ ) {
+    
+    if( isProperSize( page_size, buffer_size ) ){
         
-        // append an integer to the name of the pages (binary files).
-        char* filename = appendIntToString(PAGE_NAME, i);
-
-        // create the new filepath string.
-        char* filepath = malloc( ( strlen(db_loc) + strlen(filename) ) + 1 );
-        strcpy( filepath, db_loc );
-        strcat( filepath, filename );
+        // initialize a buffer
+        Page tmpBuffer[buffer_size];
         
-        // create the pages (binary files).
-        file = fopen( filepath, "wb" );
-        fwrite( sizeForPage, sizeof( sizeForPage ), 1 , file ); // write 10 bytes from our buffer (page size).
+        // initialize a page
+        Page new_page = { .page_id=0, .size=0, .max_size=page_size, .head=NULL };
         
-        // free the used up memory space.
-        free(filename);
-        free(filepath);
+        tmpBuffer[0] = new_page;
+        
+        // set the buffer to point to a location in memory.
+        BUFFER.db_location = db_loc;
+        BUFFER.buffer = tmpBuffer;
+        
+    }else{ // bad page size or buffer size
+        result = EXIT_FAILURE;
     }
     
     return result;
@@ -97,7 +134,7 @@ int new_database( char* db_loc, int page_size, int buffer_size ){
  * @param table_id - the id of the table to get the records for.
  * @param table - a 2d array of record_item (output variable)
  *                this will be used to output the values in the table.
-                  This will be a pointer to the first item in the 2d array.
+ This will be a pointer to the first item in the 2d array.
  * @return the number of records in the output, -1 upon error
  */
 int get_records( int table_id, union record_item *** table ){
@@ -112,7 +149,7 @@ int get_records( int table_id, union record_item *** table ){
  * @param page_id - the id of the page to get the records for.
  * @param page - a 2d array of record_item (output variable)
  *                this will be used to output the values in the page.
-                  This will be a pointer to the first item in the 2d array.
+ This will be a pointer to the first item in the 2d array.
  * @return the number of records in the output, -1 upon error
  */
 int get_page( int page_id, union record_item *** page ){
@@ -125,11 +162,11 @@ int get_page( int page_id, union record_item *** page ){
  * id that matched the key_values provided.
  * @param table_id - the id of the table to find the record in.
  * @param key_values - an array of record_items that make up the key of the
-                       record to be found. The order of the values matches
-					   the primary key indices order of the table.
+ record to be found. The order of the values matches
+ the primary key indices order of the table.
  * @param data - a pointer to an array of record_item values that represent the tuple matching
-                 the key values provided. (output parameter)
-				 The user is responsible for freeing this.
+ the key values provided. (output parameter)
+ The user is responsible for freeing this.
  * @return 0 if successful, -1 otherwise
  */
 int get_record( int table_id, union record_item * key_values, union record_item ** data ){
@@ -167,7 +204,7 @@ int update_record( int table_id, union record_item * record ){
  * Removes the provided record from the table with the provided id.
  * @param table_id - the id of the table to remove the record from.
  * @param key_values - an array of record_items that make up the key of the
-                       record to be removed.
+ record to be removed.
  * @return 0 if successfully removed, -1 otherwise
  */
 int remove_record( int table_id, union record_item * key_values ){
@@ -203,11 +240,11 @@ int clear_table( int table_id ){
  * This will add a table to the database with the provided data types and
  * primary key.
  * @param data_types - an integer array representing the data types stored
-                       in a tuple in the table.
+ in a tuple in the table.
  * @param key_indices - an integer array representing the indices that
-                        make up the primary key. The order of the indices
-						in this array determine the ordering of the attributes
-						in the primary key.
+ make up the primary key. The order of the indices
+ in this array determine the ordering of the attributes
+ in the primary key.
  * @param data_types_size - the size of the data types array
  * @param key_indices_size - the size of the key indices array.
  * @return the id of the table created, -1 upon error.

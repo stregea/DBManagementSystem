@@ -15,7 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-
 #define PAGE_SIZE 10   
 #define BUFFER_SIZE 1
 
@@ -30,10 +29,6 @@ int main(int argc, char * argv[]){
     char* databasePath = argv[1];
     
     new_database(databasePath, PAGE_SIZE, BUFFER_SIZE);
-//    sprintf(number_str, "%d", number);
-//    printf("Converted to string : %s\n", appendInt("hello", 999));
-    
-//    return 0;
     printf("Hideous Jimmies!!\n");
     return EXIT_SUCCESS;
 }
