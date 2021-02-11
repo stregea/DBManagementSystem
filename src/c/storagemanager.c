@@ -116,11 +116,18 @@ int restart_database( char * db_loc ){
 int new_database( char* db_loc, int page_size, int buffer_size ){
     int result = EXIT_SUCCESS;
     
-    clearDirectory(db_loc);
-    // delete all contents in db_loc
     // create db store file to store page and buffer size
     if( isProperSize( page_size, buffer_size ) ){
+        
+        // delete all contents in db_loc
+        clearDirectory(db_loc);
+        
+        // create the db store file.
+        createDBStore(db_loc, page_size, buffer_size);
+        
+        // reset the page size
         PAGE_INDEX = 0;
+        
         // initialize a buffer
         Page tmpBuffer[buffer_size];
         

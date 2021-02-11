@@ -14,7 +14,11 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-
+struct DBStore_S{
+    char * db_location;
+    int page_size;
+    int buffer_size;
+}; typedef struct DBStore_S * DBStore;
 /**
  * Append an integer to an existing char*.
  * - Note: the newly created string must be freed once used.
@@ -37,4 +41,25 @@ bool isProperSize( int page_size, int buffer_size );
  * @param dir_name - The directory to clear.
  */
 void clearDirectory( char * dir_name );
+
+/**
+ * Create a DB Store file to contain the information about the db.
+ * @param db_loc - The database location to store.
+ * @param page_size - The size of the pages to store.
+ * @param buffer_size - The size of the buffer to store.
+ */
+void createDBStore( char * db_loc,  int page_size, int buffer_size );
+
+/**
+ * Create a DBStore struct from an existing dbstore file.
+ * Note: The struct returned must be freed using the freeStore() function.
+ * @param store_loc - The location of the dbstore file.
+ * @returns a struct with the previously created DBStore information.
+ */
+DBStore readDBStore(char * store_loc);
+
+/*
+ * Free the previously allocated memory created for a DBStore.
+ */
+void freeStore(DBStore store);
 #endif /* storagemanagerhelper_h */
