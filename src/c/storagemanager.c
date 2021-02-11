@@ -12,11 +12,11 @@
  * @author Samuel Tregea  (sdt1093@rit.edu)
  */
 #include "../headers/storagemanager.h"
-#include "../headers/stringhelpers.h"
-#include "../headers/boolhelpers.h"
+#include "../headers/storagemanagerhelper.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
 
 #define PAGE_NAME "page"
 
@@ -116,6 +116,9 @@ int restart_database( char * db_loc ){
 int new_database( char* db_loc, int page_size, int buffer_size ){
     int result = EXIT_SUCCESS;
     
+    clearDirectory(db_loc);
+    // delete all contents in db_loc
+    // create db store file to store page and buffer size
     if( isProperSize( page_size, buffer_size ) ){
         PAGE_INDEX = 0;
         // initialize a buffer
