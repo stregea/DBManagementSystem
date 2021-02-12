@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#pragma pack(1)
 
 /// This will represent a Page that will store the table and record entries.
 struct Page_S{
@@ -42,17 +43,13 @@ struct Page_S{
 
 /// This will represent a Table within a linked list of tables.
 struct Table_S{
-    /// Int array used for generating primary keys for a record.
-    int * key_indices;
-    
-    /// Int array associated with the certain types of datatypes found within a table.
-    int * data_types;
-    
-    /// The id of a table.
-    int table_id;
 
-    /// Array to keep track of the assiociated pages to this table.
+    int data_types_size;
+    int key_indices_size;
+    int * key_indices;
+    int * data_types;
     int page_ids[];
+    
 }; typedef struct Table_S Table;
 
 /// This will be the buffer to hold all of the pages and the DB location.
@@ -133,6 +130,8 @@ int new_database( char* db_loc, int page_size, int buffer_size ){
         
         // delete all contents in db_loc
         clearDirectory(db_loc);
+
+        BUFFER.db_location = db_loc; 
         
         // Set the max page size
         BUFFER.page_size = page_size;
@@ -281,32 +280,25 @@ int clear_table( int table_id ){
  * @return the id of the table created, -1 upon error.
  */
 int add_table( int * data_types, int * key_indices, int data_types_size, int key_indices_size ){
-//    Table cursor = BUFFER->buffer[PAGE_INDEX].head;
-//    // move to next available table slot
-//    while(cursor->nextTable){
-//        cursor = cursor->nextTable;
-//    }
-//
-//    // creating the new table.
-//    Table newTable = malloc(sizeof(struct Table_Node) + data_types_size + key_indices_size);
-//
-//    // not to sure how much memory to allocate atm (due to my rustiness of C), that's why one line variation is commented out.
-//
-//    // need to free these later on within the clear_table() and drop_table() functions (or db shutdown/restart) to prevent memory leaks
-//    newTable->primary_key = malloc(key_indices_size);
-//    //    newTable->primary_key = malloc(key_indices_size * sizeof(int));
-//    newTable->data_types = malloc(data_types_size);
-//    //    newTable->data_types = malloc(data_types_size * sizeof(int));
-//
-//    // store the values into memory
-//    memcpy(newTable->primary_key, key_indices, key_indices_size); // store the primary key
-////    memcpy(newTable->primary_key, key_indices, key_indices_size * sizeof(int));
-//    memcpy(newTable->data_types, data_types, data_types_size); // store the data types
-////    memcpy(newTable->data_types, data_types, data_types_size * sizeof(int));
-//
-//    newTable->table_id = ++TABLE_ID;
-//
-//    cursor->nextTable = newTable;
+    
+    // get database path
+    char* database_path = BUFFER.db_location;
+    
+    // create path to the table in the database
+    char* table_id = "table_1.bin"; // this was just used to test we will find this later
+    char* table_path = malloc(strlen(database_path) + strlen(table_id));
+    strcpy(table_path, database_path);
+    strcat(table_path, table_id);
+
+    // build the struct for the table
+    Table table_content = {.data_types_size = data_types_size, .key_indices_size = key_indices_size, .key_indices = key_indices, .data_types = data_types};
+
+    // write the table to disk
+    FILE *tableFile= fopen(table_path, "w");
+    fwrite(&table_content, sizeof(table_content), 1, tableFile);
+    fclose(tableFile);
+
+    free(table_path);
     return 0;
 }
 

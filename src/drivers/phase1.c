@@ -29,6 +29,15 @@ int main(int argc, char * argv[]){
     char* databasePath = argv[1];
     
     new_database(databasePath, PAGE_SIZE, BUFFER_SIZE);
-    printf("Hideous Jimmies!!\n");
+    
+    // TESTING TABLE
+    int data_types_size = 3;
+    int data_types[] = {3, 0, 1};
+    int key_indices_size = 1;
+    int key_indices[] = {0};
+
+    add_table(data_types, key_indices, data_types_size, key_indices_size);
+    
+    //printf("Hideous Jimmies!!\n");
     return EXIT_SUCCESS;
 }

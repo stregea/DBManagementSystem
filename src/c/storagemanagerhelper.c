@@ -60,24 +60,27 @@ void copyStringForFilePath(char* destination, char* original_str){
  * @param dir_name - The directory to clear.
  */
 void clearDirectory( char * dir_name ){
-    
-    /// variable used to build file path for command to execute
-    char * directory = malloc(sizeof(char*));
-    
-    // copy dir_name into directory
-    copyStringForFilePath(directory, dir_name);
 
-    strcat(directory, "*"); // append '*' to delete all folders and files
+    if(dir_name[strlen(dir_name)-1] != '/'){
+        strcat(dir_name, "/"); // need to test this on windows
+    }
 
-    // build the command
-    char * command = malloc(strlen("exec rm -rf ")+strlen(directory));
-    strcat(command, "exec rm -rf ");
+    // to avoid damaging the db path string
+    char* directory = malloc(strlen(dir_name) + 1);
+    strcpy(directory, dir_name);
+    strcat(directory, "*");
+
+    // concat command and directory
+    char* baseCommand = "exec rm -rf ";   
+    char* command = malloc(strlen(directory) + strlen(baseCommand));
+    strcpy(command, baseCommand);
     strcat(command, directory);
+
+    //printf("%s\n", command);
 
     // execute the command
     system(command);
     
-    free(directory);
     free(command);
 }
 
