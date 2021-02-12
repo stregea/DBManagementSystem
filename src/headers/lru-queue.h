@@ -19,83 +19,88 @@
 
 // A Node for the Queue
 // This will represent a page at a certain index within the buffer
-struct QNode {
+typedef struct QNode {
     struct QNode *prev, *next;
     int buffer_index; // the index associated with the location of the page within the buffer.
-}; typedef struct QNode* QNode;
+} QNode;
  
 // The Queue
-struct Queue {
+typedef struct Queue {
     int count; // Number of filled frames
     int size; // max size of queue
-    QNode front;
-    QNode rear;
-};typedef struct Queue* Queue;
+    QNode* front;
+    QNode* rear;
+} Queue;
  
 // A collection of Queue pointer nodes
-struct QueueHash {
+typedef struct Hash_Struct {
     int capacity; // how many pages can be there
-    QNode* array; // an array of queue nodes
-};typedef struct QueueHash* Hash;
+    QNode** array; // an array of queue nodes
+} Hash;
 
+// The struct containing the queue and hash
+// which will allow for the functionality of using LRU cache.
+struct Cache_Struct{
+    Hash* hash;
+    Queue* queue;
+}; typedef struct Cache_Struct* LRU_Cache;
 /**
  * Create a node for the queue.
  * @param buffer_index - The id associated with a node.
  * @returns a new node to add to the queue.
  */
-QNode createNode(int buffer_index);
+QNode* createNode(int buffer_index);
 
 /**
  * Create a Queue that will be used for the LRU nodes.
  * @param size - The max size the queue .
  */
-Queue createQueue(int size);
+Queue* createQueue(int size);
 
 /**
  * Create a collection (hash) of nodes.
  * @param capacity - The maximum capacity for the hash.
  */
-Hash createHash(int capacity);
+Hash* createHash(int capacity);
 
 /**
  * Check to see the Queue has enough memory to add a node.
- * @param queue - The queue to check.
+ * @param cache - The cache containing the queue to check.
  * @returns 1 if full, 0 if there is space.
  */
-bool queueIsFull(Queue queue);
+bool queueIsFull(LRU_Cache cache);
 
 /**
  * Check to see if the Queue is empty
- * @param queue - the queue to check
+ * @param cache - The cache containing the queue to check.
  * @returns 1 if queue is empty, 0 otherwise.
  */
-bool queueIsEmpty(Queue queue);
+bool queueIsEmpty(LRU_Cache cache);
 
 /**
  * Remove a node from the Queue.
- * @param queue - The Queue to modify.
+ * @param cache - The cache containing the queue to modify.
  */
-void dequeue(Queue queue);
+void dequeue(LRU_Cache cache);
 
 /**
  * Add a node to the queue.
- * @param queue - The Queue to modify.
+ * @param cache - The cache containing the queue to modify.
+ * @param buffer_index - The buffer_index corresponding to the buffer index containing a page within the storage manager.
  */
-void enqueue(Queue queue, Hash hash, int buffer_index);
+void enqueue(LRU_Cache cache, int buffer_index);
 
 /**
  * Call this function whenever a page (page id) is referenced in the driver program.
  * This will make reference of a node and then reorganize the queue.
- * @param queue - The Queue to modify
- * @param hash - A collection of queue nodes.
+ * @param cache - The LRU cache containing the queue and hash.
  * @param buffer_index - The index of buffer of the page being referenced.
  */
-void referencePage(Queue queue, Hash hash, int buffer_index);
+void referencePage(LRU_Cache cache, int buffer_index);
 
 /**
  * Free the cache from memory to avoid memory leaks.
- * @param queue - The Queue to free from memory.
- * @param hash - The Hash to free from memory.
+ * @param cache - The cache to free.
  */
-void freeLRUCache(Queue queue, Hash hash);
+void freeLRUCache(LRU_Cache cache);
 #endif /* lru_queue_h */

@@ -17,9 +17,9 @@
  * @param buffer_index - The index associated with a node that corresponds to the location in the hash and buffer.
  * @returns a new node to add to the queue.
  */
-QNode createNode(int buffer_index){
+QNode* createNode(int buffer_index){
     // Allocate memory for the node
-    QNode node = malloc(sizeof(struct QNode));
+    QNode* node = malloc(sizeof(struct QNode));
     
     // Assign the node to the corresponding page id.
     node->buffer_index = buffer_index;
@@ -35,9 +35,9 @@ QNode createNode(int buffer_index){
  * Create a Queue that will be used for the LRU nodes.
  * @param size - The max size the queue .
  */
-Queue createQueue(int size){
+Queue* createQueue(int size){
     // Allocate memory for the queue
-    Queue queue = malloc(sizeof(struct Queue));
+    Queue* queue = malloc(sizeof(struct Queue));
     
     // initialize the queue
     queue->size = size;
@@ -53,9 +53,9 @@ Queue createQueue(int size){
  * Create a collection (hash) of nodes.
  * @param capacity - The maximum capacity for the hash.
  */
-Hash createHash(int capacity){
+Hash* createHash(int capacity){
     // Allocate memory for the hash
-    Hash hash = malloc(sizeof(struct QueueHash));
+    Hash* hash = malloc(sizeof(Hash));
     
     hash->capacity = capacity;
     
@@ -70,102 +70,102 @@ Hash createHash(int capacity){
 
 /**
  * Check to see the Queue has enough memory to add a node.
- * @param queue - The queue to check.
+ * @param cache - The cache containing the queue to check.
  * @returns 1 if full, 0 if there is space.
  */
-bool queueIsFull(Queue queue){
-    return queue->count == queue->size;
+bool queueIsFull(LRU_Cache cache){
+    return cache->queue->count == cache->queue->size;
 }
 
 /**
  * Check to see if the Queue is empty
- * @param queue - the queue to check
+ * @param cache - The cache containing the queue to check.
  * @returns 1 if queue is empty, 0 otherwise.
  */
-bool queueIsEmpty(Queue queue){
-    return queue->rear == NULL;
+bool queueIsEmpty(LRU_Cache cache){
+    return cache->queue->rear == NULL;
 }
 
 /**
  * Remove a node from the Queue.
- * @param queue - The Queue to modify.
+ * @param cache - The cache containing the queue to modify.
  */
-void dequeue(Queue queue){
+void dequeue(LRU_Cache cache){
     
-    if(queueIsEmpty(queue)){
+    if(queueIsEmpty(cache)){
         return;
     }
     
     // if the node being removed is the only one in the list,
     // change the front pointer.
-    if(queue->front == queue->rear){
-        queue->front = NULL;
+    if(cache->queue->front == cache->queue->rear){
+        cache->queue->front = NULL;
     }
     
     // Update the rear pointer
-    QNode node = queue->rear;
-    queue->rear = queue->rear->prev;
+    QNode* node = cache->queue->rear;
+    cache->queue->rear = cache->queue->rear->prev;
     
-    if(queue->rear){
-        queue->rear->next = NULL;
+    if(cache->queue->rear){
+        cache->queue->rear->next = NULL;
     }
     
     // remove the node from memory
     free(node);
     
     // update the queue count
-    queue->count--;
+    cache->queue->count--;
 }
 
 /**
  * Add a node to the queue.
- * @param queue - The Queue to modify.
+ * @param cache - The cache containing the queue to modify.
+ * @param buffer_index - The buffer_index corresponding to the buffer index containing a page within the storage manager.
  */
-void enqueue(Queue queue, Hash hash, int buffer_index){
-    if(queueIsFull(queue)){
+void enqueue(LRU_Cache cache, int buffer_index){
+    if(queueIsFull(cache)){
         // remove page from hash
         // get index of 
-        hash->array[queue->rear->buffer_index] = NULL;
-        dequeue(queue);
+        cache->hash->array[cache->queue->rear->buffer_index] = NULL;
+        dequeue(cache);
     }
     
     // Create a new node with a given page id.
     // Then add the node to the front of the queue
-    QNode node = createNode(buffer_index);
-    node->next = queue->front;
+    QNode* node = createNode(buffer_index);
+    node->next = cache->queue->front;
     
-    if(queueIsEmpty(queue)){
+    if(queueIsEmpty(cache)){
         // change the front and rear pointers
-        queue->front = node;
-        queue->rear = node;
+        cache->queue->front = node;
+        cache->queue->rear = node;
     }else{
         // change the front
-        queue->front->prev = node;
-        queue->front = node;
+        cache->queue->front->prev = node;
+        cache->queue->front = node;
     }
     
-    hash->array[buffer_index] = node;
+    cache->hash->array[buffer_index] = node;
  
     // increment queue count
-    queue->count++;
+    cache->queue->count++;
 }
 
 /**
- * Call this function whenever a page from a buffer index is referenced.
+ * Call this function whenever a page (page id) is referenced in the driver program.
  * This will make reference of a node and then reorganize the queue.
- * @param queue - The Queue to modify
- * @param hash - A collection of queue nodes.
+ * @param cache - The LRU cache containing the queue and hash.
  * @param buffer_index - The index of buffer of the page being referenced.
  */
-void referencePage(Queue queue, Hash hash, int buffer_index){
-    QNode requested_page = hash->array[buffer_index];
+void referencePage(LRU_Cache cache, int buffer_index){
+    QNode* requested_page = cache->hash->array[buffer_index];
     
     // if the page is not within the cache, insert it.
     if(requested_page == NULL){
-        enqueue(queue, hash, buffer_index);
+        enqueue(cache, buffer_index);
     }
     // page exists but not at front of queue
-    else if(requested_page != queue->front){
+    else if(requested_page != cache->queue->front){
         // unlink the requested_page from its current location in the queue
         requested_page->prev->next = requested_page->next;
         
@@ -174,46 +174,46 @@ void referencePage(Queue queue, Hash hash, int buffer_index){
         }
         
         // if the requested page is at the rear, move the rear node to front of queue.
-        if(requested_page == queue->rear){
-            queue->rear = requested_page->prev;
-            queue->rear->next = NULL;
+        if(requested_page == cache->queue->rear){
+            cache->queue->rear = requested_page->prev;
+            cache->queue->rear->next = NULL;
         }
         
         // Place the requested page before the current front
-        requested_page->next = queue->front;
+        requested_page->next = cache->queue->front;
         requested_page->prev = NULL;
         
         // Change previous of current front
         requested_page->next->prev = requested_page;
         
         // Chnage the front of the queue to the requested page.
-        queue->front = requested_page;
+        cache->queue->front = requested_page;
     }
 }
 
 /**
  * Free the cache from memory to avoid memory leaks.
- * @param queue - The Queue to free from memory.
- * @param hash - The Hash to free from memory.
+ * @param cache - The cache to free.
  */
-void freeLRUCache(Queue queue, Hash hash){
+void freeLRUCache(LRU_Cache cache){
    
     // iterate through the hash and free the QNodes.
-    for(int i = 0; i<hash->capacity; i++){
-        if(hash->array[i] != NULL){
-            free(hash->array[i]);
+    for(int i = 0; i<cache->hash->capacity; i++){
+        if(cache->hash->array[i] != NULL){
+            free(cache->hash->array[i]);
         }
     }
     
+    free(cache->hash);
     // I'm not sure this is necessary since nodes are being freed above,
     // but this will need to be debugged and checked eventually.
     // iterate through the queue and free the nodes
 //    QNode tmp;
-//    QNode cursor = queue->front;
+//    QNode cursor = cache->queue->front;
 //    while(cursor != NULL){
 //        tmp = cursor;
 //        cursor = cursor->next;
 //        free(tmp);
 //    }
-    
+    free(cache->queue);
 }

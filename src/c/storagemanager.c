@@ -13,6 +13,7 @@
  */
 #include "../headers/storagemanager.h"
 #include "../headers/storagemanagerhelper.h"
+#include "../headers/lru-queue.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,6 +70,9 @@ struct Buffer_S{
     
     /// Integer to keep track of the total number of tables that exist within the db.
     int table_count;
+    
+    /// The cache to keep track of the LRU pages.
+    LRU_Cache cache;
     
     /// Array that will contain the pages
     Page buffer[];
@@ -131,6 +135,7 @@ int new_database( char* db_loc, int page_size, int buffer_size ){
         // delete all contents in db_loc
         clearDirectory(db_loc);
 
+        // set the db location
         BUFFER.db_location = db_loc; 
         
         // Set the max page size
@@ -138,11 +143,14 @@ int new_database( char* db_loc, int page_size, int buffer_size ){
         
         // set the max buffer size.
         BUFFER.buffer_size = buffer_size;
-        
+                
         // allocate memory for the buffer that will hold pages.
-        // using void to remove the warning of the variable not being used.
         (void)BUFFER.buffer[buffer_size];
         
+        // set up the cache
+        BUFFER.cache->queue = createQueue(buffer_size);
+        BUFFER.cache->hash = createHash(buffer_size);
+                
     }else{ // bad page size or buffer size
         result = EXIT_FAILURE;
     }
@@ -302,6 +310,7 @@ int add_table( int * data_types, int * key_indices, int data_types_size, int key
     return 0;
 }
 
+
 /*
  * This will purge the page buffer to disk.
  * @return 0 on success, -1 on failure.
@@ -318,4 +327,12 @@ int purge_buffer(){
 int terminate_database(){
     int result = EXIT_SUCCESS;
     return result;
+}
+
+int read_page(){
+    return -1;
+}
+
+int write_page(){
+    return -1;
 }
