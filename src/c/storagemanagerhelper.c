@@ -31,8 +31,8 @@ char * appendIntToString( char * original, int number )
 
 /**
  * Determine if the page size and buffer size meet the required sizes.
- * @param page_size - The page size to check..
- * @param buffer_size - The buffer size to check..
+ * @param page_size - The page size to check.
+ * @param buffer_size - The buffer size to check.
  * @return true if both page_size and buffer_size are greater than or equal to zero; false otherwise.
  */
 bool isProperSize( int page_size, int buffer_size ){
@@ -40,18 +40,34 @@ bool isProperSize( int page_size, int buffer_size ){
 }
 
 /**
+ * Copy a string for a filepath.
+ * Note: This needs to be tested on windows.
+ * @param destination - The location to store the new string.
+ * @param original_str - The original string that is used to check and copy information.
+ */
+void copyStringForFilePath(char* destination, char* original_str){
+    strcpy(destination, original_str);
+    
+    // check if there is a '/' appended on the destination string
+    // if not, append a '/'.
+    if(destination[strlen(destination)-1] != '/'){
+        strcat(destination, "/"); // need to test this on windows
+    }
+}
+
+/**
  * Go to a specified directory and clear its contents but keep the parent directory..
  * @param dir_name - The directory to clear.
  */
 void clearDirectory( char * dir_name ){
-    char * directory = malloc(sizeof(char*));
-    strcat(directory, dir_name);
     
-    // check if there is a '/' appended on the
-    if(dir_name[strlen(dir_name)-1] != '/'){
-        strcat(directory, "/"); // need to test this on windows
-    }
-    strcat(directory, "*"); // delete all folders and files
+    /// variable used to build file path for command to execute
+    char * directory = malloc(sizeof(char*));
+    
+    // copy dir_name into directory
+    copyStringForFilePath(directory, dir_name);
+
+    strcat(directory, "*"); // append '*' to delete all folders and files
 
     // build the command
     char * command = malloc(strlen("exec rm -rf ")+strlen(directory));
@@ -77,22 +93,22 @@ void createDBStore( char * db_loc,  int page_size, int buffer_size ){
     char * directory = malloc(sizeof(char*));
     char * store_file = malloc(sizeof(char*));
     store->db_location = malloc(sizeof(char*));
-
-    strcat(directory, db_loc);
-    // check if there is a '/' appended on the
-    if(db_loc[strlen(db_loc)-1] != '/'){
-        strcat(directory, "/"); // need to test this on windows
-    }
+    store->db_store_location = malloc(sizeof(char*));
     
+    // copy db_loc into directory
+    copyStringForFilePath(directory, db_loc);
+      
+    // create the filename
+    strcpy(store_file, directory);
+    strcat(store_file, "db_store");
+
     // build the struct
     strcpy(store->db_location, directory);
+    strcpy(store->db_store_location, store_file);
     store->page_size = page_size;
     store->buffer_size = buffer_size;
     
-    // create the filename
-    strcpy(store_file, directory);
-    strcat(store_file, "dbstore");
-
+    
     // write to the file
     FILE * file = fopen(store_file, "wb");
     if(file != NULL){
@@ -129,5 +145,6 @@ DBStore readDBStore(char * store_loc){
  */
 void freeStore(DBStore store){
     free(store->db_location);
+    free(store->db_store_location);
     free(store);
 }

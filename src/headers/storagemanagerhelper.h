@@ -16,6 +16,7 @@
 #include <stdbool.h>
 struct DBStore_S{
     char * db_location;
+    char * db_store_location;
     int page_size;
     int buffer_size;
 }; typedef struct DBStore_S * DBStore;

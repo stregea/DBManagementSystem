@@ -18,41 +18,42 @@
 #include <string.h>
 #include <dirent.h>
 
-#define PAGE_NAME "page"
+/// This will represent a Page that will store the table and record entries.
+struct Page_S{
+    
+    /// the id of the table the page is associated with
+    int table_id;
+    
+    /// The id/name of a page.
+    int page_id;
+       
+    /// The current size of the records within the page.
+    size_t num_records;
+    
+    /// The # of attributes within a record.
+    size_t data_types_size;
+    
+    /// Pointer used to index to associated pages within a table.
+    struct Page_S * nextPage;
+
+    /// array that will be used to contain records.
+    union record_item records[];
+}; typedef struct Page_S Page;
 
 /// This will represent a Table within a linked list of tables.
-struct Table_Node{
-    int * primary_key;
+struct Table_S{
+    /// Int array used for generating primary keys for a record.
+    int * key_indices;
     
+    /// Int array associated with the certain types of datatypes found within a table.
     int * data_types;
     
     /// The id of a table.
     int table_id;
-    
-    int data_types_size;
-    int key_indices_size;
-    /// pointer for a table that may exist on another page.
-    struct Table_Node * nextTable;
-    
-    /// array that will be used to contain records.
-    union record_item records[];
-}; typedef struct Table_Node * Table;
 
-/// This will represent a Page that will store the table and record entries.
-struct Page_S{
-    
-    /// The id of a page.
-    int page_id;
-    
-    /// The current size of the records within the page.
-    size_t record_size;
-    
-    /// The max size of the page.
-    size_t max_record_size;
-    
-    /// Linked list of tables.
-    Table head;
-}; typedef struct Page_S Page;
+    /// Array to keep track of the assiociated pages to this table.
+    int page_ids[];
+}; typedef struct Table_S Table;
 
 /// This will be the buffer to hold all of the pages and the DB location.
 struct Buffer_S{
@@ -60,13 +61,22 @@ struct Buffer_S{
     /// The database location
     char* db_location;
     
+    /// The buffer size
+    int buffer_size;
+    
+    /// The max size of the pages.
+    int page_size;
+    
+    /// Integer to keep track of the total number of pages that exist within the db.
+    int page_count;
+    
+    /// Integer to keep track of the total number of tables that exist within the db.
+    int table_count;
+    
     /// Array that will contain the pages
-    Page* buffer;
+    Page buffer[];
 }; typedef struct Buffer_S Buffer;
-
 Buffer BUFFER;
-int PAGE_INDEX = 0;
-int TABLE_ID = 0;
 
 /*
  * Create or restarts an instance of the database at the
@@ -100,7 +110,9 @@ int create_database( char * db_loc, int page_size, int buffer_size, bool restart
  */
 int restart_database( char * db_loc ){
     int result = EXIT_SUCCESS;
-    PAGE_INDEX = 0;
+
+    // populate buffer from preexisting pages/tables here. These files are created when terminate_database() is called.
+
     
     return result;
 }
@@ -122,23 +134,15 @@ int new_database( char* db_loc, int page_size, int buffer_size ){
         // delete all contents in db_loc
         clearDirectory(db_loc);
         
-        // create the db store file.
-        createDBStore(db_loc, page_size, buffer_size);
+        // Set the max page size
+        BUFFER.page_size = page_size;
         
-        // reset the page size
-        PAGE_INDEX = 0;
+        // set the max buffer size.
+        BUFFER.buffer_size = buffer_size;
         
-        // initialize a buffer
-        Page tmpBuffer[buffer_size];
-        
-        // initialize a page
-        Page new_page = { .page_id=0, .record_size=0, .max_record_size=page_size, .head=NULL };
-        
-        tmpBuffer[PAGE_INDEX] = new_page;
-        
-        // set the buffer to point to a location in memory.
-        BUFFER.db_location = db_loc;
-        BUFFER.buffer = tmpBuffer;
+        // allocate memory for the buffer that will hold pages.
+        // using void to remove the warning of the variable not being used.
+        (void)BUFFER.buffer[buffer_size];
         
     }else{ // bad page size or buffer size
         result = EXIT_FAILURE;
@@ -174,6 +178,7 @@ int get_records( int table_id, union record_item *** table ){
  */
 int get_page( int page_id, union record_item *** page ){
     int result = EXIT_SUCCESS;
+    // not required for phase1.
     return result;
 }
 
@@ -276,33 +281,33 @@ int clear_table( int table_id ){
  * @return the id of the table created, -1 upon error.
  */
 int add_table( int * data_types, int * key_indices, int data_types_size, int key_indices_size ){
-    Table cursor = BUFFER.buffer[PAGE_INDEX].head;
-    // move to next available table slot
-    while(cursor->nextTable){
-        cursor = cursor->nextTable;
-    }
-    
-    // creating the new table.
-    Table newTable = malloc(sizeof(struct Table_Node) + data_types_size + key_indices_size);
-    
-    // not to sure how much memory to allocate atm (due to my rustiness of C), that's why one line variation is commented out.
-    
-    // need to free these later on within the clear_table() and drop_table() functions (or db shutdown/restart) to prevent memory leaks
-    newTable->primary_key = malloc(key_indices_size);
-    //    newTable->primary_key = malloc(key_indices_size * sizeof(int));
-    newTable->data_types = malloc(data_types_size);
-    //    newTable->data_types = malloc(data_types_size * sizeof(int));
-    
-    // store the values into memory
-    memcpy(newTable->primary_key, key_indices, key_indices_size); // store the primary key
-//    memcpy(newTable->primary_key, key_indices, key_indices_size * sizeof(int));
-    memcpy(newTable->data_types, data_types, data_types_size); // store the data types
-//    memcpy(newTable->data_types, data_types, data_types_size * sizeof(int));
-    
-    newTable->table_id = ++TABLE_ID;
-        
-    cursor->nextTable = newTable;
-    return TABLE_ID;
+//    Table cursor = BUFFER->buffer[PAGE_INDEX].head;
+//    // move to next available table slot
+//    while(cursor->nextTable){
+//        cursor = cursor->nextTable;
+//    }
+//
+//    // creating the new table.
+//    Table newTable = malloc(sizeof(struct Table_Node) + data_types_size + key_indices_size);
+//
+//    // not to sure how much memory to allocate atm (due to my rustiness of C), that's why one line variation is commented out.
+//
+//    // need to free these later on within the clear_table() and drop_table() functions (or db shutdown/restart) to prevent memory leaks
+//    newTable->primary_key = malloc(key_indices_size);
+//    //    newTable->primary_key = malloc(key_indices_size * sizeof(int));
+//    newTable->data_types = malloc(data_types_size);
+//    //    newTable->data_types = malloc(data_types_size * sizeof(int));
+//
+//    // store the values into memory
+//    memcpy(newTable->primary_key, key_indices, key_indices_size); // store the primary key
+////    memcpy(newTable->primary_key, key_indices, key_indices_size * sizeof(int));
+//    memcpy(newTable->data_types, data_types, data_types_size); // store the data types
+////    memcpy(newTable->data_types, data_types, data_types_size * sizeof(int));
+//
+//    newTable->table_id = ++TABLE_ID;
+//
+//    cursor->nextTable = newTable;
+    return 0;
 }
 
 /*
