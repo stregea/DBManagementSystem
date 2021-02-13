@@ -99,6 +99,13 @@ void enqueue(LRU_Cache cache, int buffer_index);
 void referencePage(LRU_Cache cache, int buffer_index);
 
 /**
+ * Retrieve the index of the buffer that the LRU page exists within.
+ * @param cache - The cache to check.
+ * @returns the index to access the LRU page within the buffer.
+ */
+int getLRUIndexForBuffer(LRU_Cache cache);
+
+/**
  * Free the cache from memory to avoid memory leaks.
  * @param cache - The cache to free.
  */

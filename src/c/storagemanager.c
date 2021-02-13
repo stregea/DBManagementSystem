@@ -20,6 +20,8 @@
 #include <dirent.h>
 #pragma pack(1)
 
+
+
 /// This will represent a Page that will store the table and record entries.
 struct Page_S{
     
@@ -70,6 +72,9 @@ struct Buffer_S{
     
     /// Integer to keep track of the total number of tables that exist within the db.
     int table_count;
+    
+    /// int to keep track of the number of pages existing within the buffer.
+    int pages_within_buffer;
     
     /// The cache to keep track of the LRU pages.
     LRU_Cache cache;
@@ -329,10 +334,55 @@ int terminate_database(){
     return result;
 }
 
+
+bool bufferIsFull(Buffer buffer){
+    return buffer.pages_within_buffer == buffer.buffer_size;
+}
+
+Table getTable(int table_id){
+    Table table ={};
+    
+    // iterate through current tables, read in table with matching table_id
+    // if table found, read  data from table file into table struct, then return struct.
+    // if table not found, return -1;
+    
+    return table;
+}
+
 int read_page(){
     return -1;
 }
 
-int write_page(){
-    return -1;
+/**
+ * Create a page.
+ */
+int write_page(int table_id){
+    Table table = getTable(table_id);
+    
+    Page newPage = {
+        .table_id=table_id,
+        .page_id=BUFFER.page_count,
+        .num_records=0,
+        .data_types_size=table.data_types_size
+    };
+    
+    // iterate through list of page id's
+    // update the page links?
+    if(bufferIsFull(BUFFER)){
+        // purge LRU index of buffer onto disk
+        Page pageToWrite = BUFFER.buffer[getLRUIndexForBuffer(BUFFER.cache)];
+        
+        // write pageToWrite to disk.
+        
+        // need a way to nullify index.
+        // BUFFER.buffer[getLRUIndexForBuffer(BUFFER.cache)] = NULL;
+        
+        // create new page at that index
+        BUFFER.buffer[getLRUIndexForBuffer(BUFFER.cache)] = newPage;
+    }else{
+        BUFFER.buffer[BUFFER.pages_within_buffer-1] = newPage;
+        BUFFER.pages_within_buffer++;
+    }
+    
+    return EXIT_SUCCESS;
 }
