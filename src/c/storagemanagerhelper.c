@@ -158,9 +158,8 @@ Table getTable(int table_id, char * database_path){
     printf("%d\n", table_id);
 
     // convert int table_id to string for file path
-    char table_id_string[255];
-    sprintf(table_id_string, "%d", table_id);
-    
+    char * table_id_string = appendIntToString("", table_id);
+
     // create path to the table in the database
     char* table_path = malloc(sizeof(char*) * (strlen(database_path) + strlen(table_id_string)));
     strcpy(table_path, database_path);
@@ -179,5 +178,6 @@ Table getTable(int table_id, char * database_path){
 
     Table table ={};
 
+    free(table_id_string);
     return table;
 }

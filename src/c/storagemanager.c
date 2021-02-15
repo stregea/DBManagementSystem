@@ -126,7 +126,7 @@ int new_database( char* db_loc, int page_size, int buffer_size ){
     // create db store file to store page and buffer size
     if( isProperSize( page_size, buffer_size ) ){
         
-        // delete all contents in db_loc
+        // delete all contents in db_loc // this doesn't work with windows.
         //clearDirectory(db_loc);
 
         // set the db location
@@ -290,7 +290,7 @@ int add_table( int * data_types, int * key_indices, int data_types_size, int key
     char* database_path = BUFFER.db_location;
     
     // create path to the table in the database
-    char* table_id = "1"; // this was just used to test we will find this later
+    char* table_id = appendIntToString("", BUFFER.table_count); // this was just used to test we will find this later
     char* table_path = malloc(sizeof(char*) * (strlen(database_path) + strlen(table_id)));
     strcpy(table_path, database_path);
     strcat(table_path, table_id);
@@ -302,15 +302,16 @@ int add_table( int * data_types, int * key_indices, int data_types_size, int key
         .page_ids_size = 0,
         .key_indices = key_indices,
         .data_types = data_types
-        };
+    };
 
     // write the table to disk
-    FILE *tableFile= fopen(table_path, "w");
+    FILE *tableFile= fopen(table_path, "wb");
     fwrite(&table_content, sizeof(table_content), 1, tableFile);
     fclose(tableFile);
 
     free(table_path);
-    return 1;
+    free(table_id);
+    return EXIT_SUCCESS;
 }
 
 /*
