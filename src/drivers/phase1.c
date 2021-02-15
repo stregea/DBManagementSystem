@@ -11,6 +11,7 @@
  * @author Samuel Tregea  (sdt1093@rit.edu)
  */
 #include "../headers/storagemanager.h"
+#include "../headers/storagemanagerhelper.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,12 +32,15 @@ int main(int argc, char * argv[]){
     new_database(databasePath, PAGE_SIZE, BUFFER_SIZE);
     
     // TESTING TABLE
+    // Table(char[] name, int age, float weight)
     int data_types_size = 3;
     int data_types[] = {3, 0, 1};
     int key_indices_size = 1;
     int key_indices[] = {0};
 
-    add_table(data_types, key_indices, data_types_size, key_indices_size);
+    int table_1_id = add_table(data_types, key_indices, data_types_size, key_indices_size);
+    
+    getTable(table_1_id, databasePath);
     
     //printf("Hideous Jimmies!!\n");
     return EXIT_SUCCESS;

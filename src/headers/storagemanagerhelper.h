@@ -20,6 +20,19 @@ struct DBStore_S{
     int page_size;
     int buffer_size;
 }; typedef struct DBStore_S * DBStore;
+
+/// This will represent a Table within a linked list of tables.
+struct Table_S{
+
+    int data_types_size;
+    int key_indices_size;
+    int page_ids_size;
+    int * data_types;
+    int * key_indices;
+    int * page_ids;
+    
+}; typedef struct Table_S Table;
+
 /**
  * Append an integer to an existing char*.
  * - Note: the newly created string must be freed once used.
@@ -63,4 +76,7 @@ DBStore readDBStore(char * store_loc);
  * Free the previously allocated memory created for a DBStore.
  */
 void freeStore(DBStore store);
+
+Table getTable(int table_id, char * database_path);
+
 #endif /* storagemanagerhelper_h */

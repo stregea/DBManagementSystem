@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
-#pragma pack(1)
+//#pragma pack(1)
 
 
 
@@ -44,16 +44,6 @@ struct Page_S{
     union record_item records[];
 }; typedef struct Page_S Page;
 
-/// This will represent a Table within a linked list of tables.
-struct Table_S{
-
-    int data_types_size;
-    int key_indices_size;
-    int * key_indices;
-    int * data_types;
-    int page_ids[];
-    
-}; typedef struct Table_S Table;
 
 /// This will be the buffer to hold all of the pages and the DB location.
 struct Buffer_S{
@@ -138,7 +128,7 @@ int new_database( char* db_loc, int page_size, int buffer_size ){
     if( isProperSize( page_size, buffer_size ) ){
         
         // delete all contents in db_loc
-        //clearDirectory(db_loc);
+        clearDirectory(db_loc);
 
         // set the db location
         BUFFER.db_location = db_loc; 
@@ -300,13 +290,19 @@ int add_table( int * data_types, int * key_indices, int data_types_size, int key
     char* database_path = BUFFER.db_location;
     
     // create path to the table in the database
-    char* table_id = "table_1.bin"; // this was just used to test we will find this later
+    char* table_id = "1"; // this was just used to test we will find this later
     char* table_path = malloc(sizeof(char*) * (strlen(database_path) + strlen(table_id)));
     strcpy(table_path, database_path);
     strcat(table_path, table_id);
 
     // build the struct for the table
-    Table table_content = {.data_types_size = data_types_size, .key_indices_size = key_indices_size, .key_indices = key_indices, .data_types = data_types};
+    Table table_content = {
+        .data_types_size = data_types_size, 
+        .key_indices_size = key_indices_size,
+        .page_ids_size = 0,
+        .key_indices = key_indices, 
+        .data_types = data_types
+        };
 
     // write the table to disk
     FILE *tableFile= fopen(table_path, "w");
@@ -314,9 +310,8 @@ int add_table( int * data_types, int * key_indices, int data_types_size, int key
     fclose(tableFile);
 
     free(table_path);
-    return 0;
+    return 1;
 }
-
 
 /*
  * This will purge the page buffer to disk.
@@ -341,16 +336,6 @@ bool bufferIsFull(Buffer buffer){
     return buffer.pages_within_buffer == buffer.buffer_size;
 }
 
-Table getTable(int table_id){
-    Table table ={};
-    
-    // iterate through current tables, read in table with matching table_id
-    // if table found, read  data from table file into table struct, then return struct.
-    // if table not found, return -1;
-    
-    return table;
-}
-
 int read_page(){
     return -1;
 }
@@ -359,7 +344,7 @@ int read_page(){
  * Create a page.
  */
 int write_page(int table_id){
-    Table table = getTable(table_id);
+    Table table = getTable(table_id, BUFFER.db_location);
     
     Page newPage = {
         .table_id=table_id,
