@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
-//#pragma pack(1)
+#pragma pack(1)
 
 
 
@@ -44,6 +44,16 @@ struct Page_S{
     union record_item records[];
 }; typedef struct Page_S Page;
 
+/// This will represent a Table within a linked list of tables.
+struct Table_S{
+
+    int data_types_size;
+    int key_indices_size;
+    int * key_indices;
+    int * data_types;
+    int page_ids[];
+    
+}; typedef struct Table_S Table;
 
 /// This will be the buffer to hold all of the pages and the DB location.
 struct Buffer_S{
@@ -128,7 +138,7 @@ int new_database( char* db_loc, int page_size, int buffer_size ){
     if( isProperSize( page_size, buffer_size ) ){
         
         // delete all contents in db_loc
-        clearDirectory(db_loc);
+        //clearDirectory(db_loc);
 
         // set the db location
         BUFFER.db_location = db_loc; 
@@ -140,8 +150,9 @@ int new_database( char* db_loc, int page_size, int buffer_size ){
         BUFFER.buffer_size = buffer_size;
                 
         // allocate memory for the buffer that will hold pages.
-        (void)BUFFER.buffer[buffer_size];
-        
+        // then initialize buffer with null values
+        BUFFER.buffer[buffer_size] = (Page){};
+
         // set up the cache
         BUFFER.cache = createCache(buffer_size);
 
@@ -290,17 +301,17 @@ int add_table( int * data_types, int * key_indices, int data_types_size, int key
     char* database_path = BUFFER.db_location;
     
     // create path to the table in the database
-    char* table_id = "1"; // this was just used to test we will find this later
+    char* table_id = "table_1.bin"; // this was just used to test we will find this later
     char* table_path = malloc(sizeof(char*) * (strlen(database_path) + strlen(table_id)));
     strcpy(table_path, database_path);
     strcat(table_path, table_id);
 
     // build the struct for the table
     Table table_content = {
-        .data_types_size = data_types_size, 
+        .data_types_size = data_types_size,
         .key_indices_size = key_indices_size,
         .page_ids_size = 0,
-        .key_indices = key_indices, 
+        .key_indices = key_indices,
         .data_types = data_types
         };
 
@@ -312,6 +323,7 @@ int add_table( int * data_types, int * key_indices, int data_types_size, int key
     free(table_path);
     return 1;
 }
+
 
 /*
  * This will purge the page buffer to disk.
@@ -336,6 +348,40 @@ bool bufferIsFull(Buffer buffer){
     return buffer.pages_within_buffer == buffer.buffer_size;
 }
 
+/**
+ * Write a page struct and it's contents to disk.
+ * @param page
+ */
+void write_page_to_disk(Page page){
+    char* database_path = BUFFER.db_location;
+
+    // create path to the table in the database
+    char* page_file = appendIntToString("", page.page_id); // this was just used to test we will find this later
+    char* page_path = malloc(sizeof(char*) * (strlen(database_path) + strlen(page_file)));
+    strcpy(page_path, database_path);
+    strcat(page_path, page_file);
+
+    FILE* file = fopen(page_path, "wb");
+
+    // write table id
+    fwrite(&page.table_id, sizeof(int), 1, file);
+
+    // write page id
+    fwrite(&page.page_id, sizeof(int), 1, file);
+
+    // write the total number of records
+    fwrite(&page.num_records, sizeof(size_t), 1, file);
+
+    // write the total number of attrs (5)
+    fwrite(&page.data_types_size, sizeof(size_t), 1, file);
+
+    // write all the records to the page.
+    fwrite(page.records, sizeof(union record_item), page.num_records, file);
+
+    fclose(file);
+    free(page_file);
+}
+
 int read_page(){
     return -1;
 }
@@ -350,7 +396,7 @@ int write_page(int table_id){
         .table_id=table_id,
         .page_id=BUFFER.page_count,
         .num_records=0,
-        .data_types_size=table.data_types_size
+        .data_types_size=table.data_types_size // 5 -- may want to just insert that?
     };
     
     // iterate through list of page id's
@@ -358,16 +404,20 @@ int write_page(int table_id){
     if(bufferIsFull(BUFFER)){
         // purge LRU index of buffer onto disk
         Page pageToWrite = BUFFER.buffer[getLRUIndexForBuffer(BUFFER.cache)];
-        
+
         // write pageToWrite to disk.
-        
-        // need a way to nullify index.
-        // BUFFER.buffer[getLRUIndexForBuffer(BUFFER.cache)] = NULL;
-        
+        write_page_to_disk(pageToWrite);
+
+        // remove memory space used for records
+        free(pageToWrite.records);
+
+        // nullify the index. This shouldn't be necessary, just being safe.
+        BUFFER.buffer[getLRUIndexForBuffer(BUFFER.cache)] = (Page){};
+
         // create new page at that index
         BUFFER.buffer[getLRUIndexForBuffer(BUFFER.cache)] = newPage;
     }else{
-        BUFFER.buffer[BUFFER.pages_within_buffer-1] = newPage;
+        BUFFER.buffer[BUFFER.pages_within_buffer] = newPage;
         BUFFER.pages_within_buffer++;
     }
     
