@@ -153,8 +153,10 @@ int new_database( char* db_loc, int page_size, int buffer_size ){
         (void)BUFFER.buffer[buffer_size];
         
         // set up the cache
-        BUFFER.cache->queue = createQueue(buffer_size);
-        BUFFER.cache->hash = createHash(buffer_size);
+        BUFFER.cache = createCache(buffer_size);
+
+        // this is for memory testing purposes, this can be removed before submission
+        //freeLRUCache(BUFFER.cache);
                 
     }else{ // bad page size or buffer size
         result = EXIT_FAILURE;
@@ -299,7 +301,7 @@ int add_table( int * data_types, int * key_indices, int data_types_size, int key
     
     // create path to the table in the database
     char* table_id = "table_1.bin"; // this was just used to test we will find this later
-    char* table_path = malloc(strlen(database_path) + strlen(table_id));
+    char* table_path = malloc(sizeof(char*) *strlen(database_path) + strlen(table_id));
     strcpy(table_path, database_path);
     strcat(table_path, table_id);
 

@@ -69,6 +69,18 @@ Hash* createHash(int capacity){
 }
 
 /**
+ * Create a LRU cache.
+ * @param size - The size of the cache to create.
+ * @return a cache pointer.
+ */
+LRU_Cache createCache(int size){
+    LRU_Cache cache = malloc(sizeof(struct Cache_Struct));
+    cache->queue = createQueue(size);
+    cache->hash = createHash(size);
+    return cache;
+}
+
+/**
  * Check to see the Queue has enough memory to add a node.
  * @param cache - The cache containing the queue to check.
  * @returns 1 if full, 0 if there is space.
@@ -212,7 +224,8 @@ void freeLRUCache(LRU_Cache cache){
             free(cache->hash->array[i]);
         }
     }
-    
+
+    free(cache->hash->array);
     free(cache->hash);
     // I'm not sure this is necessary since nodes are being freed above,
     // but this will need to be debugged and checked eventually.
@@ -225,4 +238,5 @@ void freeLRUCache(LRU_Cache cache){
 //        free(tmp);
 //    }
     free(cache->queue);
+    free(cache);
 }

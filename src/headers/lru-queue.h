@@ -64,6 +64,13 @@ Queue* createQueue(int size);
 Hash* createHash(int capacity);
 
 /**
+ * Create a LRU cache.
+ * @param size - The size of the cache to create.
+ * @return a cache pointer.
+ */
+LRU_Cache createCache(int size);
+
+/**
  * Check to see the Queue has enough memory to add a node.
  * @param cache - The cache containing the queue to check.
  * @returns 1 if full, 0 if there is space.
