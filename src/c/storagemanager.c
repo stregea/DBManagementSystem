@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
-#pragma pack(1)
+//#pragma pack(1)
 
 
 
@@ -43,17 +43,6 @@ struct Page_S{
     /// array that will be used to contain records.
     union record_item records[];
 }; typedef struct Page_S Page;
-
-/// This will represent a Table within a linked list of tables.
-struct Table_S{
-
-    int data_types_size;
-    int key_indices_size;
-    int * key_indices;
-    int * data_types;
-    int page_ids[];
-    
-}; typedef struct Table_S Table;
 
 /// This will be the buffer to hold all of the pages and the DB location.
 struct Buffer_S{
@@ -301,7 +290,7 @@ int add_table( int * data_types, int * key_indices, int data_types_size, int key
     char* database_path = BUFFER.db_location;
     
     // create path to the table in the database
-    char* table_id = "table_1.bin"; // this was just used to test we will find this later
+    char* table_id = "1"; // this was just used to test we will find this later
     char* table_path = malloc(sizeof(char*) * (strlen(database_path) + strlen(table_id)));
     strcpy(table_path, database_path);
     strcat(table_path, table_id);
@@ -323,7 +312,6 @@ int add_table( int * data_types, int * key_indices, int data_types_size, int key
     free(table_path);
     return 1;
 }
-
 
 /*
  * This will purge the page buffer to disk.
