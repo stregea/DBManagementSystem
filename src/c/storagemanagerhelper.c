@@ -180,3 +180,44 @@ Table getTable(int table_id, char * database_path){
     return table;
 
 }
+
+int addPageIdToTable(int table_id, int page_id, char * database_path){
+
+    // convert int table_id to string for file path
+    char* table_id_string = appendIntToString("", table_id);
+
+    // create path to the table in the database
+    char* table_path = malloc(sizeof(char*) * (strlen(database_path) + strlen(table_id_string)));
+    strcpy(table_path, database_path);
+    strcat(table_path, table_id_string);
+
+    // open table and determine file size
+    FILE* table_file = fopen (table_path, "r");
+    fseek(table_file, 0, SEEK_END);
+    int file_size = (int)ftell(table_file);
+    rewind(table_file);
+    
+    // read file contents into struct
+    Table table;
+    fread(&table, file_size, 1, table_file);
+
+    int num_pages = ++table.page_ids_size;
+    int temp[num_pages];
+    for(int i = 0; i < num_pages - 1; i++)
+    {
+        temp[i] = table.page_ids[i];
+    }
+    temp[num_pages] = page_id;
+
+    // may need to reallocate
+    table.page_ids = temp;
+
+    fwrite(&table, sizeof(table), 1, table_file);
+    fclose(tableFile);
+    
+    // free all dynamic memory
+    free(table_path);
+    free(table_id_string);
+
+    return 0;
+}

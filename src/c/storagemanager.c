@@ -281,6 +281,36 @@ int insert_record(int table_id, union record_item *record) {
     int result = EXIT_SUCCESS;
     // get array of page id's from table
     // iterate through pages
+
+    Table table = getTable(table_id, BUFFER.db_location);
+
+    if(table.page_ids_size <= 0)
+    {
+        write_page(table_id);
+    }
+
+    Page page = (Page) {};
+
+    // search through buffer
+    for(int i = 0; i < BUFFER.buffer_size; i++)
+    {
+        Page temp = BUFFER.buffer[i];
+
+        if(temp.table_id == table_id)
+        {
+            if(temp.num_records < BUFFER.page_size)
+            {
+                page = temp;
+                referencePage(BUFFER.cache, i);
+                break; 
+            }
+        }
+
+    }
+
+    // check if page is null
+    // iterate through all pages on disk
+
     // find first available page with record space.
 
     // create 2d array of page
@@ -524,5 +554,8 @@ int write_page(int table_id) {
 
     // reference the LRU page.
     referencePage(BUFFER.cache, buffer_index);
+
+    addPageIdToTable(table_id, newPage.page_id, BUFFER.db_location);
+
     return EXIT_SUCCESS;
 }
