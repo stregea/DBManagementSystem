@@ -127,6 +127,107 @@ bool keysMatch(Table table, union record_item *key1, union record_item *key2) {
     return true;
 }
 
+/**
+ * Write a page struct and it's contents to disk.
+ * @param page - The page to write.
+ */
+void write_page_to_disk(Page page) {
+    char *database_path = BUFFER.db_location;
+
+    // create path to the table in the database
+    char *page_file = appendIntToString("", page.page_id); // this was just used to test we will find this later
+    char *page_path = malloc(sizeof(char *) * (strlen(database_path) + strlen(page_file)));
+    strcpy(page_path, database_path);
+    strcat(page_path, page_file);
+
+    FILE *file = fopen(page_path, "wb");
+
+    // write table id
+    fwrite(&page.table_id, sizeof(int), 1, file);
+
+    // write page id
+    fwrite(&page.page_id, sizeof(int), 1, file);
+
+    // write the total number of records
+    fwrite(&page.num_records, sizeof(size_t), 1, file);
+
+    // write the total number of attrs (5)
+    fwrite(&page.data_types_size, sizeof(size_t), 1, file);
+
+    // write all the records to the page.
+    fwrite(page.records, sizeof(union record_item), page.num_records, file);
+
+    fclose(file);
+    free(page_file);
+}
+
+bool bufferIsFull(Buffer buffer) {
+    return buffer.pages_within_buffer == buffer.buffer_size;
+}
+
+/**
+ * Read in a page.
+ * Note a Page* that is populated must be freed.
+ * @param page_id - The id of the page to read in.
+ * @param page - The Page to populate
+ * @return EXIT_SUCCESS if page exists, EXIT_FAILURE if page doesn't exist.
+ */
+int read_page(int page_id, Page *page) {
+    // search through all pages
+    // if page id isn't found -> return -1
+    // else find page with matching page id
+    // allocate memory for for struct pointer
+    // populate struct from page.
+    return -1;
+}
+
+/**
+ * Create a page.
+ */
+int write_page(int table_id) {
+    int buffer_index;
+    Table table = getTable(table_id, BUFFER.db_location);
+    Page newPage = {
+            .table_id=table_id,
+            .page_id=BUFFER.page_count,
+            .num_records=0,
+            .data_types_size=table.data_types_size // 5 -- may want to just insert that?
+    };
+
+    // iterate through list of page id's
+    // update the page links?
+    if (bufferIsFull(BUFFER)) {
+        // point to the LRU index of the buffer
+        buffer_index = getLRUIndexForBuffer(BUFFER.cache);
+
+        // purge LRU index of buffer onto disk
+        Page pageToWrite = BUFFER.buffer[buffer_index];
+
+        // write pageToWrite to disk.
+        write_page_to_disk(pageToWrite);
+
+        // remove memory space used for records
+//        free(pageToWrite.records);
+
+        // nullify the index. This shouldn't be necessary, just being safe.
+        BUFFER.buffer[buffer_index] = (Page) {};
+
+        // create new page at that index
+        BUFFER.buffer[buffer_index] = newPage;
+    } else {
+        buffer_index = BUFFER.pages_within_buffer;
+        BUFFER.buffer[buffer_index] = newPage;
+        BUFFER.pages_within_buffer++;
+    }
+
+    // reference the LRU page.
+    referencePage(BUFFER.cache, buffer_index);
+
+    addPageIdToTable(table_id, newPage.page_id, BUFFER.db_location);
+
+    return EXIT_SUCCESS;
+}
+
 /*
  * Create or restarts an instance of the database at the
  * provided database location.
@@ -429,39 +530,7 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
     return EXIT_SUCCESS;
 }
 
-/**
- * Write a page struct and it's contents to disk.
- * @param page - The page to write.
- */
-void write_page_to_disk(Page page) {
-    char *database_path = BUFFER.db_location;
 
-    // create path to the table in the database
-    char *page_file = appendIntToString("", page.page_id); // this was just used to test we will find this later
-    char *page_path = malloc(sizeof(char *) * (strlen(database_path) + strlen(page_file)));
-    strcpy(page_path, database_path);
-    strcat(page_path, page_file);
-
-    FILE *file = fopen(page_path, "wb");
-
-    // write table id
-    fwrite(&page.table_id, sizeof(int), 1, file);
-
-    // write page id
-    fwrite(&page.page_id, sizeof(int), 1, file);
-
-    // write the total number of records
-    fwrite(&page.num_records, sizeof(size_t), 1, file);
-
-    // write the total number of attrs (5)
-    fwrite(&page.data_types_size, sizeof(size_t), 1, file);
-
-    // write all the records to the page.
-    fwrite(page.records, sizeof(union record_item), page.num_records, file);
-
-    fclose(file);
-    free(page_file);
-}
 
 /*
  * This will purge the page buffer to disk.
@@ -490,72 +559,4 @@ int terminate_database() {
     // perform proper memory wipes.
     freeLRUCache(BUFFER.cache);
     return result;
-}
-
-
-bool bufferIsFull(Buffer buffer) {
-    return buffer.pages_within_buffer == buffer.buffer_size;
-}
-
-/**
- * Read in a page.
- * Note a Page* that is populated must be freed.
- * @param page_id - The id of the page to read in.
- * @param page - The Page to populate
- * @return EXIT_SUCCESS if page exists, EXIT_FAILURE if page doesn't exist.
- */
-int read_page(int page_id, Page *page) {
-    // search through all pages
-    // if page id isn't found -> return -1
-    // else find page with matching page id
-    // allocate memory for for struct pointer
-    // populate struct from page.
-    return -1;
-}
-
-/**
- * Create a page.
- */
-int write_page(int table_id) {
-    int buffer_index;
-    Table table = getTable(table_id, BUFFER.db_location);
-    Page newPage = {
-            .table_id=table_id,
-            .page_id=BUFFER.page_count,
-            .num_records=0,
-            .data_types_size=table.data_types_size // 5 -- may want to just insert that?
-    };
-
-    // iterate through list of page id's
-    // update the page links?
-    if (bufferIsFull(BUFFER)) {
-        // point to the LRU index of the buffer
-        buffer_index = getLRUIndexForBuffer(BUFFER.cache);
-
-        // purge LRU index of buffer onto disk
-        Page pageToWrite = BUFFER.buffer[buffer_index];
-
-        // write pageToWrite to disk.
-        write_page_to_disk(pageToWrite);
-
-        // remove memory space used for records
-//        free(pageToWrite.records);
-
-        // nullify the index. This shouldn't be necessary, just being safe.
-        BUFFER.buffer[buffer_index] = (Page) {};
-
-        // create new page at that index
-        BUFFER.buffer[buffer_index] = newPage;
-    } else {
-        buffer_index = BUFFER.pages_within_buffer;
-        BUFFER.buffer[buffer_index] = newPage;
-        BUFFER.pages_within_buffer++;
-    }
-
-    // reference the LRU page.
-    referencePage(BUFFER.cache, buffer_index);
-
-    addPageIdToTable(table_id, newPage.page_id, BUFFER.db_location);
-
-    return EXIT_SUCCESS;
 }
