@@ -155,29 +155,28 @@ void freeStore(DBStore store){
 
 Table getTable(int table_id, char * database_path){
 
-    printf("%d\n", table_id);
-
     // convert int table_id to string for file path
-    char * table_id_string = appendIntToString("", table_id);
+    char* table_id_string = appendIntToString("", table_id);
 
     // create path to the table in the database
     char* table_path = malloc(sizeof(char*) * (strlen(database_path) + strlen(table_id_string)));
     strcpy(table_path, database_path);
     strcat(table_path, table_id_string);
 
+    // open table and determine file size
+    FILE* table_file = fopen (table_path, "r");
+    fseek(table_file, 0, SEEK_END);
+    int file_size = (int)ftell(table_file);
+    rewind(table_file);
+    
+    // read file contents into struct
+    Table table;
+    fread(&table, file_size, 1, table_file);
 
-    printf("%s\n", table_path);
-
-    FILE *infile; 
-    //struct person input; 
-      
-    // Open person.dat for reading 
-    infile = fopen ("person.dat", "r"); 
-
+    // free all dynamic memory
     free(table_path);
-
-    Table table ={};
-
     free(table_id_string);
+
     return table;
+
 }
