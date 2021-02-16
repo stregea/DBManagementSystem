@@ -33,6 +33,9 @@ struct Table_S{
     
 }; typedef struct Table_S Table;
 
+#define true 1
+#define false 0
+
 /**
  * Append an integer to an existing char*.
  * - Note: the newly created string must be freed once used.
@@ -78,6 +81,5 @@ DBStore readDBStore(char * store_loc);
 void freeStore(DBStore store);
 
 Table getTable(int table_id, char * database_path);
-
 
 #endif /* storagemanagerhelper_h */

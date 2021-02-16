@@ -73,6 +73,30 @@ struct Buffer_S{
 }; typedef struct Buffer_S Buffer;
 Buffer BUFFER;
 
+/**
+ * Create a primary key from a row within a table.
+ * @param row - The row to create a primary key.
+ * @param table - The table containing key information.
+ * @return A primary key.
+ */
+union record_item * get_primary_key(union record_item * row, Table table){
+    union record_item * primary_key = malloc(sizeof(union record_item) * table.key_indices_size);
+    for(int i = 0; i < table.key_indices_size; i++){
+        primary_key[i] = row[table.key_indices[i]];
+    }
+    return primary_key;
+}
+
+bool compareKeys(union record_item * key1, union record_item * key2){
+
+//    for(int i = 0){
+//
+//    }
+    // need int compare
+    // ...
+    // need string compare
+    return true;
+}
 
 /*
  * Create or restarts an instance of the database at the
