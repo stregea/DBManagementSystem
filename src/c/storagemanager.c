@@ -106,7 +106,7 @@ int create_database( char * db_loc, int page_size, int buffer_size, bool restart
 int restart_database( char * db_loc ){
     int result = EXIT_SUCCESS;
 
-    // populate buffer from preexisting pages/tables here. These files are created when terminate_database() is called.
+    // populate buffer with pre-existing info. These files are created when terminate_database() is called.
 
     
     return result;
@@ -167,6 +167,11 @@ int new_database( char* db_loc, int page_size, int buffer_size ){
  */
 int get_records( int table_id, union record_item *** table ){
     int result = EXIT_SUCCESS;
+    // get table
+    // get array of page id's
+    // calculate total number of rows
+    // cols = 5
+    // iterate through all pages, storing each row into table array.
     return result;
 }
 
@@ -200,6 +205,13 @@ int get_page( int page_id, union record_item *** page ){
  */
 int get_record( int table_id, union record_item * key_values, union record_item ** data ){
     int result = EXIT_SUCCESS;
+    // get key_indices from table
+    // get array of page id's from table
+    // iterate through all the rows
+    // for each row, create a primary key
+    // compare created primary with key_values
+    // if primary key matches, store data into data parameter.
+    // return -1 if not found
     return result;
 }
 
@@ -213,12 +225,25 @@ int get_record( int table_id, union record_item * key_values, union record_item 
  */
 int insert_record( int table_id, union record_item * record ){
     int result = EXIT_SUCCESS;
-    
-    // be sure to increment page record size here.
-    
+    // get array of page id's from table
+    // iterate through pages
+    // find first available page with record space.
+
+    // create 2d array of page
+
+    // iterate through array
+
+    // create primary key from prev_records in page and from record passed in
+    // compare the records via primary keys
+    // when at desired location insert the record
+
+    // increment page record size
+
     // if record size > max_record_size
-    // create new page and insert information there
-    
+    // split page records
+    // create new page and insert other half of pages there
+    // resort pages.
+
     return result;
 }
 
@@ -257,6 +282,9 @@ int remove_record( int table_id, union record_item * key_values ){
  */
 int drop_table( int table_id ){
     int result = EXIT_SUCCESS;
+    // read in array of page id's
+    // delete pages with page ids
+    // delete table.
     return result;
 }
 
@@ -268,6 +296,9 @@ int drop_table( int table_id ){
  */
 int clear_table( int table_id ){
     int result = EXIT_SUCCESS;
+    // read in array of page id's
+    // remove associated pages
+    // reset table file.
     return result;
 }
 
@@ -314,32 +345,9 @@ int add_table( int * data_types, int * key_indices, int data_types_size, int key
     return EXIT_SUCCESS;
 }
 
-/*
- * This will purge the page buffer to disk.
- * @return 0 on success, -1 on failure.
- */
-int purge_buffer(){
-    int result = EXIT_SUCCESS;
-    return result;
-}
-
-/*
- * This function will safely shutdown the storage manager.
- * @return 0 on success, -1 on failure.
- */
-int terminate_database(){
-    int result = EXIT_SUCCESS;
-    return result;
-}
-
-
-bool bufferIsFull(Buffer buffer){
-    return buffer.pages_within_buffer == buffer.buffer_size;
-}
-
 /**
  * Write a page struct and it's contents to disk.
- * @param page
+ * @param page - The page to write.
  */
 void write_page_to_disk(Page page){
     char* database_path = BUFFER.db_location;
@@ -371,7 +379,53 @@ void write_page_to_disk(Page page){
     free(page_file);
 }
 
-int read_page(){
+/*
+ * This will purge the page buffer to disk.
+ * @return 0 on success, -1 on failure.
+ */
+int purge_buffer(){
+    int result = EXIT_SUCCESS;
+    // foreach page in buffer
+    // write_page_to_buffer(page)
+
+    // clear the buffer
+    return result;
+}
+
+/*
+ * This function will safely shutdown the storage manager.
+ * @return 0 on success, -1 on failure.
+ */
+int terminate_database(){
+    int result = EXIT_SUCCESS;
+    // purge the buffer
+    purge_buffer();
+
+    // write buffer info to disk
+
+    // perform proper memory wipes.
+    freeLRUCache(BUFFER.cache);
+    return result;
+}
+
+
+bool bufferIsFull(Buffer buffer){
+    return buffer.pages_within_buffer == buffer.buffer_size;
+}
+
+/**
+ * Read in a page.
+ * Note a Page* that is populated must be freed.
+ * @param page_id - The id of the page to read in.
+ * @param page - The Page to populate
+ * @return EXIT_SUCCESS if page exists, EXIT_FAILURE if page doesn't exist.
+ */
+int read_page(int page_id, Page* page){
+    // search through all pages
+    // if page id isn't found -> return -1
+    // else find page with matching page id
+    // allocate memory for for struct pointer
+    // populate struct from page.
     return -1;
 }
 
