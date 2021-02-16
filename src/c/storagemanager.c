@@ -414,11 +414,12 @@ int insert_record(int table_id, union record_item *record) {
     }
 
     // check if page is null
-    // iterate through all pages on disk
+    // iterate through all pages on disk and assign.
+    // if page is still null, return error
 
     // find first available page with record space.
 
-    // create 2d array of page
+    // create 2d array of records
 
     // iterate through array
 
