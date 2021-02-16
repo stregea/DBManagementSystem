@@ -213,7 +213,7 @@ int addPageIdToTable(int table_id, int page_id, char * database_path){
     table.page_ids = temp;
 
     fwrite(&table, sizeof(table), 1, table_file);
-    fclose(tableFile);
+    fclose(table_file);
     
     // free all dynamic memory
     free(table_path);
