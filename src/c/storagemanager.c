@@ -301,7 +301,7 @@ int new_database(char *db_loc, int page_size, int buffer_size) {
         BUFFER.cache = createCache(buffer_size);
 
         // this is for memory testing purposes, this can be removed before submission
-        freeLRUCache(BUFFER.cache);
+        //freeLRUCache(BUFFER.cache);
 
     } else { // bad page size or buffer size
         result = EXIT_FAILURE;
