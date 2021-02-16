@@ -223,7 +223,11 @@ int write_page(int table_id) {
     // reference the LRU page.
     referencePage(BUFFER.cache, buffer_index);
 
+    // Add a page id to a table's page id array.
     addPageIdToTable(table_id, newPage.page_id, BUFFER.db_location);
+
+    // increment the total page count
+    BUFFER.page_count++;
 
     return EXIT_SUCCESS;
 }
@@ -538,10 +542,15 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
  */
 int purge_buffer() {
     int result = EXIT_SUCCESS;
-    // foreach page in buffer
-    // write_page_to_buffer(page)
 
-    // clear the buffer
+    // foreach page in buffer
+    for(int i = 0; i < BUFFER.buffer_size; i++){
+        write_page_to_disk(BUFFER.buffer[i]);
+        BUFFER.buffer[i] = (Page){}; // null out the index
+    }
+
+    BUFFER.pages_within_buffer = 0;
+
     return result;
 }
 
