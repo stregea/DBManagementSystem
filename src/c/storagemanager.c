@@ -73,6 +73,7 @@ struct Buffer_S{
 }; typedef struct Buffer_S Buffer;
 Buffer BUFFER;
 
+
 /*
  * Create or restarts an instance of the database at the
  * provided database location.
@@ -433,20 +434,23 @@ int read_page(int page_id, Page* page){
  * Create a page.
  */
 int write_page(int table_id){
+    int buffer_index;
     Table table = getTable(table_id, BUFFER.db_location);
-    
     Page newPage = {
         .table_id=table_id,
         .page_id=BUFFER.page_count,
         .num_records=0,
         .data_types_size=table.data_types_size // 5 -- may want to just insert that?
     };
-    
+
     // iterate through list of page id's
     // update the page links?
     if(bufferIsFull(BUFFER)){
+        // point to the LRU index of the buffer
+        buffer_index = getLRUIndexForBuffer(BUFFER.cache);
+
         // purge LRU index of buffer onto disk
-        Page pageToWrite = BUFFER.buffer[getLRUIndexForBuffer(BUFFER.cache)];
+        Page pageToWrite = BUFFER.buffer[buffer_index];
 
         // write pageToWrite to disk.
         write_page_to_disk(pageToWrite);
@@ -455,14 +459,17 @@ int write_page(int table_id){
         free(pageToWrite.records);
 
         // nullify the index. This shouldn't be necessary, just being safe.
-        BUFFER.buffer[getLRUIndexForBuffer(BUFFER.cache)] = (Page){};
+        BUFFER.buffer[buffer_index] = (Page){};
 
         // create new page at that index
-        BUFFER.buffer[getLRUIndexForBuffer(BUFFER.cache)] = newPage;
+        BUFFER.buffer[buffer_index] = newPage;
     }else{
-        BUFFER.buffer[BUFFER.pages_within_buffer] = newPage;
+        buffer_index = BUFFER.pages_within_buffer;
+        BUFFER.buffer[buffer_index] = newPage;
         BUFFER.pages_within_buffer++;
     }
-    
+
+    // reference the LRU page.
+    referencePage(BUFFER.cache, buffer_index);
     return EXIT_SUCCESS;
 }

@@ -79,4 +79,5 @@ void freeStore(DBStore store);
 
 Table getTable(int table_id, char * database_path);
 
+
 #endif /* storagemanagerhelper_h */
