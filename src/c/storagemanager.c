@@ -39,7 +39,7 @@ struct Page_S {
     /// array that will be used to contain records.
     union record_item records[];
 };
-typedef struct Page_S Page;
+typedef struct Page_S * Page;
 
 /// This will be the buffer to hold all of the pages and the DB location.
 struct Buffer_S {
@@ -68,8 +68,8 @@ struct Buffer_S {
     /// Array that will contain the pages
     Page buffer[];
 };
-typedef struct Buffer_S Buffer;
-Buffer BUFFER;
+typedef struct Buffer_S * Buffer;
+Buffer BUFFER = &(struct Buffer_S) {};
 
 /**
  * Create a primary key from a row within a table.
@@ -132,10 +132,10 @@ bool keysMatch(Table table, union record_item *key1, union record_item *key2) {
  * @param page - The page to write.
  */
 void write_page_to_disk(Page page) {
-    char *database_path = BUFFER.db_location;
+    char *database_path = BUFFER->db_location;
 
     // create path to the table in the database
-    char *page_file = appendIntToString("", page.page_id); // this was just used to test we will find this later
+    char *page_file = appendIntToString("", page->page_id); // this was just used to test we will find this later
     char *page_path = malloc(sizeof(char *) * (strlen(database_path) + strlen(page_file)));
     strcpy(page_path, database_path);
     strcat(page_path, page_file);
@@ -143,26 +143,26 @@ void write_page_to_disk(Page page) {
     FILE *file = fopen(page_path, "wb");
 
     // write table id
-    fwrite(&page.table_id, sizeof(int), 1, file);
+    fwrite(&page->table_id, sizeof(int), 1, file);
 
     // write page id
-    fwrite(&page.page_id, sizeof(int), 1, file);
+    fwrite(&page->page_id, sizeof(int), 1, file);
 
     // write the total number of records
-    fwrite(&page.num_records, sizeof(size_t), 1, file);
+    fwrite(&page->num_records, sizeof(size_t), 1, file);
 
     // write the total number of attrs (5)
-    fwrite(&page.data_types_size, sizeof(size_t), 1, file);
+    fwrite(&page->data_types_size, sizeof(size_t), 1, file);
 
     // write all the records to the page.
-    fwrite(page.records, sizeof(union record_item), page.num_records, file);
+    fwrite(page->records, sizeof(union record_item), page->num_records, file);
 
     fclose(file);
     free(page_file);
 }
 
 bool bufferIsFull(Buffer buffer) {
-    return buffer.pages_within_buffer == buffer.buffer_size;
+    return buffer->pages_within_buffer == buffer->buffer_size;
 }
 
 /**
@@ -186,10 +186,10 @@ int read_page(int page_id, Page *page) {
  */
 int write_page(int table_id) {
     int buffer_index;
-    Table table = getTable(table_id, BUFFER.db_location);
-    Page newPage = {
+    Table table = getTable(table_id, BUFFER->db_location);
+    Page newPage = &(struct Page_S) {
             .table_id=table_id,
-            .page_id=BUFFER.page_count,
+            .page_id=BUFFER->page_count,
             .num_records=0,
             .data_types_size=table.data_types_size // 5 -- may want to just insert that?
     };
@@ -198,10 +198,10 @@ int write_page(int table_id) {
     // update the page links?
     if (bufferIsFull(BUFFER)) {
         // point to the LRU index of the buffer
-        buffer_index = getLRUIndexForBuffer(BUFFER.cache);
+        buffer_index = getLRUIndexForBuffer(BUFFER->cache);
 
         // purge LRU index of buffer onto disk
-        Page pageToWrite = BUFFER.buffer[buffer_index];
+        Page pageToWrite = BUFFER->buffer[buffer_index];
 
         // write pageToWrite to disk.
         write_page_to_disk(pageToWrite);
@@ -210,24 +210,24 @@ int write_page(int table_id) {
 //        free(pageToWrite.records);
 
         // nullify the index. This shouldn't be necessary, just being safe.
-        BUFFER.buffer[buffer_index] = (Page) {};
+        BUFFER->buffer[buffer_index] = &(struct Page_S) {};
 
         // create new page at that index
-        BUFFER.buffer[buffer_index] = newPage;
+        BUFFER->buffer[buffer_index] = newPage;
     } else {
-        buffer_index = BUFFER.pages_within_buffer;
-        BUFFER.buffer[buffer_index] = newPage;
-        BUFFER.pages_within_buffer++;
+        buffer_index = BUFFER->pages_within_buffer;
+        BUFFER->buffer[buffer_index] = newPage;
+        BUFFER->pages_within_buffer++;
     }
 
     // reference the LRU page.
-    referencePage(BUFFER.cache, buffer_index);
+    referencePage(BUFFER->cache, buffer_index);
 
     // Add a page id to a table's page id array.
-    addPageIdToTable(table_id, newPage.page_id, BUFFER.db_location);
+    addPageIdToTable(table_id, newPage->page_id, BUFFER->db_location);
 
     // increment the total page count
-    BUFFER.page_count++;
+    BUFFER->page_count++;
 
     return EXIT_SUCCESS;
 }
@@ -289,20 +289,20 @@ int new_database(char *db_loc, int page_size, int buffer_size) {
         //clearDirectory(db_loc);
 
         // set the db location
-        BUFFER.db_location = db_loc;
+        BUFFER->db_location = db_loc;
 
         // Set the max page size
-        BUFFER.page_size = page_size;
+        BUFFER->page_size = page_size;
 
         // set the max buffer size.
-        BUFFER.buffer_size = buffer_size;
+        BUFFER->buffer_size = buffer_size;
 
         // allocate memory for the buffer that will hold pages.
         // then initialize buffer with null values
-        BUFFER.buffer[buffer_size] = (Page) {};
+        BUFFER->buffer[buffer_size] = &(struct Page_S) {};
 
         // set up the cache
-        BUFFER.cache = createCache(buffer_size);
+        BUFFER->cache = createCache(buffer_size);
 
         // this is for memory testing purposes, this can be removed before submission
         //freeLRUCache(BUFFER.cache);
@@ -326,7 +326,7 @@ int new_database(char *db_loc, int page_size, int buffer_size) {
  */
 int get_records(int table_id, union record_item ***table) {
     int result = EXIT_SUCCESS;
-    // get table
+    // get table by searching through buffer and grabbing the new page if not found
     // get array of page id's
     // calculate total number of rows
     // cols = 5
@@ -364,6 +364,7 @@ int get_page(int page_id, union record_item ***page) {
  */
 int get_record(int table_id, union record_item *key_values, union record_item **data) {
     int result = EXIT_SUCCESS;
+
     // get key_indices from table
     // get array of page id's from table
     // iterate through all the rows
@@ -387,29 +388,36 @@ int insert_record(int table_id, union record_item *record) {
     // get array of page id's from table
     // iterate through pages
 
-    Table table = getTable(table_id, BUFFER.db_location);
+    Table table = getTable(table_id, BUFFER->db_location);
 
+    union record_item * insert_key = get_primary_key(record, table);
+
+    // If the table does not have any existing pages, make a new one
     if(table.page_ids_size <= 0)
     {
+        // Create a new page, gets added to table
         write_page(table_id);
     }
 
-    Page page = (Page) {};
+    Page page = &(struct Page_S) {};
+
+    //Check stuff starting from here
 
     // search through buffer
-    for(int i = 0; i < BUFFER.buffer_size; i++)
+    for(int i = 0; i < BUFFER->buffer_size; i++)
     {
-        Page temp = BUFFER.buffer[i];
+        Page temp = BUFFER->buffer[i];
 
-        if(temp.table_id == table_id)
+        // Check if page is the first page in the desired table (should exist but don't count on it)
+        if(temp->page_id == table.page_ids[0])
         {
-            if(temp.num_records < BUFFER.page_size)
-            {
-                page = temp;
-                referencePage(BUFFER.cache, i);
-                break; 
-            }
+            page = temp;
+            referencePage(BUFFER->cache, i);
+            break; // Will this break from the if or the for loop? Doesn't matter for functionality, just speed
         }
+    }
+
+    if (page == NULL) {
 
     }
 
@@ -417,7 +425,7 @@ int insert_record(int table_id, union record_item *record) {
     // iterate through all pages on disk and assign.
     // if page is still null, return error
 
-    // find first available page with record space.
+    // find first available page with record space. | Need to insert record
 
     // create 2d array of records
 
@@ -433,6 +441,36 @@ int insert_record(int table_id, union record_item *record) {
     // split page records
     // create new page and insert other half of pages there
     // resort pages.
+
+
+
+    // Psuedocode for algorithm
+
+    // Create primary key array based on record and primary key
+    // Starting at the first page in the table, compare to primary key arrays of rows
+
+    // Comparison algorithm (looks like O(n^2) but isn't I promise:
+    // Start: pointer to page references first page in table
+    // comparing based on first index in primary key
+
+    // while pointer to page is not null:
+        // for record in record size:
+            // create primary key array for record
+            // compare primary key array of record to primary key array of new record
+            // if less, move on
+            // if more
+                // step back one
+                // if less again, insert and return 0
+                // if equal
+                    // if at last index in primary key, return -1 (row already exists)
+                    // else move on to comparing based on next index in primary key
+            // if equal
+                // if at last index in primary key, return -1 (row already exists)
+                // else move on to comparing based on next index in primary key
+        // if reached here, did not insert yet and did not find existing row that matched
+        // if next page exists
+            // change pointer to point to next page
+        // else insert at end and return 0
 
     return result;
 }
@@ -508,10 +546,10 @@ int clear_table(int table_id) {
 int add_table(int *data_types, int *key_indices, int data_types_size, int key_indices_size) {
 
     // get database path
-    char *database_path = BUFFER.db_location;
+    char *database_path = BUFFER->db_location;
 
     // create path to the table in the database
-    char *table_id = appendIntToString("", BUFFER.table_count); // this was just used to test we will find this later
+    char *table_id = appendIntToString("", BUFFER->table_count); // this was just used to test we will find this later
     char *table_path = malloc(sizeof(char *) * (strlen(database_path) + strlen(table_id)));
     strcpy(table_path, database_path);
     strcat(table_path, table_id);
@@ -545,12 +583,12 @@ int purge_buffer() {
     int result = EXIT_SUCCESS;
 
     // foreach page in buffer
-    for(int i = 0; i < BUFFER.buffer_size; i++){
-        write_page_to_disk(BUFFER.buffer[i]);
-        BUFFER.buffer[i] = (Page){}; // null out the index
+    for(int i = 0; i < BUFFER->buffer_size; i++){
+        write_page_to_disk(BUFFER->buffer[i]);
+        BUFFER->buffer[i] = &(struct Page_S) {}; // null out the index
     }
 
-    BUFFER.pages_within_buffer = 0;
+    BUFFER->pages_within_buffer = 0;
 
     return result;
 }
@@ -567,6 +605,6 @@ int terminate_database() {
     // write buffer info to disk
 
     // perform proper memory wipes.
-    freeLRUCache(BUFFER.cache);
+    freeLRUCache(BUFFER->cache);
     return result;
 }

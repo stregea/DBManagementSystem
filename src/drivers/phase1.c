@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#define PAGE_SIZE 10   
+#define PAGE_SIZE 10
 #define BUFFER_SIZE 1
 
 
@@ -43,6 +43,9 @@ int main(int argc, char * argv[]){
     // Since getTable will only be called inside storagemanager.c the db path have the "/"
     // added to the path because it reference the formatted path in buffer
     Table t0 = getTable(table_1_id, databasePath);
+
+    int x = get_record(table_1_id, NULL, NULL);
+    printf("%d\n", x);
         
     printf("Hideous Jimmies!!\n");
     return EXIT_SUCCESS;
