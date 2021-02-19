@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#define MAX_INT_32_DIGIT 10
 
 /**
  * Append an integer to an existing char*.
@@ -24,8 +25,11 @@
  */
 char * appendIntToString( char * original, int number )
 {
-    char * newString = malloc( sizeof( char* ) );
-    sprintf(newString, "%s%d", original, number);
+    // string length + len(MAX_INT_32 as string)
+    size_t buffer_size = strlen(original) + MAX_INT_32_DIGIT;
+    char * newString = malloc(buffer_size);
+    // to prevent buffer overflow
+    snprintf(newString, buffer_size, "%s%d", original, number);
     return newString;
 }
 
@@ -159,65 +163,123 @@ Table getTable(int table_id, char * database_path){
     char* table_id_string = appendIntToString("table_", table_id);
 
     // create path to the table in the database
-    char* table_path = malloc(sizeof(char*) * (strlen(database_path) + strlen(table_id_string)));
-    strcpy(table_path, database_path);
-    strcat(table_path, table_id_string);
+    // add null terminating btye
+    size_t path_buffer_size = strlen(database_path) + strlen(table_id_string) + 1;
+    char* table_path = malloc(path_buffer_size);
+
+    // preventing buffer overflows
+    strncpy(table_path, database_path, path_buffer_size);
+    strncat(table_path, table_id_string, path_buffer_size - strlen(table_path));
 
     // open table and determine file size
-    FILE* table_file = fopen (table_path, "r");
+    FILE* table_file = fopen (table_path, "rb");
+    // move pointer to pass end of file
     fseek(table_file, 0, SEEK_END);
+    // getting address first beyond end of file
     int file_size = (int)ftell(table_file);
     rewind(table_file);
     
     // read file contents into struct
     Table table;
-    fread(&table, file_size, 1, table_file);
+    fread(&table.data_types_size, sizeof(int), 1, table_file);
+    fread(&table.key_indices_size, sizeof(int), 1, table_file);
+    fread(&table.page_ids_size, sizeof(int), 1, table_file);
+
+    // allocate space for the int arrays
+    table.data_types = malloc(sizeof(int) * table.data_types_size);
+    table.key_indices = malloc(sizeof(int) * table.key_indices_size);
+    table.page_ids = malloc(sizeof(int) * table.page_ids_size);
+
+    fread(table.key_indices, sizeof(int), table.key_indices_size, table_file);
+    fread(table.data_types, sizeof(int), table.data_types_size, table_file);
+    fread(table.page_ids, sizeof(int), table.page_ids_size, table_file);
 
     // free all dynamic memory
     free(table_path);
     free(table_id_string);
 
     return table;
-
 }
 
-int addPageIdToTable(int table_id, int page_id, char * database_path){
-
-    // convert int table_id to string for file path
-    char* table_id_string = appendIntToString("", table_id);
+int writeTable(Table table, int table_id, char * database_path){
 
     // create path to the table in the database
-    char* table_path = malloc(sizeof(char*) * (strlen(database_path) + strlen(table_id_string)));
+    char *table_id_string = appendIntToString("", table_id); // this was just used to test we will find this later
+    
+    // refactor into function
+    char *table_path = malloc(strlen(database_path) + strlen(table_id_string) + 1);
     strcpy(table_path, database_path);
     strcat(table_path, table_id_string);
 
-    // open table and determine file size
-    FILE* table_file = fopen (table_path, "r");
-    fseek(table_file, 0, SEEK_END);
-    int file_size = (int)ftell(table_file);
-    rewind(table_file);
-    
-    // read file contents into struct
-    Table table;
-    fread(&table, file_size, 1, table_file);
+    // write the table to disk
+    FILE *table_file = fopen(table_path, "wb");
 
+    fwrite(&table.data_types_size, sizeof(int), 1, table_file);
+    fwrite(&table.key_indices_size, sizeof(int), 1, table_file);
+    fwrite(&table.page_ids_size, sizeof(int), 1, table_file);
+    fwrite(table.key_indices, sizeof(int), table.key_indices_size, table_file);
+    fwrite(table.data_types, sizeof(int), table.data_types_size, table_file);
+    fwrite(table.page_ids, sizeof(int), table.page_ids_size, table_file);
+
+    fclose(table_file);
+    free(table_path);
+    free(table_id_string);
+
+    return EXIT_SUCCESS;
+}
+
+void printIntArray(int *array, int size){
+    printf("{ ");
+    for(int i = 0; i < size; i++){
+        printf("%d, ", array[i]);
+    }
+    printf(" }\n");
+}
+
+void printTable(Table table) {
+
+    printf("data_types_size = %d\n", table.data_types_size);
+    printf("key_indices_size = %d\n", table.key_indices_size);
+    printf("table.page_ids_size = %d\n", table.page_ids_size);
+    
+    printf("data_types = ");
+    printIntArray(table.data_types, table.data_types_size);
+    
+    printf("key_indices = ");
+    printIntArray(table.key_indices, table.key_indices_size);
+
+    printf("page_ids = ");
+    printIntArray(table.page_ids, table.page_ids_size);
+}
+
+int addPageIdToTable(int table_id, int page_id, char * database_path, int new_page_index){
+
+    // read file contents into struct
+    Table table = getTable(table_id, database_path);
+
+    // increment page id size and add page id
     int num_pages = ++table.page_ids_size;
     int temp[num_pages];
     for(int i = 0; i < num_pages - 1; i++)
     {
-        temp[i] = table.page_ids[i];
+        // copy page_id to desired index
+        if(i == new_page_index){
+            temp[i] = page_id;
+        }
+        else if(i < new_page_index){
+            temp[i] = table.page_ids[i];
+        }
+        else {
+            temp[i + 1] = table.page_ids[i];
+        }
+
     }
-    temp[num_pages] = page_id;
 
     // may need to reallocate
     table.page_ids = temp;
 
-    fwrite(&table, sizeof(table), 1, table_file);
-    fclose(table_file);
-    
-    // free all dynamic memory
-    free(table_path);
-    free(table_id_string);
+    // write to disk
+    writeTable(table, table_id, database_path);
 
     return 0;
 }
