@@ -66,11 +66,13 @@ struct Buffer_S {
     LRU_Cache cache;
 
     /// Array that will contain the pages
-    Page buffer[];
+//    Page buffer[];
+    Page *buffer;
+
 };
 typedef struct Buffer_S * Buffer;
-Buffer BUFFER = &(struct Buffer_S) {};
-
+Buffer BUFFER;
+#define BUFFER_FILE "buffer_meta"
 /**
  * Create a primary key from a row within a table.
  * @param row - The row to create a primary key.
@@ -210,7 +212,8 @@ int write_page(int table_id) {
 //        free(pageToWrite.records);
 
         // nullify the index. This shouldn't be necessary, just being safe.
-        BUFFER->buffer[buffer_index] = &(struct Page_S) {};
+//        BUFFER->buffer[buffer_index] = &(struct Page_S) {};
+        BUFFER->buffer[buffer_index] = NULL;
 
         // create new page at that index
         BUFFER->buffer[buffer_index] = newPage;
@@ -230,6 +233,66 @@ int write_page(int table_id) {
     BUFFER->page_count++;
 
     return EXIT_SUCCESS;
+}
+
+/**
+ * Write the Buffer and it's contents to disk.
+ * @param filename - The filename to name the buffer file.
+ * @param buffer - The buffer to write.
+ * @return EXIT_SUCCESS if able to write to disk, EXIT_FAILURE otherwise.
+ */
+int write_buffer_to_disk(char *filename, Buffer buffer){
+    int result = EXIT_SUCCESS;
+    char *fileLocation = malloc(sizeof(char*));
+
+    copyStringForFilePath(fileLocation, buffer->db_location);
+    strcat(fileLocation, filename);
+
+    FILE *file = fopen(fileLocation, "wb");
+    if(file != NULL){
+        fwrite(buffer, sizeof(struct Buffer_S), 1, file);
+        fclose(file);
+    }else{
+        result = EXIT_FAILURE;
+    }
+
+    return result;
+}
+
+/**
+ * Read in a meta file to populate the buffer.
+ * @param db_location - The location the buffer exists.
+ * @param buffer - The Buffer to populate.
+ * @return EXIT_SUCCESS if able to populate, EXIT_FAILURE otherwise.
+ */
+int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer){
+    int result = EXIT_SUCCESS;
+    buffer = malloc(sizeof(struct Buffer_S));
+    char *fileLocation = malloc(sizeof(char*));
+
+    copyStringForFilePath(fileLocation, db_location);
+    strcat(fileLocation, filename);
+    FILE *file = fopen(fileLocation, "wb");
+
+    if(file != NULL){
+        fread(buffer, sizeof(struct Buffer_S), 1, file);
+        fclose(file);
+    }else{
+        result = EXIT_FAILURE;
+    }
+
+    return result;
+}
+
+/**
+ * Free the memory locations the buffer is using.
+ * @param buffer - The buffer to free.
+ */
+void freeBuffer(Buffer buffer){
+    freeLRUCache(BUFFER->cache);
+    free(buffer->db_location);
+    free(buffer->buffer);
+    free(buffer);
 }
 
 /*
@@ -265,9 +328,12 @@ int create_database(char *db_loc, int page_size, int buffer_size, bool restart) 
 int restart_database(char *db_loc) {
     int result = EXIT_SUCCESS;
 
-    // populate buffer with pre-existing info. These files are created when terminate_database() is called.
+    // re-populate buffer with pre-existing info.
+    // The buffer file is created when terminate_database() is called.
+    result = read_buffer_from_disk(db_loc, BUFFER_FILE, BUFFER);
+    BUFFER->buffer = malloc(sizeof(struct Page_S)*BUFFER->buffer_size);
 
-
+    // would the buffer array need to
     return result;
 }
 
@@ -285,11 +351,16 @@ int new_database(char *db_loc, int page_size, int buffer_size) {
     // create db store file to store page and buffer size
     if (isProperSize(page_size, buffer_size)) {
 
+        // initialize buffer
+//        BUFFER = &(struct Buffer_S) {};
+        BUFFER = malloc(sizeof (struct Buffer_S));
+
         // delete all contents in db_loc // this doesn't work with windows.
         //clearDirectory(db_loc);
 
         // set the db location
-        BUFFER->db_location = db_loc;
+        BUFFER->db_location = malloc(sizeof(char*)*strlen(db_loc));
+        strcpy(BUFFER->db_location, db_loc);
 
         // Set the max page size
         BUFFER->page_size = page_size;
@@ -299,14 +370,16 @@ int new_database(char *db_loc, int page_size, int buffer_size) {
 
         // allocate memory for the buffer that will hold pages.
         // then initialize buffer with null values
-        BUFFER->buffer[buffer_size] = &(struct Page_S) {};
+//        BUFFER->buffer[buffer_size] = &(struct Page_S) {};
+        BUFFER->buffer = malloc(sizeof (struct Page_S)* BUFFER->buffer_size);
+
+        // set null values
+        for(int i = 0; i < BUFFER->buffer_size; i++){
+            BUFFER->buffer[i] = NULL;
+        }
 
         // set up the cache
         BUFFER->cache = createCache(buffer_size);
-
-        // this is for memory testing purposes, this can be removed before submission
-        //freeLRUCache(BUFFER.cache);
-
     } else { // bad page size or buffer size
         result = EXIT_FAILURE;
     }
@@ -570,6 +643,8 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
 
     free(table_path);
     free(table_id);
+
+    BUFFER->table_count++;
     return EXIT_SUCCESS;
 }
 
@@ -585,13 +660,15 @@ int purge_buffer() {
     // foreach page in buffer
     for(int i = 0; i < BUFFER->buffer_size; i++){
         write_page_to_disk(BUFFER->buffer[i]);
-        BUFFER->buffer[i] = &(struct Page_S) {}; // null out the index
+//        BUFFER->buffer[i] = &(struct Page_S) {}; // null out the index
+        BUFFER->buffer[i] = NULL;
     }
 
     BUFFER->pages_within_buffer = 0;
 
     return result;
 }
+
 
 /*
  * This function will safely shutdown the storage manager.
@@ -600,11 +677,12 @@ int purge_buffer() {
 int terminate_database() {
     int result = EXIT_SUCCESS;
     // purge the buffer
-    purge_buffer();
+    result = purge_buffer();
 
     // write buffer info to disk
+    result = write_buffer_to_disk(BUFFER_FILE, BUFFER);
 
     // perform proper memory wipes.
-    freeLRUCache(BUFFER->cache);
+    freeBuffer(BUFFER);
     return result;
 }

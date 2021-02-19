@@ -54,6 +54,14 @@ char * appendIntToString( char * original, int number );
 bool isProperSize( int page_size, int buffer_size );
 
 /**
+ * Copy a string for a filepath.
+ * Note: This needs to be tested on windows.
+ * @param destination - The location to store the new string.
+ * @param original_str - The original string that is used to check and copy information.
+ */
+void copyStringForFilePath(char* destination, char* original_str);
+
+/**
  * Go to a specified directory and clear its contents but keep the parent directory..
  * @param dir_name - The directory to clear.
  */
