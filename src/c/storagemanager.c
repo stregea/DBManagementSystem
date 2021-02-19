@@ -668,6 +668,8 @@ int drop_table(int table_id) {
         result = EXIT_FAILURE;
     }
 
+    BUFFER->table_count--;
+
     // free created strings.
     free(table_file);
     free(table_location);
@@ -705,9 +707,38 @@ int clear_table(int table_id) {
     }
 
     table.page_ids_size=0;
+
     // TODO: re-write to make cleaner, and write to table file to reset it.
+    // delete the table.
+    // build the location of the Table file
+    char *table_location = malloc((sizeof(char*)));
+    strcpy(table_location, db_location);
+    strcat(table_location, "table_");
+
+//    char *file_name = appendIntToString("table_", table.)
+//    FILE *table_file = fopen(table_location, "wb");
+//    if(table_file != NULL){
+//
+//    }else{
+//        result = EXIT_FAILURE;
+//    }
+//    fwrite(&table.data_types_size, sizeof(int), 1, table_file);
+//    fwrite(&table.key_indices_size, sizeof(int), 1, table_file);
+//    fwrite(&table.page_ids_size, sizeof(int), 1, table_file);
+//    fwrite(table.key_indices, sizeof(int), table.key_indices_size, table_file);
+//    fwrite(table.data_types, sizeof(int), table.data_types_size, table_file);
+//    fwrite(table.page_ids, sizeof(int), table.page_ids_size, table_file);
+//
+//    fclose(table_file);
+//
+//    free(table_location);
+//    free(table_id_string);
+
+    BUFFER->table_count++;
     // write file to
     // reset table file.
+
+    free(db_location);
     return result;
 }
 
