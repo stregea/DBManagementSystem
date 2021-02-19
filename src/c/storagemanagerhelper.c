@@ -159,6 +159,8 @@ void freeStore(DBStore store){
 
 Table getTable(int table_id, char * database_path){
 
+    //printf("Getting table...\n");
+
     // convert int table_id to string for file path
     char* table_id_string = appendIntToString("table_", table_id);
 
@@ -171,14 +173,10 @@ Table getTable(int table_id, char * database_path){
     strncpy(table_path, database_path, path_buffer_size);
     strncat(table_path, table_id_string, path_buffer_size - strlen(table_path));
 
-    // open table and determine file size
+    // open table file
+    //printf("%s\n", table_path);
     FILE* table_file = fopen (table_path, "rb");
-    // move pointer to pass end of file
-    fseek(table_file, 0, SEEK_END);
-    // getting address first beyond end of file
-    int file_size = (int)ftell(table_file);
-    rewind(table_file);
-    
+
     // read file contents into struct
     Table table;
     fread(&table.data_types_size, sizeof(int), 1, table_file);
@@ -203,13 +201,19 @@ Table getTable(int table_id, char * database_path){
 
 int writeTable(Table table, int table_id, char * database_path){
 
+    int result = EXIT_SUCCESS;
+
+    printf("Writing table...\n");
+
     // create path to the table in the database
-    char *table_id_string = appendIntToString("", table_id); // this was just used to test we will find this later
+    char *table_id_string = appendIntToString("table_", table_id); // this was just used to test we will find this later
     
     // refactor into function
     char *table_path = malloc(strlen(database_path) + strlen(table_id_string) + 1);
     strcpy(table_path, database_path);
     strcat(table_path, table_id_string);
+
+    printf("%s\n", table_path);
 
     // write the table to disk
     FILE *table_file = fopen(table_path, "wb");
@@ -225,22 +229,28 @@ int writeTable(Table table, int table_id, char * database_path){
     free(table_path);
     free(table_id_string);
 
-    return EXIT_SUCCESS;
+    printTable(table);
+    return result;
 }
 
 void printIntArray(int *array, int size){
-    printf("{ ");
+    printf("{");
     for(int i = 0; i < size; i++){
-        printf("%d, ", array[i]);
+
+        printf("%d", array[i]);
+        
+        if(i != size - 1){
+            printf(", ");
+        }
     }
-    printf(" }\n");
+    printf("}\n");
 }
 
 void printTable(Table table) {
 
     printf("data_types_size = %d\n", table.data_types_size);
     printf("key_indices_size = %d\n", table.key_indices_size);
-    printf("table.page_ids_size = %d\n", table.page_ids_size);
+    printf("page_ids_size = %d\n", table.page_ids_size);
     
     printf("data_types = ");
     printIntArray(table.data_types, table.data_types_size);
@@ -250,9 +260,48 @@ void printTable(Table table) {
 
     printf("page_ids = ");
     printIntArray(table.page_ids, table.page_ids_size);
+
+    printf("\n");
+}
+
+void printRecord(union record_item *record, int data_types_size, int * data_types) {
+    
+    printf("{");
+    int current_data_type;
+    for(int i = 0; i < data_types_size; i++){
+        
+        current_data_type = data_types[i];
+
+        switch(current_data_type) {
+            case 0 :
+                printf("%d", record[i].i);
+                break;
+            case 1 :
+                printf("%f", record[i].d);
+                break;
+            case 2 :
+                printf("%s", record[i].b ? "true" : "false");
+                break;
+            case 3 :
+                printf("%s", record[i].c);
+                break;
+            case 4 :
+                printf("%s", record[i].v);
+                break;
+            default :
+                printf("Invalid type" );
+        }
+
+        if(i != data_types_size - 1){
+            printf(", ");
+        }
+    }
+    printf("}\n");
 }
 
 int addPageIdToTable(int table_id, int page_id, char * database_path, int new_page_index){
+
+    printf("Add page_id: %d to table_%d...\n", page_id, table_id);
 
     // read file contents into struct
     Table table = getTable(table_id, database_path);
@@ -260,7 +309,7 @@ int addPageIdToTable(int table_id, int page_id, char * database_path, int new_pa
     // increment page id size and add page id
     int num_pages = ++table.page_ids_size;
     int temp[num_pages];
-    for(int i = 0; i < num_pages - 1; i++)
+    for(int i = 0; i < num_pages; i++)
     {
         // copy page_id to desired index
         if(i == new_page_index){

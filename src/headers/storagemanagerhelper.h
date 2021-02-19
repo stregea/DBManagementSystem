@@ -12,6 +12,7 @@
 #ifndef storagemanagerhelper_h
 #define storagemanagerhelper_h
 
+#include "../headers/storagemanager.h"
 #include <stdio.h>
 #include <stdbool.h>
 struct DBStore_S{
@@ -93,7 +94,10 @@ Table getTable(int table_id, char * database_path);
 int writeTable(Table table, int table_id, char * database_path); 
 
 void printIntArray(int *array, int size);
+
 void printTable(Table table);
+
+void printRecord(union record_item *record, int data_types_size, int * data_types);
 
 int addPageIdToTable(int table_id, int page_id, char * database_path, int new_page_index);
 #endif /* storagemanagerhelper_h */
