@@ -682,7 +682,8 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
 
     // create path to the table in the database
     char *table_id = appendIntToString("", BUFFER->table_count); // this was just used to test we will find this later
-    char *table_path = malloc(sizeof(char *) * (strlen(database_path) + strlen(table_id)));
+    // refactor into function
+    char *table_path = malloc(strlen(database_path) + strlen(table_id) + 1);
     strcpy(table_path, database_path);
     strcat(table_path, table_id);
 
@@ -696,9 +697,15 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
     };
 
     // write the table to disk
-    FILE *tableFile = fopen(table_path, "wb");
-    fwrite(&table_content, sizeof(table_content), 1, tableFile);
-    fclose(tableFile);
+    FILE *table_file = fopen(table_path, "wb");
+    fwrite(&table_content.data_types_size, sizeof(int), 1, table_file);
+    fwrite(&table_content.key_indices_size, sizeof(int), 1, table_file);
+    fwrite(&table_content.page_ids_size, sizeof(int), 1, table_file);
+    fwrite(table_content.key_indices, sizeof(int), table_content.key_indices_size, table_file);
+    fwrite(table_content.data_types, sizeof(int), table_content.data_types_size, table_file);
+    fwrite(table_content.page_ids, sizeof(int), table_content.page_ids_size, table_file);
+
+    fclose(table_file);
 
     free(table_path);
     free(table_id);
@@ -706,6 +713,8 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
     BUFFER->table_count++;
     return EXIT_SUCCESS;
 }
+
+
 
 /*
  * This will purge the page buffer to disk.
@@ -725,7 +734,6 @@ int purge_buffer() {
 
     return result;
 }
-
 
 /*
  * This function will safely shutdown the storage manager.

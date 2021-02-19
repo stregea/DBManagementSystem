@@ -43,9 +43,10 @@ int main(int argc, char * argv[]){
     // Since getTable will only be called inside storagemanager.c the db path have the "/"
     // added to the path because it reference the formatted path in buffer
     Table t0 = getTable(table_1_id, databasePath);
+    printTable(t0);
 
-    int x = get_record(table_1_id, NULL, NULL);
-    printf("%d\n", x);
+    //int x = get_record(table_1_id, NULL, NULL);
+    //printf("%d\n", x);
         
     printf("Hideous Jimmies!!\n");
     return EXIT_SUCCESS;
