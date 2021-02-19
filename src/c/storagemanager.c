@@ -69,6 +69,7 @@ struct Buffer_S {
     Page buffer[];
 };
 typedef struct Buffer_S * Buffer;
+
 Buffer BUFFER = &(struct Buffer_S) {};
 
 /**
@@ -183,10 +184,13 @@ int read_page(int page_id, Page *page) {
 
 /**
  * Create a page.
+ * param - page_index location to place page id into page_id array
  */
-int write_page(int table_id) {
+int write_page(int table_id, int page_index) {
+
     int buffer_index;
     Table table = getTable(table_id, BUFFER->db_location);
+
     Page newPage = &(struct Page_S) {
             .table_id=table_id,
             .page_id=BUFFER->page_count,
@@ -221,10 +225,11 @@ int write_page(int table_id) {
     }
 
     // reference the LRU page.
+    // tell LRU we used the page
     referencePage(BUFFER->cache, buffer_index);
 
     // Add a page id to a table's page id array.
-    addPageIdToTable(table_id, newPage->page_id, BUFFER->db_location);
+    addPageIdToTable(table_id, newPage->page_id, BUFFER->db_location, page_index);
 
     // increment the total page count
     BUFFER->page_count++;
@@ -396,7 +401,7 @@ int insert_record(int table_id, union record_item *record) {
     if(table.page_ids_size <= 0)
     {
         // Create a new page, gets added to table
-        write_page(table_id);
+        write_page(table_id, 0);
     }
 
     Page page = &(struct Page_S) {};
@@ -565,6 +570,7 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
     };
 
     // write the table to disk
+    // was storing address of int arrays before not actual data
     FILE *table_file = fopen(table_path, "wb");
     fwrite(&table_content.data_types_size, sizeof(int), 1, table_file);
     fwrite(&table_content.key_indices_size, sizeof(int), 1, table_file);
@@ -591,7 +597,7 @@ int purge_buffer() {
     // foreach page in buffer
     for(int i = 0; i < BUFFER->buffer_size; i++){
         write_page_to_disk(BUFFER->buffer[i]);
-        BUFFER->buffer[i] = &(struct Page_S) {}; // null out the index
+        BUFFER->buffer[i] = NULL; // null out the index
     }
 
     BUFFER->pages_within_buffer = 0;

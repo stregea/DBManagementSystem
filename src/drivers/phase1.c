@@ -38,12 +38,27 @@ int main(int argc, char * argv[]){
     int key_indices_size = 1;
     int key_indices[] = {0};
 
-    int table_1_id = add_table(data_types, key_indices, data_types_size, key_indices_size);
+    int table_id = add_table(data_types, key_indices, data_types_size, key_indices_size);
     
     // Since getTable will only be called inside storagemanager.c the db path have the "/"
     // added to the path because it reference the formatted path in buffer
-    Table t0 = getTable(table_1_id, databasePath);
+    Table t0 = getTable(table_id, databasePath);
     printTable(t0);
+
+    union record_item person[] = {
+        {
+            .c = "Bob"
+        },
+        {
+            .i = 31
+        },
+        {
+            .d = 168.23
+        }
+    };
+
+    insert_record(table_id, person);
+    purge_buffer();
 
     //int x = get_record(table_1_id, NULL, NULL);
     //printf("%d\n", x);
