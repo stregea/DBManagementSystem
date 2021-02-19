@@ -156,7 +156,7 @@ void freeStore(DBStore store){
 Table getTable(int table_id, char * database_path){
 
     // convert int table_id to string for file path
-    char* table_id_string = appendIntToString("", table_id);
+    char* table_id_string = appendIntToString("table_", table_id);
 
     // create path to the table in the database
     char* table_path = malloc(sizeof(char*) * (strlen(database_path) + strlen(table_id_string)));

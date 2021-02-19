@@ -72,7 +72,9 @@ struct Buffer_S {
 };
 typedef struct Buffer_S * Buffer;
 Buffer BUFFER;
-#define BUFFER_FILE "buffer_meta"
+#define BUFFER_FILE "buffer_meta";
+#define TABLE_FILE "table_";
+
 /**
  * Create a primary key from a row within a table.
  * @param row - The row to create a primary key.
@@ -330,10 +332,10 @@ int restart_database(char *db_loc) {
 
     // re-populate buffer with pre-existing info.
     // The buffer file is created when terminate_database() is called.
-    result = read_buffer_from_disk(db_loc, BUFFER_FILE, BUFFER);
+    char* buffer_file = BUFFER_FILE;
+    result = read_buffer_from_disk(db_loc, buffer_file, BUFFER);
     BUFFER->buffer = malloc(sizeof(struct Page_S)*BUFFER->buffer_size);
 
-    // would the buffer array need to
     return result;
 }
 
@@ -586,6 +588,41 @@ int drop_table(int table_id) {
     // read in array of page id's
     // delete pages with page ids
     // delete table.
+    Table table = getTable(table_id, BUFFER->db_location);
+    char *db_location = malloc(sizeof(char*));
+    strcpy(db_location, BUFFER->db_location);
+    strcat(db_location, "/"); // need this to change for windows.
+
+    // delete pages associated with table.
+    for(int i = 0; i < table.page_ids_size; i++){
+
+        char* filename = appendIntToString(db_location, table.page_ids[i]);
+
+        // file was unable to be deleted/was not found.
+        if(remove(filename) != 0){
+            result = EXIT_FAILURE;
+        }
+
+        free(filename);
+    }
+
+    // delete the table.
+    char *table_location = malloc((sizeof(char*)));
+    strcpy(table_location, db_location);
+
+    // build the file location
+    char*table_name = TABLE_FILE;
+    char *table_file = appendIntToString(table_name, table_id);
+
+    // Table was unable to delete, thus error.
+    if(remove(table_file) != 0){
+        result = EXIT_FAILURE;
+    }
+
+    // free created strings.
+    free(table_file);
+    free(table_location);
+    free(db_location);
     return result;
 }
 
@@ -598,7 +635,29 @@ int drop_table(int table_id) {
 int clear_table(int table_id) {
     int result = EXIT_SUCCESS;
     // read in array of page id's
-    // remove associated pages
+    // delete pages with page ids
+    // delete table.
+    Table table = getTable(table_id, BUFFER->db_location);
+    char *db_location = malloc(sizeof(char*));
+    strcpy(db_location, BUFFER->db_location);
+    strcat(db_location, "/"); // need this to change for windows.
+
+    // delete pages associated with table.
+    for(int i = 0; i < table.page_ids_size; i++){
+
+        char* filename = appendIntToString(db_location, table.page_ids[i]);
+
+        // file was unable to be deleted/was not found.
+        if(remove(filename) != 0){
+            result = EXIT_FAILURE;
+        }
+
+        free(filename);
+    }
+
+    table.page_ids_size=0;
+    // TODO: re-write to make cleaner, and write to table file to reset it.
+    // write file to
     // reset table file.
     return result;
 }
@@ -648,8 +707,6 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
     return EXIT_SUCCESS;
 }
 
-
-
 /*
  * This will purge the page buffer to disk.
  * @return 0 on success, -1 on failure.
@@ -680,7 +737,8 @@ int terminate_database() {
     result = purge_buffer();
 
     // write buffer info to disk
-    result = write_buffer_to_disk(BUFFER_FILE, BUFFER);
+    char* buffer_file = BUFFER_FILE;
+    result = write_buffer_to_disk(buffer_file, BUFFER);
 
     // perform proper memory wipes.
     freeBuffer(BUFFER);
