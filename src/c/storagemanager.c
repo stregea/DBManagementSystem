@@ -105,7 +105,7 @@ union record_item *get_primary_key(union record_item *row, Table table) {
  * @return true (1) if the keys match, otherwise false (-1).
  */
 bool compareKeys(Table table, union record_item *key1, union record_item *key2, int operation) {
-    if(operation != COMPARE_EQUALS && operation != COMPARE_LESS_THAN && operation != COMPARE_GREATER_THAN){
+    if (operation != COMPARE_EQUALS && operation != COMPARE_LESS_THAN && operation != COMPARE_GREATER_THAN) {
         return false; // invalid mode.
     }
 
@@ -113,7 +113,7 @@ bool compareKeys(Table table, union record_item *key1, union record_item *key2, 
     for (int i = 0; i < table.key_indices_size; i++) {
         switch (table.key_indices[i]) {
             case 0: // integer comparison
-                switch(operation){
+                switch (operation) {
                     case COMPARE_EQUALS:
                         // check if < or > than 0
                         if (key1[i].i < key2[i].i || key1[i].i > key2[i].i) {
@@ -137,7 +137,7 @@ bool compareKeys(Table table, union record_item *key1, union record_item *key2, 
                 }
                 break;
             case 1: // double comparison
-                switch(operation){
+                switch (operation) {
                     case COMPARE_EQUALS:
                         // check if < or > than 0
                         if (key1[i].d < key2[i].d || key1[i].d > key2[i].d) {
@@ -161,7 +161,7 @@ bool compareKeys(Table table, union record_item *key1, union record_item *key2, 
                 }
                 break;
             case 2: // boolean comparison
-                switch(operation){
+                switch (operation) {
                     case COMPARE_EQUALS:
                         // check if < or > than 0
                         if (key1[i].b < key2[i].b || key1[i].b > key2[i].b) {
@@ -185,7 +185,7 @@ bool compareKeys(Table table, union record_item *key1, union record_item *key2, 
                 }
                 break;
             case 3: // char comparison
-                switch(operation){
+                switch (operation) {
                     case COMPARE_EQUALS:
                         // check if < or > than 0
                         if (strcmp(key1[i].c, key2[i].c) != 0) {
@@ -209,7 +209,7 @@ bool compareKeys(Table table, union record_item *key1, union record_item *key2, 
                 }
                 break;
             case 4: // varchar comparison
-                switch(operation){
+                switch (operation) {
                     case COMPARE_EQUALS:
                         // check if < or > than 0
                         if (strcmp(key1[i].v, key2[i].v) != 0) {
@@ -693,35 +693,50 @@ int insert_record(int table_id, union record_item *record) {
     // Comparison algorithm (looks like O(n^2) but isn't I promise:
     // Start: pointer to page references first page in table
     // comparing based on first index in primary key
+
+    // while pointer to page is not null:
+    // for record in record size:
     union record_item *insert_key = get_primary_key(record, table);
     while (current_page->nextPage != NULL) {
         for (int i = 0; i < current_page->num_records; i++) {
+
+            // create primary key array for record
+            // compare primary key array of record to primary key array of new record
             union record_item *temp_key = get_primary_key(current_page->records[i], table);
 
+            // if less, move on
+            if (compareKeys(table, insert_key, temp_key, COMPARE_LESS_THAN)) {
+
+            }
+            // if more
+            // step back one
+            if (compareKeys(table, insert_key, temp_key, COMPARE_GREATER_THAN)) {
+                // if less again, insert and return 0
+
+            }
+            // if equal
+            if(compareKeys(table, insert_key, temp_key, COMPARE_EQUALS)){
+                return -1; // if at last index in primary key, return -1 (row already exists)
+
+                // else move on to comparing based on next index in primary key
+                // if equal
+                // if at last index in primary key, return -1 (row already exists)
+            }
+            // else move on to comparing based on next index in primary key
+            // if reached here, did not insert yet and did not find existing row that matched
+
+            // if next page exists
+            if(current_page->nextPage != NULL){
+                // change pointer to point to next page
+                current_page = current_page->nextPage;
+            }else{
+                // else insert at end and return 0
+            }
             free(temp_key);
         }
     }
     free(insert_key);
     freePage(current_page);
-    // while pointer to page is not null:
-    // for record in record size:
-    // create primary key array for record
-    // compare primary key array of record to primary key array of new record
-    // if less, move on
-    // if more
-    // step back one
-    // if less again, insert and return 0
-    // if equal
-    // if at last index in primary key, return -1 (row already exists)
-    // else move on to comparing based on next index in primary key
-    // if equal
-    // if at last index in primary key, return -1 (row already exists)
-    // else move on to comparing based on next index in primary key
-    // if reached here, did not insert yet and did not find existing row that matched
-    // if next page exists
-    // change pointer to point to next page
-    // else insert at end and return 0
-
     return result;
 }
 
