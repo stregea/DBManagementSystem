@@ -656,9 +656,10 @@ int insert_record(int table_id, union record_item *record) {
 
             // test only two records for now
             printf("Records: \n");
-            printRecord(current_page->records[0], table.data_types_size, table.data_types);
+            printRecord((union record_item *) current_page->records, table.data_types_size, table.data_types);
             printRecord((union record_item *) current_page->records + 1 * table.data_types_size, table.data_types_size,
                         table.data_types);
+            free(updated_records);
         }
     }
 

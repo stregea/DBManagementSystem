@@ -45,7 +45,8 @@ int main(int argc, char * argv[]){
  
     insert_record(table_id, person_1);
     insert_record(table_id, person_2);
-        
+
+   // terminate_database();
     printf("\nHideous Jimmies!!\n");
     return EXIT_SUCCESS;
 }
