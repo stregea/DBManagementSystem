@@ -63,7 +63,7 @@ int main(int argc, char * argv[]){
 
     free(pointer);
 
-   // terminate_database();
+    terminate_database(); // writeing buffer meta file crashes on linux
     printf("\nHideous Jimmies!!\n");
     return EXIT_SUCCESS;
 }
