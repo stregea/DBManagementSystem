@@ -304,6 +304,15 @@ void freeBuffer(Buffer buffer){
     free(buffer->buffer);
     free(buffer);
 }
+/**
+ * Free the memory location a page pointer is using.
+ * @param page - The page to free.
+ */
+void freePage(Page page){
+    free(page->nextPage);
+    free(page->records);
+    free(page);
+}
 
 /*
  * Create or restarts an instance of the database at the
@@ -550,6 +559,7 @@ int insert_record(int table_id, union record_item *record) {
         }
     }
 
+    freePage(current_page);
         // check if page is null
         // iterate through all pages on disk and assign.
         // if page is still null, return error
