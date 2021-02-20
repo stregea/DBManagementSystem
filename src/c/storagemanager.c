@@ -974,7 +974,7 @@ int terminate_database() {
 
     // write buffer info to disk
     char *buffer_file = BUFFER_FILE;
-    result = write_buffer_to_disk(buffer_file, BUFFER); // breaks valgrind
+  //  result = write_buffer_to_disk(buffer_file, BUFFER); // breaks valgrind
 
     // perform proper memory wipes.
     freeBuffer(BUFFER);
