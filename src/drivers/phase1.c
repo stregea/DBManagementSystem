@@ -31,9 +31,6 @@ int main(int argc, char * argv[]){
 
     // create new database
     create_database(databasePath, PAGE_SIZE, BUFFER_SIZE, false);
-
-    // restart database
-    create_database(databasePath, PAGE_SIZE, BUFFER_SIZE, true);
     
     // add table
     int data_types_size = 3;
@@ -43,9 +40,11 @@ int main(int argc, char * argv[]){
     int table_id = add_table(data_types, key_indices, data_types_size, key_indices_size);
 
     // table(name, age, weight)
-    union record_item person[] = { {.c = "Bob"}, {.i = 31}, {.d = 168.23} };
+    union record_item person_1[] = { {.c = "Bob"}, {.i = 31}, {.d = 168.23} };
+    union record_item person_2[] = { {.c = "John"}, {.i = 23}, {.d = 180.20} };
  
-    insert_record(table_id, person);
+    insert_record(table_id, person_1);
+    insert_record(table_id, person_2);
         
     printf("\nHideous Jimmies!!\n");
     return EXIT_SUCCESS;

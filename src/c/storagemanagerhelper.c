@@ -10,6 +10,7 @@
  * @author Samuel Tregea  (sdt1093@rit.edu)
  */
 #include "../headers/storagemanagerhelper.h"
+#include "../headers/storagemanager.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -158,8 +159,6 @@ void freeStore(DBStore store){
 }
 
 Table getTable(int table_id, char * database_path){
-
-    //printf("Getting table...\n");
 
     // convert int table_id to string for file path
     char* table_id_string = appendIntToString("table_", table_id);

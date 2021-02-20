@@ -192,14 +192,15 @@ int read_page(int page_id, Page *page) {
 int write_page(int table_id, int page_index) {
 
     int buffer_index;
-    Table table = getTable(table_id, BUFFER->db_location);
+    Table table;
+    table = getTable(table_id, BUFFER->db_location);
 
-    Page newPage = &(struct Page_S) {
-            .table_id=table_id,
-            .page_id=BUFFER->page_count,
-            .num_records=0,
-            .data_types_size=table.data_types_size // 5 -- may want to just insert that?
-    };
+    Page newPage = malloc(sizeof(struct Page_S));
+    newPage->table_id = table_id;
+    newPage->page_id = BUFFER->page_count;
+    newPage->num_records = 0;
+    newPage->data_types_size = table.data_types_size;
+
 
     // iterate through list of page id's
     // update the page links?
@@ -476,137 +477,124 @@ int insert_record(int table_id, union record_item *record) {
 
     Table table = getTable(table_id, BUFFER->db_location);
 
-    union record_item * insert_key = get_primary_key(record, table);
+    //union record_item * insert_key = get_primary_key(record, table);
 
-    int number_of_pages = table.page_ids_size;
-    int * page_ids = table.page_ids;
+    int current_page_id;
     Page current_page;
 
     // If the table does not have any existing pages, make a new one
-    if(number_of_pages <= 0)
+    if(table.page_ids_size <= 0)
     {
         // Create a new page, gets added to table
         write_page(table_id, 0);
         current_page = BUFFER->buffer[0];
 
-        // add record to initial page
-        current_page->records = malloc(sizeof(union record_item));
-        current_page->records[0] = record;
+        // allocate memory for 1 row of data
+        current_page->records = malloc(sizeof(union record_item) * table.data_types_size);
+
+        // copy the record to insert into this newly allocated memory
+        memcpy(current_page->records, record, sizeof(union record_item) * table.data_types_size);
         current_page->num_records = 1;
-        
+
+        //printRecord((union record_item *) current_page->records, table.data_types_size, table.data_types);
     }
-
-/*
-    Page current_page;
-
-    for(int i = 0; i < number_of_pages; i++)
+    else
     {
-        current_page = BUFFER->buffer[i];
-    }
 
-    
-    union record_item ** records_on_page = current_page->records;
-    printf("line hit!!!\n");
-    int records_count = current_page->num_records;
-    union record_item ** temp_records = malloc(sizeof(union record_item) * records_count + 1);
-
-    // insert with no records on page 
-    if(records_count <= 0)
-    {
-        temp_records[0] = record;
-        ++records_count;
-    }
-
-    // increment page record size and array
-    current_page->num_records = records_count;
-    current_page->records = temp_records;
-
-    // display all records
-    printf("Records: ");
-    for(int i = 0; i < current_page->num_records; i++){
-        printRecord(current_page->records[i], table.data_types_size, table.data_types);
-    }
-
-    /*
-    union record_item *current_record;
-    for(int i = 0; i < records_count: i++)
-    {
-        current_record = records[i];
-    }
-
-    Page page = &(struct Page_S) {};
-
-    //Check stuff starting from here
-
-    // search through buffer
-    for(int i = 0; i < BUFFER->buffer_size; i++)
-    {
-        Page temp = BUFFER->buffer[i];
-
-        // Check if page is the first page in the desired table (should exist but don't count on it)
-        if(temp->page_id == table.page_ids[0])
+        int buffer_index = 0;
+        union record_item * updated_records;
+        for(int i = 0; i < table.page_ids_size; i++)
         {
-            page = temp;
-            referencePage(BUFFER->cache, i);
-            break; // Will this break from the if or the for loop? Doesn't matter for functionality, just speed
+            current_page_id = table.page_ids[i];
+            // find the page in buffer where page matches page_id
+            // add binary search in future
+            do
+            {
+                current_page = BUFFER->buffer[buffer_index];
+                buffer_index++;
+            }while(current_page->page_id != current_page_id && buffer_index < BUFFER->buffer_size);
+            
+            // If the page_ids don't match check on disk
+            if(current_page->page_id != current_page_id){
+                // check on disk stopped here this need
+                printf("Search Disk for Pages\n");
+            }
+
+            // adding record this will need to find correct location
+            // Note: for now just adding to end of array
+            // allocate enough space for current record array + 1
+            size_t record_items_in_table = table.data_types_size * current_page->num_records;
+            updated_records = malloc(sizeof(union record_item) * table.data_types_size * (current_page->num_records + 1));
+
+            // copy all of the existing records into the new version of the table
+            memcpy(updated_records, current_page->records, sizeof(union record_item) * record_items_in_table);
+
+            // copy the new record to the end of the table
+            memcpy(updated_records + record_items_in_table, record, sizeof(union record_item) * table.data_types_size);
+            
+            current_page->num_records++;
+
+            // make the temporary table the new table and free the old one
+            free(current_page->records);
+            current_page->records = (union record_item **)updated_records;
+
+            // test only two records for now
+            printf("Records: \n");
+            printRecord((union record_item *) current_page->records, table.data_types_size, table.data_types);
+            printRecord((union record_item *) current_page->records + 1 * table.data_types_size, table.data_types_size, table.data_types);
         }
     }
 
-    if (page == NULL) {
+        // check if page is null
+        // iterate through all pages on disk and assign.
+        // if page is still null, return error
 
-    }
-    */
+        // find first available page with record space. | Need to insert record
 
-    // check if page is null
-    // iterate through all pages on disk and assign.
-    // if page is still null, return error
+        // create 2d array of records
 
-    // find first available page with record space. | Need to insert record
+        // iterate through array
 
-    // create 2d array of records
+        // create primary key from prev_records in page and from record passed in
+        // compare the records via primary keys
+        // when at desired location insert the record
 
-    // iterate through array
+        // increment page record size
 
-    // create primary key from prev_records in page and from record passed in
-    // compare the records via primary keys
-    // when at desired location insert the record
-
-    // increment page record size
-
-    // if record size > max_record_size
-    // split page records
-    // create new page and insert other half of pages there
-    // resort pages.
+        // if record size > max_record_size
+        // split page records
+        // create new page and insert other half of pages there
+        // resort pages.
 
 
 
-    // Psuedocode for algorithm
+        // Psuedocode for algorithm
 
-    // Create primary key array based on record and primary key
-    // Starting at the first page in the table, compare to primary key arrays of rows
+        // Create primary key array based on record and primary key
+        // Starting at the first page in the table, compare to primary key arrays of rows
 
-    // Comparison algorithm (looks like O(n^2) but isn't I promise:
-    // Start: pointer to page references first page in table
-    // comparing based on first index in primary key
+        // Comparison algorithm (looks like O(n^2) but isn't I promise:
+        // Start: pointer to page references first page in table
+        // comparing based on first index in primary key
 
-    // while pointer to page is not null:
-        // for record in record size:
-            // create primary key array for record
-            // compare primary key array of record to primary key array of new record
-            // if less, move on
-            // if more
-                // step back one
-                // if less again, insert and return 0
+        // while pointer to page is not null:
+            // for record in record size:
+                // create primary key array for record
+                // compare primary key array of record to primary key array of new record
+                // if less, move on
+                // if more
+                    // step back one
+                    // if less again, insert and return 0
+                    // if equal
+                        // if at last index in primary key, return -1 (row already exists)
+                        // else move on to comparing based on next index in primary key
                 // if equal
                     // if at last index in primary key, return -1 (row already exists)
                     // else move on to comparing based on next index in primary key
-            // if equal
-                // if at last index in primary key, return -1 (row already exists)
-                // else move on to comparing based on next index in primary key
-        // if reached here, did not insert yet and did not find existing row that matched
-        // if next page exists
-            // change pointer to point to next page
-        // else insert at end and return 0
+            // if reached here, did not insert yet and did not find existing row that matched
+            // if next page exists
+                // change pointer to point to next page
+            // else insert at end and return 0
 
     return result;
 }
