@@ -252,22 +252,25 @@ void write_page_to_disk(Page page) {
 
     FILE *file = fopen(page_path, "wb");
 
-    // write table id
-    fwrite(&page->table_id, sizeof(int), 1, file);
+    if(file != NULL){
+        // write table id
+        fwrite(&page->table_id, sizeof(int), 1, file);
 
-    // write page id
-    fwrite(&page->page_id, sizeof(int), 1, file);
+        // write page id
+        fwrite(&page->page_id, sizeof(int), 1, file);
 
-    // write the total number of records
-    fwrite(&page->num_records, sizeof(size_t), 1, file);
+        // write the total number of records
+        fwrite(&page->num_records, sizeof(size_t), 1, file);
 
-    // write the total number of attrs (5)
-    fwrite(&page->data_types_size, sizeof(size_t), 1, file);
+        // write the total number of attrs (5)
+        fwrite(&page->data_types_size, sizeof(size_t), 1, file);
 
-    // write all the records to the page.
-    fwrite(page->records, sizeof(union record_item), page->num_records, file);
+        // write all the records to the page.
+        fwrite(page->records, sizeof(union record_item), page->num_records, file);
 
-    fclose(file);
+        fclose(file);
+    }
+
     free(page_path);
     free(page_file);
 }
@@ -971,7 +974,7 @@ int purge_buffer() {
 int terminate_database() {
     int result = EXIT_SUCCESS;
     // purge the buffer
-    result = purge_buffer();
+   // result = purge_buffer();
 
     // write buffer info to disk
     char *buffer_file = BUFFER_FILE;
