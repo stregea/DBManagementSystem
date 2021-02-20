@@ -668,6 +668,8 @@ int drop_table(int table_id) {
         result = EXIT_FAILURE;
     }
 
+    BUFFER->table_count--;
+
     // free created strings.
     free(table_file);
     free(table_location);
@@ -683,9 +685,7 @@ int drop_table(int table_id) {
  */
 int clear_table(int table_id) {
     int result = EXIT_SUCCESS;
-    // read in array of page id's
-    // delete pages with page ids
-    // delete table.
+
     Table table = getTable(table_id, BUFFER->db_location);
     char *db_location = malloc(sizeof(char*));
     strcpy(db_location, BUFFER->db_location);
@@ -693,7 +693,6 @@ int clear_table(int table_id) {
 
     // delete pages associated with table.
     for(int i = 0; i < table.page_ids_size; i++){
-
         char* filename = appendIntToString(db_location, table.page_ids[i]);
 
         // file was unable to be deleted/was not found.
@@ -704,10 +703,33 @@ int clear_table(int table_id) {
         free(filename);
     }
 
-    table.page_ids_size=0;
-    // TODO: re-write to make cleaner, and write to table file to reset it.
-    // write file to
-    // reset table file.
+    table.page_ids_size = 0;
+
+    // TODO: re-write to make cleaner, will want to make writing to table file a function.
+    char *file_name = appendIntToString("table_", table_id);
+    char *table_location = malloc((sizeof(char*)));
+    strcpy(table_location, db_location);
+    strcat(table_location, file_name);
+
+    FILE *table_file = fopen(table_location, "wb");
+
+    if(table_file != NULL){
+        // re-write the Table file.
+        fwrite(&table.data_types_size, sizeof(int), 1, table_file);
+        fwrite(&table.key_indices_size, sizeof(int), 1, table_file);
+        fwrite(&table.page_ids_size, sizeof(int), 1, table_file);
+        fwrite(table.key_indices, sizeof(int), table.key_indices_size, table_file);
+        fwrite(table.data_types, sizeof(int), table.data_types_size, table_file);
+        fwrite(table.page_ids, sizeof(int), table.page_ids_size, table_file);
+        fclose(table_file);
+    }else{
+        result = EXIT_FAILURE;
+    }
+
+    free(file_name);
+    free(table_location);
+
+    free(db_location);
     return result;
 }
 
@@ -753,14 +775,18 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
     // write the table to disk
     // was storing address of int arrays before not actual data
     FILE *table_file = fopen(table_path, "wb");
-    fwrite(&table_content.data_types_size, sizeof(int), 1, table_file);
-    fwrite(&table_content.key_indices_size, sizeof(int), 1, table_file);
-    fwrite(&table_content.page_ids_size, sizeof(int), 1, table_file);
-    fwrite(table_content.key_indices, sizeof(int), table_content.key_indices_size, table_file);
-    fwrite(table_content.data_types, sizeof(int), table_content.data_types_size, table_file);
-    fwrite(table_content.page_ids, sizeof(int), table_content.page_ids_size, table_file);
+    if(table_file != NULL){
+        fwrite(&table_content.data_types_size, sizeof(int), 1, table_file);
+        fwrite(&table_content.key_indices_size, sizeof(int), 1, table_file);
+        fwrite(&table_content.page_ids_size, sizeof(int), 1, table_file);
+        fwrite(table_content.key_indices, sizeof(int), table_content.key_indices_size, table_file);
+        fwrite(table_content.data_types, sizeof(int), table_content.data_types_size, table_file);
+        fwrite(table_content.page_ids, sizeof(int), table_content.page_ids_size, table_file);
 
-    fclose(table_file);
+        fclose(table_file);
+    }else{
+        table_id = -1;
+    }
 
     free(table_path);
     free(table_id_string);
@@ -769,7 +795,6 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
 
     printf("Success!\n");
     printTable(table_content);
-    
     return table_id;
 }
 
