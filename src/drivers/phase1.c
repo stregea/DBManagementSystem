@@ -43,10 +43,10 @@ int main(int argc, char * argv[]){
     union record_item person_1[] = { {.c = "Bob"}, {.i = 31}, {.d = 168.23} };
     union record_item person_2[] = { {.c = "John"}, {.i = 23}, {.d = 180.20} };
  
-    insert_record(table_id, person_1);
-    insert_record(table_id, person_2);
+  //  insert_record(table_id, person_1); -- mem leaks in here
+   // insert_record(table_id, person_2);
 
-   // terminate_database();
+    terminate_database(); // writeing buffer meta file crashes on linux
     printf("\nHideous Jimmies!!\n");
     return EXIT_SUCCESS;
 }
