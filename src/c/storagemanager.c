@@ -268,6 +268,7 @@ void write_page_to_disk(Page page) {
     fwrite(page->records, sizeof(union record_item), page->num_records, file);
 
     fclose(file);
+    free(page_path);
     free(page_file);
 }
 
