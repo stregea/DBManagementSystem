@@ -57,9 +57,6 @@ int main(int argc, char * argv[]){
 
 
 
-  //  insert_record(table_id, person_1); -- mem leaks in here
-   // insert_record(table_id, person_2);
-
     terminate_database(); // write_buffer_to_disk() crashes on linux
     printf("\nHideous Jimmies!!\n");
     return EXIT_SUCCESS;

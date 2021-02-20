@@ -944,7 +944,7 @@ int purge_buffer() {
 int terminate_database() {
     int result = EXIT_SUCCESS;
     // purge the buffer
-    result = purge_buffer();
+   // result = purge_buffer();
 
     // write buffer info to disk
     char *buffer_file = BUFFER_FILE;
