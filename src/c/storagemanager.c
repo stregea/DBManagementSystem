@@ -37,9 +37,9 @@ struct Page_S {
     struct Page_S *nextPage;
 
     /// array that will be used to contain records.
-    union record_item ** records;
+    union record_item **records;
 };
-typedef struct Page_S * Page;
+typedef struct Page_S *Page;
 
 /// This will be the buffer to hold all of the pages and the DB location.
 struct Buffer_S {
@@ -70,10 +70,13 @@ struct Buffer_S {
     Page *buffer;
 
 };
-typedef struct Buffer_S * Buffer;
+typedef struct Buffer_S *Buffer;
 Buffer BUFFER;
 #define BUFFER_FILE "buffer_meta";
 #define TABLE_FILE "table_";
+#define COMPARE_EQUALS 0
+#define COMPARE_LESS_THAN -1
+#define COMPARE_GREATER_THAN 1
 
 /**
  * Create a primary key from a row within a table.
@@ -90,40 +93,143 @@ union record_item *get_primary_key(union record_item *row, Table table) {
 }
 
 /**
- * Determine if a pair of keys match.
+ * Determine if a pair of keys match, or compare if one key is less than or greater than the other
+ * depending on the selected operation.
  * Iterate through each index of the keys and perform a check dependent
  * upon the value of the index of the table's key indices array.
+ *      Note: The valid operations are COMPARE_EQUALS (0), COMPARE_LESS_THAN (-1), and COMPARE_GREATER_THAN (1).
  * @param table - The table containing key information.
  * @param key1 - The first key to compare.
  * @param key2 - The second key to compare
+ * @param operation - The type of operation to perform when comparing the strings.
  * @return true (1) if the keys match, otherwise false (-1).
  */
-bool keysMatch(Table table, union record_item *key1, union record_item *key2) {
+bool compareKeys(Table table, union record_item *key1, union record_item *key2, int operation) {
+    if(operation != COMPARE_EQUALS && operation != COMPARE_LESS_THAN && operation != COMPARE_GREATER_THAN){
+        return false; // invalid mode.
+    }
+
+    // index through both keys then perform the selected operation to check.
     for (int i = 0; i < table.key_indices_size; i++) {
         switch (table.key_indices[i]) {
             case 0: // integer comparison
-                if (key1[i].i < key2[i].i || key1[i].i > key2[i].i) {
-                    return false;
+                switch(operation){
+                    case COMPARE_EQUALS:
+                        // check if < or > than 0
+                        if (key1[i].i < key2[i].i || key1[i].i > key2[i].i) {
+                            return false;
+                        }
+                        break;
+                    case COMPARE_LESS_THAN:
+                        // check if == 0 (equals) or > 0 (greater than)
+                        if (key1[i].i == key2[i].i || key1[i].i > key2[i].i) {
+                            return false;
+                        }
+                        break;
+                    case COMPARE_GREATER_THAN:
+                        // check if == 0 (equals) or < 0 (less than)
+                        if (key1[i].i == key2[i].i || key1[i].i < key2[i].i) {
+                            return false;
+                        }
+                        break;
+                    default:
+                        return false;
                 }
                 break;
             case 1: // double comparison
-                if (key1[i].d < key2[i].d || key1[i].d > key2[i].d) {
-                    return false;
+                switch(operation){
+                    case COMPARE_EQUALS:
+                        // check if < or > than 0
+                        if (key1[i].d < key2[i].d || key1[i].d > key2[i].d) {
+                            return false;
+                        }
+                        break;
+                    case COMPARE_LESS_THAN:
+                        // check if == 0 (equals) or > 0 (greater than)
+                        if (key1[i].d == key2[i].d || key1[i].d > key2[i].d) {
+                            return false;
+                        }
+                        break;
+                    case COMPARE_GREATER_THAN:
+                        // check if == 0 (equals) or < 0 (less than)
+                        if (key1[i].d == key2[i].d || key1[i].d < key2[i].d) {
+                            return false;
+                        }
+                        break;
+                    default:
+                        return false;
                 }
                 break;
             case 2: // boolean comparison
-                if (key1[i].b < key2[i].b || key1[i].b > key2[i].b) {
-                    return false;
+                switch(operation){
+                    case COMPARE_EQUALS:
+                        // check if < or > than 0
+                        if (key1[i].b < key2[i].b || key1[i].b > key2[i].b) {
+                            return false;
+                        }
+                        break;
+                    case COMPARE_LESS_THAN:
+                        // check if == 0 (equals) or > 0 (greater than)
+                        if (key1[i].b == key2[i].b || key1[i].b > key2[i].b) {
+                            return false;
+                        }
+                        break;
+                    case COMPARE_GREATER_THAN:
+                        // check if == 0 (equals) or < 0 (less than)
+                        if (key1[i].b == key2[i].b || key1[i].b < key2[i].b) {
+                            return false;
+                        }
+                        break;
+                    default:
+                        return false;
                 }
                 break;
             case 3: // char comparison
-                if (strcmp(key1[i].c, key2[i].c) < 0) {
-                    return false;
+                switch(operation){
+                    case COMPARE_EQUALS:
+                        // check if < or > than 0
+                        if (strcmp(key1[i].c, key2[i].c) != 0) {
+                            return false;
+                        }
+                        break;
+                    case COMPARE_LESS_THAN:
+                        // check if == 0 (equals) or > 0 (greater than)
+                        if (strcmp(key1[i].c, key2[i].c) == 0 || strcmp(key1[i].c, key2[i].c) > 0) {
+                            return false;
+                        }
+                        break;
+                    case COMPARE_GREATER_THAN:
+                        // check if == 0 (equals) or < 0 (less than)
+                        if (strcmp(key1[i].c, key2[i].c) == 0 || strcmp(key1[i].c, key2[i].c) < 0) {
+                            return false;
+                        }
+                        break;
+                    default:
+                        return false;
                 }
                 break;
             case 4: // varchar comparison
-                if (strcmp(key1[i].v, key2[i].v) < 0) {
-                    return false;
+                switch(operation){
+                    case COMPARE_EQUALS:
+                        // check if < or > than 0
+                        if (strcmp(key1[i].v, key2[i].v) != 0) {
+                            return false;
+                        }
+                        break;
+                    case COMPARE_LESS_THAN:
+                        // check if == 0 (equals) or > 0 (greater than)
+                        if (strcmp(key1[i].v, key2[i].v) == 0 || strcmp(key1[i].v, key2[i].v) > 0) {
+                            return false;
+                        }
+                        break;
+                    case COMPARE_GREATER_THAN:
+                        // check if == 0 (equals) or < 0 (less than)
+                        if (strcmp(key1[i].v, key2[i].v) == 0 || strcmp(key1[i].v, key2[i].v) < 0) {
+                            return false;
+                        }
+                        break;
+                    default:
+                        return false;
                 }
                 break;
         }
@@ -251,18 +357,18 @@ int write_page(int table_id, int page_index) {
  * @param buffer - The buffer to write.
  * @return EXIT_SUCCESS if able to write to disk, EXIT_FAILURE otherwise.
  */
-int write_buffer_to_disk(char *filename, Buffer buffer){
+int write_buffer_to_disk(char *filename, Buffer buffer) {
     int result = EXIT_SUCCESS;
-    char *fileLocation = malloc(sizeof(char*));
+    char *fileLocation = malloc(sizeof(char *));
 
     copyStringForFilePath(fileLocation, buffer->db_location);
     strcat(fileLocation, filename);
 
     FILE *file = fopen(fileLocation, "wb");
-    if(file != NULL){
+    if (file != NULL) {
         fwrite(buffer, sizeof(struct Buffer_S), 1, file);
         fclose(file);
-    }else{
+    } else {
         result = EXIT_FAILURE;
     }
 
@@ -275,19 +381,19 @@ int write_buffer_to_disk(char *filename, Buffer buffer){
  * @param buffer - The Buffer to populate.
  * @return EXIT_SUCCESS if able to populate, EXIT_FAILURE otherwise.
  */
-int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer){
+int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer) {
     int result = EXIT_SUCCESS;
     buffer = malloc(sizeof(struct Buffer_S));
-    char *fileLocation = malloc(sizeof(char*));
+    char *fileLocation = malloc(sizeof(char *));
 
     copyStringForFilePath(fileLocation, db_location);
     strcat(fileLocation, filename);
     FILE *file = fopen(fileLocation, "wb");
 
-    if(file != NULL){
+    if (file != NULL) {
         fread(buffer, sizeof(struct Buffer_S), 1, file);
         fclose(file);
-    }else{
+    } else {
         result = EXIT_FAILURE;
     }
 
@@ -298,17 +404,18 @@ int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer){
  * Free the memory locations the buffer is using.
  * @param buffer - The buffer to free.
  */
-void freeBuffer(Buffer buffer){
+void freeBuffer(Buffer buffer) {
     freeLRUCache(BUFFER->cache);
     free(buffer->db_location);
     free(buffer->buffer);
     free(buffer);
 }
+
 /**
  * Free the memory location a page pointer is using.
  * @param page - The page to free.
  */
-void freePage(Page page){
+void freePage(Page page) {
     free(page->nextPage);
     free(page->records);
     free(page);
@@ -336,7 +443,7 @@ int create_database(char *db_loc, int page_size, int buffer_size, bool restart) 
         result = new_database(db_loc, page_size, buffer_size);
     }
 
-    if(result == EXIT_SUCCESS){
+    if (result == EXIT_SUCCESS) {
         printf("Success!\n\n");
     }
     return result;
@@ -353,9 +460,9 @@ int restart_database(char *db_loc) {
 
     // re-populate buffer with pre-existing info.
     // The buffer file is created when terminate_database() is called.
-    char* buffer_file = BUFFER_FILE;
+    char *buffer_file = BUFFER_FILE;
     result = read_buffer_from_disk(db_loc, buffer_file, BUFFER);
-    BUFFER->buffer = malloc(sizeof(struct Page_S)*BUFFER->buffer_size);
+    BUFFER->buffer = malloc(sizeof(struct Page_S) * BUFFER->buffer_size);
 
     return result;
 }
@@ -376,14 +483,14 @@ int new_database(char *db_loc, int page_size, int buffer_size) {
     if (isProperSize(page_size, buffer_size)) {
 
         // initialize buffer
-        BUFFER = malloc(sizeof (struct Buffer_S));
+        BUFFER = malloc(sizeof(struct Buffer_S));
 
         // delete all contents in db_loc 
         // this doesn't work with windows needs to be fix
         //clearDirectory(db_loc);
 
         // set the db location
-        BUFFER->db_location = malloc(sizeof(char*)*strlen(db_loc));
+        BUFFER->db_location = malloc(sizeof(char *) * strlen(db_loc));
         strcpy(BUFFER->db_location, db_loc);
 
         // Set the max page size
@@ -394,10 +501,10 @@ int new_database(char *db_loc, int page_size, int buffer_size) {
 
         // allocate memory for the buffer that will hold pages.
         // then initialize buffer with null values
-        BUFFER->buffer = malloc(sizeof (struct Page_S)* BUFFER->buffer_size);
+        BUFFER->buffer = malloc(sizeof(struct Page_S) * BUFFER->buffer_size);
 
         // set null values
-        for(int i = 0; i < BUFFER->buffer_size; i++){
+        for (int i = 0; i < BUFFER->buffer_size; i++) {
             BUFFER->buffer[i] = malloc(sizeof(struct Page_S));
         }
 
@@ -491,14 +598,12 @@ int insert_record(int table_id, union record_item *record) {
 
     Table table = getTable(table_id, BUFFER->db_location);
 
-    //union record_item * insert_key = get_primary_key(record, table);
-
+//    union record_item * insert_key = get_primary_key(record, table);
     int current_page_id;
     Page current_page;
 
     // If the table does not have any existing pages, make a new one
-    if(table.page_ids_size <= 0)
-    {
+    if (table.page_ids_size <= 0) {
         // Create a new page, gets added to table
         write_page(table_id, 0);
         current_page = BUFFER->buffer[0];
@@ -511,25 +616,21 @@ int insert_record(int table_id, union record_item *record) {
         current_page->num_records = 1;
 
         //printRecord((union record_item *) current_page->records, table.data_types_size, table.data_types);
-    }
-    else
-    {
+    } else {
 
         int buffer_index = 0;
-        union record_item * updated_records;
-        for(int i = 0; i < table.page_ids_size; i++)
-        {
+        union record_item *updated_records;
+        for (int i = 0; i < table.page_ids_size; i++) {
             current_page_id = table.page_ids[i];
             // find the page in buffer where page matches page_id
             // add binary search in future
-            do
-            {
+            do {
                 current_page = BUFFER->buffer[buffer_index];
                 buffer_index++;
-            }while(current_page->page_id != current_page_id && buffer_index < BUFFER->buffer_size);
-            
+            } while (current_page->page_id != current_page_id && buffer_index < BUFFER->buffer_size);
+
             // If the page_ids don't match check on disk
-            if(current_page->page_id != current_page_id){
+            if (current_page->page_id != current_page_id) {
                 // check on disk stopped here this need
                 printf("Search Disk for Pages\n");
             }
@@ -538,78 +639,88 @@ int insert_record(int table_id, union record_item *record) {
             // Note: for now just adding to end of array
             // allocate enough space for current record array + 1
             size_t record_items_in_table = table.data_types_size * current_page->num_records;
-            updated_records = malloc(sizeof(union record_item) * table.data_types_size * (current_page->num_records + 1));
+            updated_records = malloc(
+                    sizeof(union record_item) * table.data_types_size * (current_page->num_records + 1));
 
             // copy all of the existing records into the new version of the table
             memcpy(updated_records, current_page->records, sizeof(union record_item) * record_items_in_table);
 
             // copy the new record to the end of the table
             memcpy(updated_records + record_items_in_table, record, sizeof(union record_item) * table.data_types_size);
-            
+
             current_page->num_records++;
 
             // make the temporary table the new table and free the old one
             free(current_page->records);
-            current_page->records = (union record_item **)updated_records;
+            current_page->records = (union record_item **) updated_records;
 
             // test only two records for now
             printf("Records: \n");
-            printRecord((union record_item *) current_page->records, table.data_types_size, table.data_types);
-            printRecord((union record_item *) current_page->records + 1 * table.data_types_size, table.data_types_size, table.data_types);
+            printRecord(current_page->records[0], table.data_types_size, table.data_types);
+            printRecord((union record_item *) current_page->records + 1 * table.data_types_size, table.data_types_size,
+                        table.data_types);
         }
     }
 
+    // check if page is null
+    // iterate through all pages on disk and assign.
+    // if page is still null, return error
+
+    // find first available page with record space. | Need to insert record
+
+    // create 2d array of records
+
+    // iterate through array
+
+    // create primary key from prev_records in page and from record passed in
+    // compare the records via primary keys
+    // when at desired location insert the record
+
+    // increment page record size
+
+    // if record size > max_record_size
+    // split page records
+    // create new page and insert other half of pages there
+    // resort pages.
+
+
+
+    // Psuedocode for algorithm
+
+    // Create primary key array based on record and primary key
+    // Starting at the first page in the table, compare to primary key arrays of rows
+
+    // Comparison algorithm (looks like O(n^2) but isn't I promise:
+    // Start: pointer to page references first page in table
+    // comparing based on first index in primary key
+    union record_item *insert_key = get_primary_key(record, table);
+    while (current_page->nextPage != NULL) {
+        for (int i = 0; i < current_page->num_records; i++) {
+            union record_item *temp_key = get_primary_key(current_page->records[i], table);
+
+            free(temp_key);
+        }
+    }
+    free(insert_key);
     freePage(current_page);
-        // check if page is null
-        // iterate through all pages on disk and assign.
-        // if page is still null, return error
-
-        // find first available page with record space. | Need to insert record
-
-        // create 2d array of records
-
-        // iterate through array
-
-        // create primary key from prev_records in page and from record passed in
-        // compare the records via primary keys
-        // when at desired location insert the record
-
-        // increment page record size
-
-        // if record size > max_record_size
-        // split page records
-        // create new page and insert other half of pages there
-        // resort pages.
-
-
-
-        // Psuedocode for algorithm
-
-        // Create primary key array based on record and primary key
-        // Starting at the first page in the table, compare to primary key arrays of rows
-
-        // Comparison algorithm (looks like O(n^2) but isn't I promise:
-        // Start: pointer to page references first page in table
-        // comparing based on first index in primary key
-
-        // while pointer to page is not null:
-            // for record in record size:
-                // create primary key array for record
-                // compare primary key array of record to primary key array of new record
-                // if less, move on
-                // if more
-                    // step back one
-                    // if less again, insert and return 0
-                    // if equal
-                        // if at last index in primary key, return -1 (row already exists)
-                        // else move on to comparing based on next index in primary key
-                // if equal
-                    // if at last index in primary key, return -1 (row already exists)
-                    // else move on to comparing based on next index in primary key
-            // if reached here, did not insert yet and did not find existing row that matched
-            // if next page exists
-                // change pointer to point to next page
-            // else insert at end and return 0
+    // while pointer to page is not null:
+    // for record in record size:
+    // create primary key array for record
+    // compare primary key array of record to primary key array of new record
+    // if less, move on
+    // if more
+    // step back one
+    // if less again, insert and return 0
+    // if equal
+    // if at last index in primary key, return -1 (row already exists)
+    // else move on to comparing based on next index in primary key
+    // if equal
+    // if at last index in primary key, return -1 (row already exists)
+    // else move on to comparing based on next index in primary key
+    // if reached here, did not insert yet and did not find existing row that matched
+    // if next page exists
+    // change pointer to point to next page
+    // else insert at end and return 0
 
     return result;
 }
@@ -653,17 +764,17 @@ int drop_table(int table_id) {
     // delete pages with page ids
     // delete table.
     Table table = getTable(table_id, BUFFER->db_location);
-    char *db_location = malloc(sizeof(char*));
+    char *db_location = malloc(sizeof(char *));
     strcpy(db_location, BUFFER->db_location);
     strcat(db_location, "/"); // need this to change for windows.
 
     // delete pages associated with table.
-    for(int i = 0; i < table.page_ids_size; i++){
+    for (int i = 0; i < table.page_ids_size; i++) {
 
-        char* filename = appendIntToString(db_location, table.page_ids[i]);
+        char *filename = appendIntToString(db_location, table.page_ids[i]);
 
         // file was unable to be deleted/was not found.
-        if(remove(filename) != 0){
+        if (remove(filename) != 0) {
             result = EXIT_FAILURE;
         }
 
@@ -671,15 +782,15 @@ int drop_table(int table_id) {
     }
 
     // delete the table.
-    char *table_location = malloc((sizeof(char*)));
+    char *table_location = malloc((sizeof(char *)));
     strcpy(table_location, db_location);
 
     // build the file location
-    char*table_name = TABLE_FILE;
+    char *table_name = TABLE_FILE;
     char *table_file = appendIntToString(table_name, table_id);
 
     // Table was unable to delete, thus error.
-    if(remove(table_file) != 0){
+    if (remove(table_file) != 0) {
         result = EXIT_FAILURE;
     }
 
@@ -702,16 +813,16 @@ int clear_table(int table_id) {
     int result = EXIT_SUCCESS;
 
     Table table = getTable(table_id, BUFFER->db_location);
-    char *db_location = malloc(sizeof(char*));
+    char *db_location = malloc(sizeof(char *));
     strcpy(db_location, BUFFER->db_location);
     strcat(db_location, "/"); // need this to change for windows.
 
     // delete pages associated with table.
-    for(int i = 0; i < table.page_ids_size; i++){
-        char* filename = appendIntToString(db_location, table.page_ids[i]);
+    for (int i = 0; i < table.page_ids_size; i++) {
+        char *filename = appendIntToString(db_location, table.page_ids[i]);
 
         // file was unable to be deleted/was not found.
-        if(remove(filename) != 0){
+        if (remove(filename) != 0) {
             result = EXIT_FAILURE;
         }
 
@@ -722,13 +833,13 @@ int clear_table(int table_id) {
 
     // TODO: re-write to make cleaner, will want to make writing to table file a function.
     char *file_name = appendIntToString("table_", table_id);
-    char *table_location = malloc((sizeof(char*)));
+    char *table_location = malloc((sizeof(char *)));
     strcpy(table_location, db_location);
     strcat(table_location, file_name);
 
     FILE *table_file = fopen(table_location, "wb");
 
-    if(table_file != NULL){
+    if (table_file != NULL) {
         // re-write the Table file.
         fwrite(&table.data_types_size, sizeof(int), 1, table_file);
         fwrite(&table.key_indices_size, sizeof(int), 1, table_file);
@@ -737,7 +848,7 @@ int clear_table(int table_id) {
         fwrite(table.data_types, sizeof(int), table.data_types_size, table_file);
         fwrite(table.page_ids, sizeof(int), table.page_ids_size, table_file);
         fclose(table_file);
-    }else{
+    } else {
         result = EXIT_FAILURE;
     }
 
@@ -790,7 +901,7 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
     // write the table to disk
     // was storing address of int arrays before not actual data
     FILE *table_file = fopen(table_path, "wb");
-    if(table_file != NULL){
+    if (table_file != NULL) {
         fwrite(&table_content.data_types_size, sizeof(int), 1, table_file);
         fwrite(&table_content.key_indices_size, sizeof(int), 1, table_file);
         fwrite(&table_content.page_ids_size, sizeof(int), 1, table_file);
@@ -799,7 +910,7 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
         fwrite(table_content.page_ids, sizeof(int), table_content.page_ids_size, table_file);
 
         fclose(table_file);
-    }else{
+    } else {
         table_id = -1;
     }
 
@@ -821,7 +932,7 @@ int purge_buffer() {
     int result = EXIT_SUCCESS;
 
     // foreach page in buffer
-    for(int i = 0; i < BUFFER->buffer_size; i++){
+    for (int i = 0; i < BUFFER->buffer_size; i++) {
         write_page_to_disk(BUFFER->buffer[i]);
 //        BUFFER->buffer[i] = &(struct Page_S) {}; // null out the index
         BUFFER->buffer[i] = NULL;
@@ -842,7 +953,7 @@ int terminate_database() {
     result = purge_buffer();
 
     // write buffer info to disk
-    char* buffer_file = BUFFER_FILE;
+    char *buffer_file = BUFFER_FILE;
     result = write_buffer_to_disk(buffer_file, BUFFER);
 
     // perform proper memory wipes.
