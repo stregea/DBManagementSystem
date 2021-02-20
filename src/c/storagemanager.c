@@ -371,7 +371,7 @@ int new_database(char *db_loc, int page_size, int buffer_size) {
 
         // delete all contents in db_loc 
         // this doesn't work with windows needs to be fix
-        clearDirectory(db_loc);
+        //clearDirectory(db_loc);
 
         // set the db location
         BUFFER->db_location = malloc(sizeof(char*)*strlen(db_loc));
@@ -389,8 +389,13 @@ int new_database(char *db_loc, int page_size, int buffer_size) {
 
         // set null values
         for(int i = 0; i < BUFFER->buffer_size; i++){
-            BUFFER->buffer[i] = NULL;
+            BUFFER->buffer[i] = malloc(sizeof(struct Page_S));
         }
+
+        BUFFER->page_count = 0;
+        BUFFER->pages_within_buffer = 0;
+        BUFFER->table_count = 0;
+
 
         // set up the cache
         BUFFER->cache = createCache(buffer_size);
