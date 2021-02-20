@@ -696,47 +696,48 @@ int insert_record(int table_id, union record_item *record) {
 
     // while pointer to page is not null:
     // for record in record size:
-    union record_item *insert_key = get_primary_key(record, table);
-    while (current_page->nextPage != NULL) {
-        for (int i = 0; i < current_page->num_records; i++) {
 
-            // create primary key array for record
-            // compare primary key array of record to primary key array of new record
-            union record_item *temp_key = get_primary_key(current_page->records[i], table);
-
-            // if less, move on
-            if (compareKeys(table, insert_key, temp_key, COMPARE_LESS_THAN)) {
-
-            }
-            // if more
-            // step back one
-            if (compareKeys(table, insert_key, temp_key, COMPARE_GREATER_THAN)) {
-                // if less again, insert and return 0
-
-            }
-            // if equal
-            if(compareKeys(table, insert_key, temp_key, COMPARE_EQUALS)){
-                return -1; // if at last index in primary key, return -1 (row already exists)
-
-                // else move on to comparing based on next index in primary key
-                // if equal
-                // if at last index in primary key, return -1 (row already exists)
-            }
-            // else move on to comparing based on next index in primary key
-            // if reached here, did not insert yet and did not find existing row that matched
-
-            // if next page exists
-            if(current_page->nextPage != NULL){
-                // change pointer to point to next page
-                current_page = current_page->nextPage;
-            }else{
-                // else insert at end and return 0
-            }
-            free(temp_key);
-        }
-    }
-    free(insert_key);
-    freePage(current_page);
+//    union record_item *insert_key = get_primary_key(record, table);
+//    while (current_page->nextPage != NULL) {
+//        for (int i = 0; i < current_page->num_records; i++) {
+//
+//            // create primary key array for record
+//            // compare primary key array of record to primary key array of new record
+//            union record_item *temp_key = get_primary_key(current_page->records[i], table);
+//
+//            // if less, move on
+//            if (compareKeys(table, insert_key, temp_key, COMPARE_LESS_THAN)) {
+//
+//            }
+//            // if more
+//            // step back one
+//            if (compareKeys(table, insert_key, temp_key, COMPARE_GREATER_THAN)) {
+//                // if less again, insert and return 0
+//
+//            }
+//            // if equal
+//            if(compareKeys(table, insert_key, temp_key, COMPARE_EQUALS)){
+//                return -1; // if at last index in primary key, return -1 (row already exists)
+//
+//                // else move on to comparing based on next index in primary key
+//                // if equal
+//                // if at last index in primary key, return -1 (row already exists)
+//            }
+//            // else move on to comparing based on next index in primary key
+//            // if reached here, did not insert yet and did not find existing row that matched
+//
+//            // if next page exists
+//            if(current_page->nextPage != NULL){
+//                // change pointer to point to next page
+//                current_page = current_page->nextPage;
+//            }else{
+//                // else insert at end and return 0
+//            }
+//            free(temp_key);
+//        }
+//    }
+//    free(insert_key);
+//    freePage(current_page);
     return result;
 }
 
