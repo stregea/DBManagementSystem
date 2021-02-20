@@ -407,9 +407,9 @@ int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer) {
 void freeBuffer(Buffer buffer) {
     freeLRUCache(BUFFER->cache);
     free(buffer->db_location);
-    for(int i = 0; i < buffer->buffer_size; i++){
-        free(buffer->buffer[i]);
-    }
+//    for(int i = 0; i < buffer->buffer_size; i++){
+//        free(buffer->buffer[i]);
+//    }
     free(buffer->buffer);
     free(buffer);
 }
