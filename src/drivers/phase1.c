@@ -36,7 +36,7 @@ int main(int argc, char * argv[]){
     int data_types_size = 3;
     int data_types[] = {3, 0, 1};
     int key_indices_size = 2;
-    int key_indices[] = {1, 3};
+    int key_indices[] = {3, 0};
     int table_id = add_table(data_types, key_indices, data_types_size, key_indices_size);
 
     // table(name, age, weight)
@@ -54,14 +54,46 @@ int main(int argc, char * argv[]){
     insert_record(table_id, person_4);
     insert_record(table_id, person_5);
 
-    union record_item key1[] = {{.d = 180.2}, {.c = "John"}};
-    union record_item **pointer;
+    union record_item key1[] = {{.c = "John"}, {.i = 23}};
+
+    // give pointer a valid memory address without any meaningful data
+    union record_item *list;
+    union record_item **pointer = &list;
 
     int result = get_record(table_id, key1, pointer);
 
     printf("get_record: %d\n", result);
 
-   // free(pointer);
+<<<<<<< HEAD
+    printf("string value of record: %s\n\n", (*pointer)[0].c);
+
+    // give pointer a valid memory address without any meaningful data
+
+    int* x = malloc(sizeof(int *));
+
+    union record_item **twoDeeArray;
+    union record_item ***point = &twoDeeArray;
+
+    int records = get_records(table_id, point);
+
+    printf("get_records: %d\n", records);
+
+    printf("string value of second tuple: %s\n\n", (*point)[2][0].c);
+
+    result = remove_record(table_id, key1);
+
+    printf("remove_record: %d\n\n", result);
+
+    result = get_record(table_id, key1, pointer);
+
+    printf("get_record when record has been removed: %d\n\n", result);
+
+    result = remove_record(table_id, key1);
+
+    printf("remove_record when record has been removed: %d\n\n", result);
+
+    free(*pointer);
+    free(*point);
 
     terminate_database(); // write_buffer_to_disk() crashes on linux
     //restart_database(databasePath);
