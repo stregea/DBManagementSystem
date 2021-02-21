@@ -35,7 +35,7 @@ struct Page_S {
     size_t data_types_size;
 
     /// Pointer used to index to associated pages within a table.
-    struct Page_S *nextPage;
+    int next_page_id;
 
     /// array that will be used to contain records.
     union record_item **records;
@@ -315,9 +315,9 @@ int create_page(int table_id, int page_index) {
     newPage->table_id = table_id;
     newPage->page_id = BUFFER->page_count;
     newPage->num_records = 0;
-    newPage->records = malloc(BUFFER->page_size / ((sizeof(union record_item)) * table.data_types_size));
+    newPage->records = malloc(BUFFER->page_size);
     newPage->data_types_size = table.data_types_size;
-    newPage->nextPage = NULL;
+    newPage->next_page_id = -1;
 
     printf("page_id: %d\n", newPage->page_id);
 
@@ -370,6 +370,11 @@ Page load_page(int page_id) {
 
     //printf("current num records: %zu\n", BUFFER->buffer[0]->num_records);
 
+    if (page_id == -1) {
+        // no next page, break loops that are checking for it
+        return NULL;
+    }
+
     Page page = NULL;
     for (int i = 0; i < BUFFER->pages_within_buffer; i++) {
         //printf("checking page id: %d\n", BUFFER->buffer[i]->page_id);
@@ -381,19 +386,11 @@ Page load_page(int page_id) {
         }
     }
 
-    //printf("", page->)
+    //TODO read from memory if not in buffer
 
-    if (page != NULL) {
-        return page;
-    }
+    return page;
 
     page = read_page_from_disk(page_id);
-
-    //check buffer
-    //call read_page
-    //add page to buffer
-    //update LRU
-    return page;
 }
 
 /**
@@ -605,7 +602,7 @@ int get_records(int table_id, union record_item ***table) {
 
         total_records = total_records + current_page->num_records;
 
-        current_page = current_page->nextPage;
+        current_page = load_page(current_page->next_page_id);
     }
 
     if (grid != NULL) {
@@ -702,7 +699,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
                 return 0;
             }
         }
-        current_page = current_page->nextPage;
+        current_page = load_page(current_page->next_page_id);
     }
 
     freeTable(table);
@@ -816,8 +813,8 @@ int insert_record(int table_id, union record_item *record) {
                     }
 
                     // update next page references
-                    new_page->nextPage = current_page->nextPage;
-                    current_page->nextPage = new_page;
+                    new_page->next_page_id = current_page->next_page_id;
+                    current_page->next_page_id = new_page->page_id;
 
                     // figure out where to put new record after split
                     int new_pos = -1;
@@ -865,9 +862,9 @@ int insert_record(int table_id, union record_item *record) {
         // if reached here, did not insert yet and did not find existing row that matched
 
         // if next page exists
-        if(current_page->nextPage != NULL){
+        if(current_page->next_page_id != -1){
             // change pointer to point to next page
-            current_page = current_page->nextPage;
+            current_page = load_page(current_page->next_page_id);
         } else {
             // does the page have room to fit the record we're about to add?
             size_t size_after_adding = (current_page->num_records + 1) * table.data_types_size * sizeof(union record_item);
@@ -914,8 +911,8 @@ int insert_record(int table_id, union record_item *record) {
                 }
 
                 // update next page references
-                new_page->nextPage = current_page->nextPage;
-                current_page->nextPage = new_page;
+                new_page->next_page_id = current_page->next_page_id;
+                current_page->next_page_id = new_page->page_id;
 
                 printf("appending record to page %d: [%s, %u, %g]\n\n", new_page->page_id, record[0].c, record[1].i, record[2].d);
 
@@ -1003,7 +1000,7 @@ int update_record(int table_id, union record_item *record) {
             }
         }
 
-        current_page = current_page->nextPage;
+        current_page = load_page(current_page->next_page_id);
     }
 
     return -1;
@@ -1083,7 +1080,7 @@ int remove_record(int table_id, union record_item *key_values) {
             free(current_key);
         }
 
-        current_page = current_page->nextPage;
+        current_page = load_page(current_page->next_page_id);
     }
     return -1;
 }
