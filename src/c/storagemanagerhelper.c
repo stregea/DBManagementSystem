@@ -159,9 +159,15 @@ void freeStore(DBStore store){
 }
 
 void freeTable(Table table){
-    free(table.data_types);
-    free(table.key_indices);
-    free(table.page_ids);
+    if(table.data_types != NULL){
+        free(table.data_types);
+    }
+    if(table.key_indices != NULL){
+        free(table.key_indices);
+    }
+    if(table.page_ids != NULL){
+        free(table.page_ids);
+    }
 }
 
 Table getTable(int table_id, char * database_path){
