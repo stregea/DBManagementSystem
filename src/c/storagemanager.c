@@ -800,6 +800,30 @@ int insert_record(int table_id, union record_item *record) {
 
     Table table = getTable(table_id, BUFFER->db_location);
 
+    union record_item *copy = malloc(table.data_types_size * sizeof(union record_item));
+
+    for (int i = 0; i < table.data_types_size; i++) {
+        switch (table.data_types[i]) {
+            case 0:
+                copy[i].i = record[i].i;
+                break;
+            case 1:
+                copy[i].d = record[i].d;
+                break;
+            case 2:
+                copy[i].b = record[i].d;
+                break;
+            case 3:
+                strcpy(copy[i].c, record[i].c);
+                break;
+            case 4:
+                strcpy(copy[i].v, record[i].v);
+                break;
+            default:
+                return -1;
+        }
+    }
+
     int current_page_id = -1;
     Page current_page = NULL;
 
@@ -822,6 +846,7 @@ int insert_record(int table_id, union record_item *record) {
     while (current_page != NULL) {
         printf("number of records on page %d: %zu\n", current_page_id, current_page->num_records);
         referencePage(BUFFER->cache, get_buffer_index(current_page_id));
+
         for (int i = 0; i < current_page->num_records; i++) {
 
             printf("checking against record %d\n", i);
@@ -915,7 +940,7 @@ int insert_record(int table_id, union record_item *record) {
                     }
 
                     printf("inserting record in position %d on page %d\n\n", new_pos, adding_to->page_id);
-                    adding_to->records[new_pos] = record;
+                    adding_to->records[new_pos] = copy;
                     adding_to->num_records = adding_to->num_records + 1;
 
                 } else {
@@ -925,7 +950,7 @@ int insert_record(int table_id, union record_item *record) {
                         printf("value at new pos %d: [%s, %d, %g]\n", j+1, current_page->records[j+1][0].c, current_page->records[j+1][1].i, current_page->records[j+1][2].d);
                     }
                     printf("inserting record in position %d on page %d\n\n", i, current_page->page_id);
-                    current_page->records[i] = record;
+                    current_page->records[i] = copy;
                     current_page->num_records = current_page->num_records + 1;
                 }
                 freeTable(table);
@@ -991,7 +1016,7 @@ int insert_record(int table_id, union record_item *record) {
                 printf("appending record to page %d: [%s, %u, %g]\n\n", new_page->page_id, record[0].c, record[1].i, record[2].d);
 
                 // add new record to end of new page
-                new_page->records[current_page->num_records - half] = record;
+                new_page->records[current_page->num_records - half] = copy;
 
                 // update pages with new number of records
                 new_page->num_records = current_page->num_records - half + 1;
@@ -1001,7 +1026,7 @@ int insert_record(int table_id, union record_item *record) {
 
             } else {
                 printf("appending record to page %d: [%s, %u, %g]\n\n", current_page->page_id, record[0].c, record[1].i, record[2].d);
-                current_page->records[current_page->num_records] = record;
+                current_page->records[current_page->num_records] = copy;
                 current_page->num_records = current_page->num_records + 1;
             }
             freeTable(table);
