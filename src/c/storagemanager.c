@@ -90,12 +90,22 @@ union record_item *get_primary_key(union record_item *row, Table table) {
     printf("getting primary key\n");
     union record_item *primary_key = malloc(sizeof(union record_item) * table.key_indices_size);
     for (int i = 0; i < table.key_indices_size; i++) {
-        switch(table.key_indices[i]) {
-
+        int location = -1;
+        for (int j = 0; j < table.data_types_size; j++) {
+            if (table.data_types[j] == table.key_indices[i]) {
+                location = j;
+                break;
+            }
         }
-        primary_key[i] = row[table.key_indices[i]];
+
+        if (location < 0) {
+            // couldn't find the right data type in the list, key cannot be created
+            return NULL;
+        }
+
+        primary_key[i] = row[location];
     }
-    printf("returning primary key: [%s, %d]\n", primary_key[0].c, primary_key[1].i);
+    printf("returning primary key: [%g, %s]\n", primary_key[0].d, primary_key[1].c);
     return primary_key;
 }
 
@@ -549,6 +559,56 @@ int get_page(int page_id, union record_item ***page) {
 int get_record(int table_id, union record_item *key_values, union record_item **data) {
     int result = EXIT_SUCCESS;
 
+    Table table = getTable(table_id, BUFFER->db_location);
+
+    if (table.page_ids <= 0) {
+        // can't have any data without pages
+        return -1;
+    }
+
+     Page current_page = load_page(table.page_ids[0]);
+
+    while (current_page != NULL) {
+
+        for (int i = 0; i < current_page->num_records; i++) {
+            union record_item *test_values = get_primary_key(current_page->records[i], table);
+
+            bool matches = true;
+
+            for (int j = 0; j < table.key_indices_size; j++) {
+                switch (table.key_indices[i]) {
+                    case 0:
+                        if (test_values[j].i != key_values[j].i) matches = false;
+                        break;
+                    case 1:
+                        // double
+                        if (test_values[j].d != key_values[j].d) matches = false;
+                        break;
+                    case 2:
+                        // bool
+                        if (test_values[j].b != key_values[j].b) matches = false;
+                        break;
+                    case 3:
+                        // char
+                        if (strcmp(test_values[j].c, key_values[j].c) != 0) matches = false;
+                        break;
+                    case 4:
+                        // varchar
+                        if (strcmp(test_values[j].v, key_values[j].v) != 0) matches = false;
+                        break;
+                    default:
+                        return -1;
+                }
+            }
+
+            if (matches) {
+                data = &current_page->records[i];
+                return 0;
+            }
+        }
+        current_page = current_page->nextPage;
+    }
+
     // get key_indices from table
     // get array of page id's from table
     // iterate through all the rows
@@ -556,7 +616,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
     // compare created primary with key_values
     // if primary key matches, store data into data parameter.
     // return -1 if not found
-    return result;
+    return -1;
 }
 
 /*
@@ -759,7 +819,7 @@ int insert_record(int table_id, union record_item *record) {
                 printf("appending record to page %d\n\n", new_page->page_id);
 
                 // add new record to end of new page
-                new_page->records[current_page->num_records - half + 1] = record;
+                new_page->records[current_page->num_records - half] = record;
 
                 // update pages with new number of records
                 new_page->num_records = current_page->num_records - half + 1;
