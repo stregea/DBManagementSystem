@@ -176,26 +176,22 @@ void write_page_to_disk(Page page) {
 
     FILE *file = fopen(page_path, "wb");
 
-    if(file != NULL){
-        // write table id
-        fwrite(&page->table_id, sizeof(int), 1, file);
+    // write table id
+    fwrite(&page->table_id, sizeof(int), 1, file);
 
-        // write page id
-        fwrite(&page->page_id, sizeof(int), 1, file);
+    // write page id
+    fwrite(&page->page_id, sizeof(int), 1, file);
 
-        // write the total number of records
-        fwrite(&page->num_records, sizeof(size_t), 1, file);
+    // write the total number of records
+    fwrite(&page->num_records, sizeof(size_t), 1, file);
 
-        // write the total number of attrs (5)
-        fwrite(&page->data_types_size, sizeof(size_t), 1, file);
+    // write the total number of attrs (5)
+    fwrite(&page->data_types_size, sizeof(size_t), 1, file);
 
-        // write all the records to the page.
-        fwrite(page->records, sizeof(union record_item), page->num_records, file);
+    // write all the records to the page.
+    fwrite(page->records, sizeof(union record_item), page->num_records, file);
 
-        fclose(file);
-    }
-
-    free(page_path);
+    fclose(file);
     free(page_file);
 }
 
@@ -280,7 +276,6 @@ int create_page(int table_id, int page_index) {
     // increment the total page count
     BUFFER->page_count++;
 
-    freeTable(table);
     return EXIT_SUCCESS;
 }
 
@@ -340,9 +335,6 @@ int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer) {
 void freeBuffer(Buffer buffer) {
     freeLRUCache(BUFFER->cache);
     free(buffer->db_location);
-    for(int i = 0; i < buffer->buffer_size; i++){
-        free(buffer->buffer[i]);
-    }
     free(buffer->buffer);
     free(buffer);
 }
@@ -659,15 +651,11 @@ int insert_record(int table_id, union record_item *record) {
             union record_item *temp_key = get_primary_key(current_page->records[i], table);
 
             int compare = compare_keys(table, insert_key, temp_key);
-            free(temp_key);
 
             printf("comparison: %d\n", compare);
             // if less, move on
             if (compare == 0) {
                 printf("equal, not inserting\n\n");
-                free(insert_key);
-                freePage(current_page);
-                freeTable(table);
                 return -1;
             }
             // if more
@@ -688,12 +676,10 @@ int insert_record(int table_id, union record_item *record) {
                     current_page->records[i] = record;
                     current_page->num_records++;
                 }
-                free(insert_key);
-                freePage(current_page);
-                freeTable(table);
                 return 0;
             }
-
+            // else move on to comparing based on next index in primary key
+            free(temp_key);
         }
         // if reached here, did not insert yet and did not find existing row that matched
 
@@ -715,15 +701,11 @@ int insert_record(int table_id, union record_item *record) {
                 current_page->records[current_page->num_records] = record;
                 current_page->num_records = current_page->num_records + 1;
             }
-            free(insert_key);
-            freePage(current_page);
-            freeTable(table);
             return 0;
         }
     }
     free(insert_key);
     freePage(current_page);
-    freeTable(table);
     return result;
 }
 
@@ -952,11 +934,11 @@ int purge_buffer() {
 int terminate_database() {
     int result = EXIT_SUCCESS;
     // purge the buffer
-   // result = purge_buffer();
+    result = purge_buffer();
 
     // write buffer info to disk
     char *buffer_file = BUFFER_FILE;
-  //  result = write_buffer_to_disk(buffer_file, BUFFER); // breaks valgrind
+    result = write_buffer_to_disk(buffer_file, BUFFER);
 
     // perform proper memory wipes.
     freeBuffer(BUFFER);
