@@ -722,6 +722,7 @@ int insert_record(int table_id, union record_item *record) {
     }
     free(insert_key);
     freePage(current_page);
+    freeTable(table);
     return result;
 }
 

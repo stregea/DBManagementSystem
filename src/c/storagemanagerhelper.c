@@ -158,6 +158,12 @@ void freeStore(DBStore store){
     free(store);
 }
 
+void freeTable(Table table){
+    free(table.data_types);
+    free(table.key_indices);
+    free(table.page_ids);
+}
+
 Table getTable(int table_id, char * database_path){
 
     // convert int table_id to string for file path
