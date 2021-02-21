@@ -267,7 +267,7 @@ void printTable(Table table) {
     printf("page_ids = ");
     printIntArray(table.page_ids, table.page_ids_size);
 
-    printf("\n");
+    //printf("\n");
 }
 
 void printRecord(union record_item *record, int data_types_size, int * data_types) {
