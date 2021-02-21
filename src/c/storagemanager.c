@@ -705,7 +705,7 @@ int insert_record(int table_id, union record_item *record) {
                     int new_page_id = create_page(table_id, current_page_index + 1);
 
                     // tables are created with exactly enough space to hold their current page ids
-                    realloc(table.page_ids, (table.page_ids_size + 1) * sizeof(int));
+                    table.page_ids = realloc(table.page_ids, (table.page_ids_size + 1) * sizeof(int));
 
                     for (int j = table.page_ids_size - 1; j > current_page_index; j--) {
                         table.page_ids[j+1] = table.page_ids[j];
@@ -801,7 +801,7 @@ int insert_record(int table_id, union record_item *record) {
                 int new_page_id = create_page(table_id, current_page_index + 1);
 
                 // tables are created with exactly enough space to hold their current page ids
-                realloc(table.page_ids, (table.page_ids_size + 1) * sizeof(int));
+                table.page_ids = realloc(table.page_ids, (table.page_ids_size + 1) * sizeof(int));
 
                 for (int i = table.page_ids_size - 1; i > current_page_index; i--) {
                     table.page_ids[i+1] = table.page_ids[i];
