@@ -54,10 +54,10 @@ int main(int argc, char * argv[]){
     //insert_record(table_id, person_4);
     insert_record(table_id, person_5);
 
+    
 
 
-
-    terminate_database(); // write_buffer_to_disk() crashes on linux
+   // terminate_database();
     printf("\nHideous Jimmies!!\n");
     return EXIT_SUCCESS;
 }
