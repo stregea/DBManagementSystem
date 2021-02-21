@@ -219,13 +219,64 @@ void write_page_to_disk(Page page) {
         fwrite(&page->data_types_size, sizeof(size_t), 1, file);
 
         // write all the records to the page.
-        fwrite(page->records, sizeof(union record_item), page->num_records, file);
+        Table table = getTable(page->table_id, database_path);
 
+        fwrite(page->records, sizeof(union record_item)*BUFFER->page_size, page->num_records, file);
+
+        freeTable(table);
         fclose(file);
     }
 
     free(page_path);
     free(page_file);
+}
+
+/**
+ * Read in a page struct from disk.
+ * @param page_id - The id of the page to create.
+ */
+Page read_page_from_disk(int page_id){
+    Page page = malloc(sizeof(struct Page_S));
+    char *database_path = BUFFER->db_location;
+
+    // create path to the table in the database
+    char *page_file = appendIntToString("", page_id); // this was just used to test we will find this later
+    char *page_path = malloc(sizeof(char *) * (strlen(database_path) + strlen(page_file)));
+    strcpy(page_path, database_path);
+    strcat(page_path, page_file);
+
+    FILE *file = fopen(page_path, "wb");
+
+    if(file != NULL){
+        // read the table id
+        fread(&page->table_id, sizeof(int), 1, file);
+
+        // read the page id
+        fread(&page->page_id, sizeof(int), 1, file);
+
+        // read the total number of records
+        fread(&page->num_records, sizeof(size_t), 1, file);
+
+        // read the total number of attrs (5)
+        fread(&page->data_types_size, sizeof(size_t), 1, file);
+
+        // Allocate memory required for the records.
+        Table table = getTable(page->table_id, database_path);
+        page->records = malloc(BUFFER->page_size / ((sizeof(union record_item)) * table.data_types_size));
+
+        // read in the records.
+        fread(page->records, BUFFER->page_size / ((sizeof(union record_item)) * table.data_types_size), page->num_records, file);
+
+        freeTable(table);
+        fclose(file);
+    }else{
+        free(page);
+        page = NULL;
+    }
+
+    free(page_path);
+    free(page_file);
+    return page;
 }
 
 bool bufferIsFull(Buffer buffer) {
@@ -261,7 +312,7 @@ int create_page(int table_id, int page_index) {
     newPage->table_id = table_id;
     newPage->page_id = BUFFER->page_count;
     newPage->num_records = 0;
-    newPage->records = malloc(BUFFER->page_size);
+    newPage->records = malloc(BUFFER->page_size / ((sizeof(union record_item)) * table.data_types_size));
     newPage->data_types_size = table.data_types_size;
     newPage->nextPage = NULL;
 
@@ -333,12 +384,13 @@ Page load_page(int page_id) {
         return page;
     }
 
-    //TODO read page from memory if not found
+    page = read_page_from_disk(page_id);
+
     //check buffer
     //call read_page
     //add page to buffer
     //update LRU
-    return EXIT_SUCCESS;
+    return page;
 }
 
 /**
