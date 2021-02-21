@@ -291,7 +291,7 @@ int create_page(int table_id, int page_index) {
  */
 int write_buffer_to_disk(char *filename, Buffer buffer) {
     int result = EXIT_SUCCESS;
-    char *fileLocation = malloc(sizeof(char *));
+    char *fileLocation = malloc(sizeof(char *) * strlen(buffer->db_location));
 
     copyStringForFilePath(fileLocation, buffer->db_location);
     strcat(fileLocation, filename);
@@ -303,7 +303,7 @@ int write_buffer_to_disk(char *filename, Buffer buffer) {
     } else {
         result = EXIT_FAILURE;
     }
-
+    free(fileLocation);
     return result;
 }
 
