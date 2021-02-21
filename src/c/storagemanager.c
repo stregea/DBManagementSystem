@@ -676,6 +676,7 @@ int insert_record(int table_id, union record_item *record) {
             // if equal, stop and don't insert the record
             if (comparison== 0) {
                 printf("equal, not inserting\n\n");
+                freeTable(table);
                 return -1;
             }
             // if more
@@ -765,6 +766,7 @@ int insert_record(int table_id, union record_item *record) {
                     current_page->records[i] = record;
                     current_page->num_records = current_page->num_records + 1;
                 }
+                freeTable(table);
                 return 0;
             }
             // else move on to comparing based on next index in primary key
@@ -839,10 +841,10 @@ int insert_record(int table_id, union record_item *record) {
                 current_page->records[current_page->num_records] = record;
                 current_page->num_records = current_page->num_records + 1;
             }
+            freeTable(table);
             return 0;
         }
     }
-    freePage(current_page);
     freeTable(table);
     return result;
 }
