@@ -1057,9 +1057,11 @@ int purge_buffer() {
 
     // foreach page in buffer
     for (int i = 0; i < BUFFER->buffer_size; i++) {
-        write_page_to_disk(BUFFER->buffer[i]);
-//        BUFFER->buffer[i] = &(struct Page_S) {}; // null out the index
-        BUFFER->buffer[i] = NULL;
+        if(BUFFER->buffer[i] != NULL){
+            write_page_to_disk(BUFFER->buffer[i]);
+            freePage(BUFFER->buffer[i]);
+            BUFFER->buffer[i] = NULL;
+        }
     }
 
     BUFFER->pages_within_buffer = 0;
@@ -1074,7 +1076,7 @@ int purge_buffer() {
 int terminate_database() {
     int result = EXIT_SUCCESS;
     // purge the buffer
-   // result = purge_buffer();
+    result = purge_buffer();
 
     // write buffer info to disk
     char *buffer_file = BUFFER_FILE;
