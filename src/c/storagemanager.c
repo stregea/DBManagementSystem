@@ -374,7 +374,7 @@ int write_buffer_to_disk(char *filename, Buffer buffer) {
 int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer) {
     int result = EXIT_SUCCESS;
     buffer = malloc(sizeof(struct Buffer_S));
-    char *fileLocation = malloc(sizeof(char *) * strlen(buffer->db_location) + 1);
+    char *fileLocation = malloc(sizeof(char *) * strlen(db_location + 1);
 
     copyStringForFilePath(fileLocation, db_location);
     strcat(fileLocation, filename);
