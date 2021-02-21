@@ -286,17 +286,45 @@ bool bufferIsFull(Buffer buffer) {
     return buffer->pages_within_buffer == buffer->buffer_size;
 }
 
-/**
- * Read in a page.
- * Note a Page* that is populated must be freed.
- * @param page_id - The id of the page to read in.
- * @param page - The Page to populate
- * @return EXIT_SUCCESS if page exists, EXIT_FAILURE if page doesn't exist.
- */
-int read_page(int page_id, Page *page) {
-    // allocate memory for for struct pointer
-    // populate struct from page.
-    return -1;
+int add_page_to_buffer(Page page) {
+
+    int buffer_index;
+
+    if (bufferIsFull(BUFFER)) {
+        printf("BUFFER FULL: ");
+        // point to the LRU index of the buffer
+        buffer_index = getLRUIndexForBuffer(BUFFER->cache);
+
+        // purge LRU index of buffer onto disk
+        Page pageToWrite = BUFFER->buffer[buffer_index];
+
+        // write pageToWrite to disk.
+        write_page_to_disk(pageToWrite);
+        printf("page %d written to disk\n", pageToWrite->page_id);
+
+        // remove memory space used for records
+        // free(pageToWrite.records);
+
+        // nullify the index. This shouldn't be necessary, just being safe.
+        // BUFFER->buffer[buffer_index] = &(struct Page_S) {};
+        BUFFER->buffer[buffer_index] = NULL;
+
+        // create new page at that index
+        BUFFER->buffer[buffer_index] = page;
+    } else {
+        buffer_index = BUFFER->pages_within_buffer;
+        printf("buffer index?: %d\n", buffer_index);
+        BUFFER->buffer[buffer_index] = page;
+        BUFFER->pages_within_buffer++;
+    }
+
+    printf("Wrote page to buffer\n");
+
+    // reference the LRU page.
+    // tell LRU we used the page
+    referencePage(BUFFER->cache, buffer_index);
+
+    return 0;
 }
 
 /**
@@ -307,7 +335,6 @@ int read_page(int page_id, Page *page) {
  */
 int create_page(int table_id, int page_index) {
 
-    int buffer_index;
     Table table;
     table = getTable(table_id, BUFFER->db_location);
 
@@ -321,41 +348,7 @@ int create_page(int table_id, int page_index) {
 
     printf("page_id: %d\n", newPage->page_id);
 
-
-    // iterate through list of page id's
-    // update the page links?
-    if (bufferIsFull(BUFFER)) {
-        printf("BUFFER FULL: ");
-        // point to the LRU index of the buffer
-        buffer_index = getLRUIndexForBuffer(BUFFER->cache);
-
-        // purge LRU index of buffer onto disk
-        Page pageToWrite = BUFFER->buffer[buffer_index];
-
-        // write pageToWrite to disk.
-        write_page_to_disk(pageToWrite);
-
-        // remove memory space used for records
-        // free(pageToWrite.records);
-
-        // nullify the index. This shouldn't be necessary, just being safe.
-        // BUFFER->buffer[buffer_index] = &(struct Page_S) {};
-        BUFFER->buffer[buffer_index] = NULL;
-
-        // create new page at that index
-        BUFFER->buffer[buffer_index] = newPage;
-    } else {
-        buffer_index = BUFFER->pages_within_buffer;
-        printf("buffer index?: %d\n", buffer_index);
-        BUFFER->buffer[buffer_index] = newPage;
-        BUFFER->pages_within_buffer++;
-    }
-
-    printf("Wrote page to buffer...\n");
-
-    // reference the LRU page.
-    // tell LRU we used the page
-    referencePage(BUFFER->cache, buffer_index);
+    add_page_to_buffer(newPage);
 
     // Add a page id to a table's page id array.
     addPageIdToTable(table_id, newPage->page_id, BUFFER->db_location, page_index);
@@ -364,6 +357,15 @@ int create_page(int table_id, int page_index) {
     BUFFER->page_count++;
     freeTable(table);
     return newPage->page_id;
+}
+
+int get_buffer_index(int page_id) {
+    for (int i = 0; i < BUFFER->pages_within_buffer; i++) {
+        if (BUFFER->buffer[i]->page_id == page_id) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 Page load_page(int page_id) {
@@ -387,10 +389,15 @@ Page load_page(int page_id) {
     }
 
     //TODO read from memory if not in buffer
+    if (page == NULL) {
+        printf("page %d not in buffer, reading from disk\n", page_id);
+        //page = read_page_from_disk(page_id);
+        //add_page_to_buffer(page);
+    }
+
+    referencePage(BUFFER->cache, get_buffer_index(page_id));
 
     return page;
-
-    page = read_page_from_disk(page_id);
 }
 
 /**
@@ -589,6 +596,8 @@ int get_records(int table_id, union record_item ***table) {
 
     while (current_page != NULL) {
 
+        referencePage(BUFFER->cache, get_buffer_index(current_page->page_id));
+
         if (grid == NULL) {
             grid = malloc(current_page->num_records * sizeof(union record_item));
         } else {
@@ -748,6 +757,7 @@ int insert_record(int table_id, union record_item *record) {
     //union record_item *insert_key = get_primary_key(record, table);
     while (current_page != NULL) {
         printf("number of records on page %d: %zu\n", current_page_id, current_page->num_records);
+        referencePage(BUFFER->cache, get_buffer_index(current_page_id));
         for (int i = 0; i < current_page->num_records; i++) {
 
             printf("checking against record %d\n", i);
@@ -959,6 +969,8 @@ int update_record(int table_id, union record_item *record) {
 
     while (current_page != NULL) {
 
+        referencePage(BUFFER->cache, current_page->page_id);
+
         for (int i = 0; i < current_page->num_records; i++) {
             int comparison = compare(table, record, current_page->records[i]);
 
@@ -1024,6 +1036,8 @@ int remove_record(int table_id, union record_item *key_values) {
     Page current_page = load_page(table.page_ids[0]);
 
     while (current_page != NULL) {
+
+        referencePage(BUFFER->cache, current_page->page_id);
 
         for (int i = 0; i < current_page->num_records; i++) {
             union record_item *current_key = get_primary_key(current_page->records[i], table);

@@ -17,7 +17,7 @@
 #include <string.h>
 #include <stdbool.h>
 #define PAGE_SIZE 1536
-#define BUFFER_SIZE 10
+#define BUFFER_SIZE 3
 
 
 int main(int argc, char * argv[]){
