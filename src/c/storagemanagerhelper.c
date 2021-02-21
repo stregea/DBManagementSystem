@@ -165,7 +165,7 @@ void freeTable(Table table){
 }
 
 Table getTable(int table_id, char * database_path){
-    Table table;
+    Table table = {};
 
     // convert int table_id to string for file path
     char* table_id_string = appendIntToString("table_", table_id);
@@ -333,11 +333,17 @@ int addPageIdToTable(int table_id, int page_id, char * database_path, int new_pa
 
     }
 
-    // may need to reallocate
+    // free the previous allocated array
+    free(table.page_ids);
+
+    // point to the new array pf id's
     table.page_ids = temp;
 
     // write to disk
     writeTable(table, table_id, database_path);
-    freeTable(table);
+
+    // free the rest of the memory
+    free(table.data_types);
+    free(table.key_indices);
     return 0;
 }
