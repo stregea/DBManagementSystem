@@ -296,8 +296,10 @@ Page read_page_from_disk(int page_id){
 
         // read in the records.
         for(int i = 0; i < page->num_records; i++){
+            page->records[i] = malloc(sizeof(union record_item*));
+            union record_item* record = malloc(sizeof(union record_item) * table.data_types_size);
+            page->records[i] = record;
             for(int j = 0; j < table.data_types_size; j++){
-
                 switch(table.data_types[j]){
                     case 0:
                         fread(&page->records[i][j].i, sizeof(int), 1, file);
@@ -511,8 +513,13 @@ void freeBuffer(Buffer buffer) {
  * @param page - The page to free.
  */
 void freePage(Page page) {
+    Table table = getTable(page->table_id, BUFFER->db_location);
+    for(int i = 0; i < page->num_records; i++){
+        free(page->records[i]);
+    }
     free(page->records);
     free(page);
+    freeTable(table);
 }
 
 /*
