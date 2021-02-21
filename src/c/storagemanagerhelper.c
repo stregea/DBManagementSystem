@@ -338,6 +338,6 @@ int addPageIdToTable(int table_id, int page_id, char * database_path, int new_pa
 
     // write to disk
     writeTable(table, table_id, database_path);
-//    freeTable(table);
+    freeTable(table);
     return 0;
 }
