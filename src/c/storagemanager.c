@@ -195,7 +195,7 @@ int compare(Table table, union record_item *row1, union record_item *row2) {
  * @param page - The page to write.
  */
 void write_page_to_disk(Page page) {
-    char *database_path = BUFFER->db_location;
+    char *database_path = malloc(sizeof(char*)*strlen(BUFFER->db_location)+1);
 
     // create path to the table in the database
     char *page_file = appendIntToString("", page->page_id); // this was just used to test we will find this later
@@ -227,8 +227,9 @@ void write_page_to_disk(Page page) {
         fclose(file);
     }
 
-    free(page_path);
     free(page_file);
+    free(page_path);
+    free(database_path);
 }
 
 /**
@@ -237,8 +238,9 @@ void write_page_to_disk(Page page) {
  */
 Page read_page_from_disk(int page_id){
     Page page = malloc(sizeof(struct Page_S));
-    char *database_path = BUFFER->db_location;
+    char *database_path = malloc(sizeof(char*)*strlen(BUFFER->db_location)+1);
 
+    copyStringForFilePath(database_path, BUFFER->db_location);
     // create path to the table in the database
     char *page_file = appendIntToString("", page_id); // this was just used to test we will find this later
     char *page_path = malloc(sizeof(char *) * (strlen(database_path) + strlen(page_file)));
@@ -274,8 +276,9 @@ Page read_page_from_disk(int page_id){
         page = NULL;
     }
 
-    free(page_path);
     free(page_file);
+    free(page_path);
+    free(database_path);
     return page;
 }
 
