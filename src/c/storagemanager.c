@@ -196,6 +196,7 @@ int compare(Table table, union record_item *row1, union record_item *row2) {
  */
 void write_page_to_disk(Page page) {
     char *database_path = malloc(sizeof(char*)*strlen(BUFFER->db_location)+1);
+    copyStringForFilePath(database_path, BUFFER->db_location);
 
     // create path to the table in the database
     char *page_file = appendIntToString("", page->page_id); // this was just used to test we will find this later
@@ -221,7 +222,31 @@ void write_page_to_disk(Page page) {
         // write all the records to the page.
         Table table = getTable(page->table_id, database_path);
 
-        fwrite(page->records, sizeof(union record_item)*BUFFER->page_size, page->num_records, file);
+        size_t page_size = BUFFER->page_size / ((sizeof(union record_item)) * table.data_types_size);
+
+        for(int i = 0; i < page->num_records; i++){
+            for(int j = 0; j < table.data_types_size; j++){
+
+                switch(table.data_types[j]){
+                    case 0:
+                        fwrite(&page->records[i][j].i, sizeof(int), 1, file);
+                        break;
+                    case 1:
+                        fwrite(&page->records[i][j].d, sizeof(double), 1, file);
+                        break;
+                    case 2:
+                        fwrite(&page->records[i][j].b, sizeof(bool), 1, file);
+                        break;
+                    case 3:
+                        fwrite(page->records[i][j].c, sizeof(char)*255, 1, file);
+                        break;
+                    case 4:
+                        fwrite(page->records[i][j].v, sizeof(char)*255, 1, file);
+                        break;
+                }
+            }
+        }
+//        fwrite(page->records, sizeof(union record_item)*BUFFER->page_size, page->num_records, file);
 
         freeTable(table);
         fclose(file);
@@ -239,8 +264,8 @@ void write_page_to_disk(Page page) {
 Page read_page_from_disk(int page_id){
     Page page = malloc(sizeof(struct Page_S));
     char *database_path = malloc(sizeof(char*)*strlen(BUFFER->db_location)+1);
-
     copyStringForFilePath(database_path, BUFFER->db_location);
+
     // create path to the table in the database
     char *page_file = appendIntToString("", page_id); // this was just used to test we will find this later
     char *page_path = malloc(sizeof(char *) * (strlen(database_path) + strlen(page_file)));
@@ -264,7 +289,7 @@ Page read_page_from_disk(int page_id){
 
         // Allocate memory required for the records.
         Table table = getTable(page->table_id, database_path);
-        page->records = malloc(BUFFER->page_size / ((sizeof(union record_item)) * table.data_types_size));
+        page->records = malloc(BUFFER->page_size);
 
         // read in the records.
         fread(page->records, BUFFER->page_size / ((sizeof(union record_item)) * table.data_types_size), page->num_records, file);
@@ -1289,6 +1314,7 @@ int terminate_database() {
     // purge the buffer
     result = purge_buffer();
 
+    Page test = read_page_from_disk(2);
     // write buffer info to disk
     char *buffer_file = BUFFER_FILE;
     result = write_buffer_to_disk(buffer_file, BUFFER); // breaks valgrind
