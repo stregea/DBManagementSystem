@@ -227,24 +227,24 @@ void write_page_to_disk(Page page) {
 
         for(int i = 0; i < page->num_records; i++){
             for(int j = 0; j < table.data_types_size; j++){
-
-                switch(table.data_types[j]){
-                    case 0:
-                        fwrite(&page->records[i][j].i, sizeof(int), 1, file);
-                        break;
-                    case 1:
-                        fwrite(&page->records[i][j].d, sizeof(double), 1, file);
-                        break;
-                    case 2:
-                        fwrite(&page->records[i][j].b, sizeof(bool), 1, file);
-                        break;
-                    case 3:
-                        fwrite(page->records[i][j].c, sizeof(char)*255, 1, file);
-                        break;
-                    case 4:
-                        fwrite(page->records[i][j].v, sizeof(char)*255, 1, file);
-                        break;
-                }
+                fwrite(&page->records[i][j], sizeof(union record_item), 1, file);
+//                switch(table.data_types[j]){
+//                    case 0:
+//                        fwrite(&page->records[i][j].i, sizeof(union record_item), 1, file);
+//                        break;
+//                    case 1:
+//                        fwrite(&page->records[i][j].d, sizeof(union record_item), 1, file);
+//                        break;
+//                    case 2:
+//                        fwrite(&page->records[i][j].b, sizeof(union record_item), 1, file);
+//                        break;
+//                    case 3:
+//                        fwrite(page->records[i][j].c, sizeof(union record_item), 1, file);
+//                        break;
+//                    case 4:
+//                        fwrite(page->records[i][j].v, sizeof(union record_item), 1, file);
+//                        break;
+//                }
             }
         }
 
@@ -300,23 +300,25 @@ Page read_page_from_disk(int page_id){
 //            union record_item* record = malloc(sizeof(union record_item) * table.data_types_size);
 //            page->records[i] = record;
             for(int j = 0; j < table.data_types_size; j++){
-                switch(table.data_types[j]){
-                    case 0:
-                        fread(&page->records[i][j].i, sizeof(union record_item), 1, file);
-                        break;
-                    case 1:
-                        fread(&page->records[i][j].d, sizeof(union record_item), 1, file);
-                        break;
-                    case 2:
-                        fread(&page->records[i][j].b, sizeof(union record_item), 1, file);
-                        break;
-                    case 3:
-                        fread(page->records[i][j].c, sizeof(union record_item), 1, file);
-                        break;
-                    case 4:
-                        fread(page->records[i][j].v, sizeof(union record_item), 1, file);
-                        break;
-                }
+                fread(&page->records[i][j], sizeof(union record_item), 1, file);
+
+//                switch(table.data_types[j]){
+//                    case 0:
+//                        fread(&page->records[i][j].i, sizeof(union record_item), 1, file);
+//                        break;
+//                    case 1:
+//                        fread(&page->records[i][j].d, sizeof(union record_item), 1, file);
+//                        break;
+//                    case 2:
+//                        fread(&page->records[i][j].b, sizeof(union record_item), 1, file);
+//                        break;
+//                    case 3:
+//                        fread(page->records[i][j].c, sizeof(union record_item), 1, file);
+//                        break;
+//                    case 4:
+//                        fread(page->records[i][j].v, sizeof(union record_item), 1, file);
+//                        break;
+//                }
             }
         }
         freeTable(table);
