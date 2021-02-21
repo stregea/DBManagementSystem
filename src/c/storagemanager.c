@@ -85,6 +85,8 @@ Buffer BUFFER;
  * @return A primary key.
  */
 union record_item *get_primary_key(union record_item *row, Table table) {
+
+    printf("getting primary key\n");
     union record_item *primary_key = malloc(sizeof(union record_item) * table.key_indices_size);
     for (int i = 0; i < table.key_indices_size; i++) {
         primary_key[i] = row[table.key_indices[i]];
@@ -104,137 +106,59 @@ union record_item *get_primary_key(union record_item *row, Table table) {
  * @param operation - The type of operation to perform when comparing the strings.
  * @return true (1) if the keys match, otherwise false (-1).
  */
-bool compareKeys(Table table, union record_item *key1, union record_item *key2, int operation) {
-    if (operation != COMPARE_EQUALS && operation != COMPARE_LESS_THAN && operation != COMPARE_GREATER_THAN) {
-        return false; // invalid mode.
-    }
+int compare_keys(Table table, union record_item *key1, union record_item *key2) {
+
+    //printf("comparing\n");
 
     // index through both keys then perform the selected operation to check.
     for (int i = 0; i < table.key_indices_size; i++) {
+        printf("running with %d\n", table.key_indices[i]);
         switch (table.key_indices[i]) {
             case 0: // integer comparison
-                switch (operation) {
-                    case COMPARE_EQUALS:
-                        // check if < or > than 0
-                        if (key1[i].i < key2[i].i || key1[i].i > key2[i].i) {
-                            return false;
-                        }
-                        break;
-                    case COMPARE_LESS_THAN:
-                        // check if == 0 (equals) or > 0 (greater than)
-                        if (key1[i].i == key2[i].i || key1[i].i > key2[i].i) {
-                            return false;
-                        }
-                        break;
-                    case COMPARE_GREATER_THAN:
-                        // check if == 0 (equals) or < 0 (less than)
-                        if (key1[i].i == key2[i].i || key1[i].i < key2[i].i) {
-                            return false;
-                        }
-                        break;
-                    default:
-                        return false;
+                if (key1[i].i < key2[i].i) {
+                    return -1;
+                } else if (key1[i].i == key2[i].i) {
+                    break;
+                } else {
+                    return 1;
                 }
-                break;
             case 1: // double comparison
-                switch (operation) {
-                    case COMPARE_EQUALS:
-                        // check if < or > than 0
-                        if (key1[i].d < key2[i].d || key1[i].d > key2[i].d) {
-                            return false;
-                        }
-                        break;
-                    case COMPARE_LESS_THAN:
-                        // check if == 0 (equals) or > 0 (greater than)
-                        if (key1[i].d == key2[i].d || key1[i].d > key2[i].d) {
-                            return false;
-                        }
-                        break;
-                    case COMPARE_GREATER_THAN:
-                        // check if == 0 (equals) or < 0 (less than)
-                        if (key1[i].d == key2[i].d || key1[i].d < key2[i].d) {
-                            return false;
-                        }
-                        break;
-                    default:
-                        return false;
+                if (key1[i].d < key2[i].d) {
+                    return -1;
+                } else if (key1[i].d == key2[i].d) {
+                    break;
+                } else {
+                    return 1;
                 }
-                break;
             case 2: // boolean comparison
-                switch (operation) {
-                    case COMPARE_EQUALS:
-                        // check if < or > than 0
-                        if (key1[i].b < key2[i].b || key1[i].b > key2[i].b) {
-                            return false;
-                        }
-                        break;
-                    case COMPARE_LESS_THAN:
-                        // check if == 0 (equals) or > 0 (greater than)
-                        if (key1[i].b == key2[i].b || key1[i].b > key2[i].b) {
-                            return false;
-                        }
-                        break;
-                    case COMPARE_GREATER_THAN:
-                        // check if == 0 (equals) or < 0 (less than)
-                        if (key1[i].b == key2[i].b || key1[i].b < key2[i].b) {
-                            return false;
-                        }
-                        break;
-                    default:
-                        return false;
+                // booleans can only be true or false, but false (0) is less than true (1)
+                if (key1[i].b < key2[i].b) {
+                    return -1;
+                } else if (key1[i].b == key2[i].b) {
+                    break;
+                } else {
+                    return 1;
                 }
-                break;
             case 3: // char comparison
-                switch (operation) {
-                    case COMPARE_EQUALS:
-                        // check if < or > than 0
-                        if (strcmp(key1[i].c, key2[i].c) != 0) {
-                            return false;
-                        }
-                        break;
-                    case COMPARE_LESS_THAN:
-                        // check if == 0 (equals) or > 0 (greater than)
-                        if (strcmp(key1[i].c, key2[i].c) == 0 || strcmp(key1[i].c, key2[i].c) > 0) {
-                            return false;
-                        }
-                        break;
-                    case COMPARE_GREATER_THAN:
-                        // check if == 0 (equals) or < 0 (less than)
-                        if (strcmp(key1[i].c, key2[i].c) == 0 || strcmp(key1[i].c, key2[i].c) < 0) {
-                            return false;
-                        }
-                        break;
-                    default:
-                        return false;
+                    // check if < or > than 0
+                if (strcmp(key1[i].c, key2[i].c) < 0) {
+                    return -1;
+                } else if (strcmp(key1[i].c, key2[i].c) == 0) {
+                    break;
+                } else {
+                    return 1;
                 }
-                break;
             case 4: // varchar comparison
-                switch (operation) {
-                    case COMPARE_EQUALS:
-                        // check if < or > than 0
-                        if (strcmp(key1[i].v, key2[i].v) != 0) {
-                            return false;
-                        }
-                        break;
-                    case COMPARE_LESS_THAN:
-                        // check if == 0 (equals) or > 0 (greater than)
-                        if (strcmp(key1[i].v, key2[i].v) == 0 || strcmp(key1[i].v, key2[i].v) > 0) {
-                            return false;
-                        }
-                        break;
-                    case COMPARE_GREATER_THAN:
-                        // check if == 0 (equals) or < 0 (less than)
-                        if (strcmp(key1[i].v, key2[i].v) == 0 || strcmp(key1[i].v, key2[i].v) < 0) {
-                            return false;
-                        }
-                        break;
-                    default:
-                        return false;
+                if (strcmp(key1[i].v, key2[i].v) < 0) {
+                    return -1;
+                } else if (strcmp(key1[i].v, key2[i].v) == 0) {
+                    break;
+                } else {
+                    return 1;
                 }
-                break;
         }
     }
-    return true;
+    return 0;
 }
 
 /**
@@ -295,7 +219,7 @@ int read_page(int page_id, Page *page) {
  * Create a page.
  * param - page_index location to place page id into page_id array
  */
-int write_page(int table_id, int page_index) {
+int create_page(int table_id, int page_index) {
 
     int buffer_index;
     Table table;
@@ -305,7 +229,11 @@ int write_page(int table_id, int page_index) {
     newPage->table_id = table_id;
     newPage->page_id = BUFFER->page_count;
     newPage->num_records = 0;
+    newPage->records = malloc(BUFFER->page_size);
     newPage->data_types_size = table.data_types_size;
+    newPage->nextPage = NULL;
+    table.page_ids[table.page_ids_size] = page_index;
+    table.page_ids_size = table.page_ids_size + 1;
 
 
     // iterate through list of page id's
@@ -594,7 +522,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
  */
 int insert_record(int table_id, union record_item *record) {
     int result = EXIT_SUCCESS;
-    printf("Inserting record ==> table_%d\n", table_id);
+    printf("Inserting record into table_%d\n", table_id);
 
     Table table = getTable(table_id, BUFFER->db_location);
 
@@ -604,63 +532,75 @@ int insert_record(int table_id, union record_item *record) {
 
     // If the table does not have any existing pages, make a new one
     if (table.page_ids_size <= 0) {
+
+        printf("making new page\n");
         // Create a new page, gets added to table
-        write_page(table_id, 0);
+        create_page(table_id, 0);
         current_page = BUFFER->buffer[0];
 
-        // allocate memory for 1 row of data
-        current_page->records = malloc(sizeof(union record_item) * table.data_types_size);
-
-        // copy the record to insert into this newly allocated memory
-        memcpy(current_page->records, record, sizeof(union record_item) * table.data_types_size);
-        current_page->num_records = 1;
+//        // allocate memory for 1 row of data
+//        current_page->records = malloc(sizeof(union record_item) * table.data_types_size);
+//
+//        // copy the record to insert into this newly allocated memory
+//        memcpy(current_page->records, record, sizeof(union record_item) * table.data_types_size);
+//        current_page->num_records = 1;
 
         //printRecord((union record_item *) current_page->records, table.data_types_size, table.data_types);
     } else {
 
-        int buffer_index = 0;
-        union record_item *updated_records;
-        for (int i = 0; i < table.page_ids_size; i++) {
-            current_page_id = table.page_ids[i];
-            // find the page in buffer where page matches page_id
-            // add binary search in future
-            do {
-                current_page = BUFFER->buffer[buffer_index];
-                buffer_index++;
-            } while (current_page->page_id != current_page_id && buffer_index < BUFFER->buffer_size);
+        printf("found existing page\n");
 
-            // If the page_ids don't match check on disk
-            if (current_page->page_id != current_page_id) {
-                // check on disk stopped here this need
-                printf("Search Disk for Pages\n");
+        current_page_id = table.page_ids[0];
+
+        for (int i = 0; i < BUFFER->buffer_size; i++) {
+            if (BUFFER->buffer[i]->page_id == current_page_id) {
+                current_page = BUFFER->buffer[i];
             }
-
-            // adding record this will need to find correct location
-            // Note: for now just adding to end of array
-            // allocate enough space for current record array + 1
-            size_t record_items_in_table = table.data_types_size * current_page->num_records;
-            updated_records = malloc(
-                    sizeof(union record_item) * table.data_types_size * (current_page->num_records + 1));
-
-            // copy all of the existing records into the new version of the table
-            memcpy(updated_records, current_page->records, sizeof(union record_item) * record_items_in_table);
-
-            // copy the new record to the end of the table
-            memcpy(updated_records + record_items_in_table, record, sizeof(union record_item) * table.data_types_size);
-
-            current_page->num_records++;
-
-            // make the temporary table the new table and free the old one
-            free(current_page->records);
-            current_page->records = (union record_item **) updated_records;
-
-            // test only two records for now
-            printf("Records: \n");
-            printRecord((union record_item *) current_page->records, table.data_types_size, table.data_types);
-            printRecord((union record_item *) current_page->records + 1 * table.data_types_size, table.data_types_size,
-                        table.data_types);
-            free(updated_records);
         }
+
+//        int buffer_index = 0;
+//        union record_item *updated_records;
+//        for (int i = 0; i < table.page_ids_size; i++) {
+//            current_page_id = table.page_ids[i];
+//            // find the page in buffer where page matches page_id
+//            // add binary search in future
+//            do {
+//                current_page = BUFFER->buffer[buffer_index];
+//                buffer_index++;
+//            } while (current_page->page_id != current_page_id && buffer_index < BUFFER->buffer_size);
+//
+//            // If the page_ids don't match check on disk
+//            if (current_page->page_id != current_page_id) {
+//                // check on disk stopped here this need
+//                printf("Search Disk for Pages\n");
+//            }
+//
+//            // adding record this will need to find correct location
+//            // Note: for now just adding to end of array
+//            // allocate enough space for current record array + 1
+//            size_t record_items_in_table = table.data_types_size * current_page->num_records;
+//            updated_records = malloc(
+//                    sizeof(union record_item) * table.data_types_size * (current_page->num_records + 1));
+//
+//            // copy all of the existing records into the new version of the table
+//            memcpy(updated_records, current_page->records, sizeof(union record_item) * record_items_in_table);
+//
+//            // copy the new record to the end of the table
+//            memcpy(updated_records + record_items_in_table, record, sizeof(union record_item) * table.data_types_size);
+//
+//            current_page->num_records++;
+//
+//            // make the temporary table the new table and free the old one
+//            free(current_page->records);
+//            current_page->records = (union record_item **) updated_records;
+//
+//             test only two records for now
+//            printf("Records: \n");
+//            printRecord((union record_item *) current_page->records, table.data_types_size, table.data_types);
+//            printRecord((union record_item *) current_page->records + 1 * table.data_types_size, table.data_types_size,
+//                        table.data_types);
+//            free(updated_records);
+//        }
     }
 
     // check if page is null
@@ -692,53 +632,80 @@ int insert_record(int table_id, union record_item *record) {
     // Starting at the first page in the table, compare to primary key arrays of rows
 
     // Comparison algorithm (looks like O(n^2) but isn't I promise:
-    // Start: pointer to page references first page in table
+    // Start: pointer to page references first page in table]
+
     // comparing based on first index in primary key
 
     // while pointer to page is not null:
     // for record in record size:
 
-//    union record_item *insert_key = get_primary_key(record, table);
-//    while (current_page->nextPage != NULL) {
-//        for (int i = 0; i < current_page->num_records; i++) {
-//
-//            // create primary key array for record
-//            // compare primary key array of record to primary key array of new record
-//            union record_item *temp_key = get_primary_key(current_page->records[i], table);
-//
-//            // if less, move on
-//            if (compareKeys(table, insert_key, temp_key, COMPARE_LESS_THAN)) {
-//
-//            }
-//            // if more
-//            // step back one
-//            if (compareKeys(table, insert_key, temp_key, COMPARE_GREATER_THAN)) {
-//                // if less again, insert and return 0
-//
-//            }
-//            // if equal
-//            if(compareKeys(table, insert_key, temp_key, COMPARE_EQUALS)){
-//                return -1; // if at last index in primary key, return -1 (row already exists)
-//
-//                // else move on to comparing based on next index in primary key
-//                // if equal
-//                // if at last index in primary key, return -1 (row already exists)
-//            }
-//            // else move on to comparing based on next index in primary key
-//            // if reached here, did not insert yet and did not find existing row that matched
-//
-//            // if next page exists
-//            if(current_page->nextPage != NULL){
-//                // change pointer to point to next page
-//                current_page = current_page->nextPage;
-//            }else{
-//                // else insert at end and return 0
-//            }
-//            free(temp_key);
-//        }
-//    }
-//    free(insert_key);
-//    freePage(current_page);
+    union record_item *insert_key = get_primary_key(record, table);
+    while (current_page != NULL) {
+        printf("number of records: %zu\n", current_page->num_records);
+        for (int i = 0; i < current_page->num_records; i++) {
+
+            printf(" checking against record %d\n", i);
+
+            // create primary key array for record
+            // compare primary key array of record to primary key array of new record
+            union record_item *temp_key = get_primary_key(current_page->records[i], table);
+
+            int compare = compare_keys(table, insert_key, temp_key);
+
+            printf("comparison: %d\n", compare);
+            // if less, move on
+            if (compare == 0) {
+                printf("equal, not inserting\n\n");
+                return -1;
+            }
+            // if more
+            if(compare > 0) {
+                // step back one
+                // does the page have room to fit the record we're about to add?
+                size_t size_after_adding = (current_page->num_records + 1) * table.data_types_size * sizeof(union record_item);
+                printf("page size after adding: %zu\n", size_after_adding);
+                if (size_after_adding > BUFFER->page_size) {
+                    printf("out of space in page\n");
+
+                } else {
+                    printf("inserting\n\n");
+                    // starting at the end of the list, move all records over 1 up to the one we want to insert before
+                    for (int j = (int) current_page->num_records - 1; j >= i; j--) {
+                        current_page->records[j+1] = current_page->records[j];
+                    }
+                    current_page->records[i] = record;
+                    current_page->num_records++;
+                }
+                return 0;
+            }
+            // else move on to comparing based on next index in primary key
+            free(temp_key);
+        }
+        // if reached here, did not insert yet and did not find existing row that matched
+
+        // if next page exists
+        if(current_page->nextPage != NULL){
+            // change pointer to point to next page
+            current_page = current_page->nextPage;
+        }else {
+            // else insert at end and return 0
+            printf("appending\n");
+            // does the page have room to fit the record we're about to add?
+            size_t size_after_adding = (current_page->num_records + 1) * table.data_types_size * sizeof(union record_item);
+            printf("page size after adding: %zu\n", size_after_adding);
+            if (size_after_adding > BUFFER->page_size) {
+                printf("out of space in page\n");
+
+            } else {
+                printf("adding record\n\n");
+                current_page->records[current_page->num_records] = record;
+                current_page->num_records = current_page->num_records + 1;
+            }
+            return 0;
+        }
+    }
+    free(insert_key);
+    freePage(current_page);
     return result;
 }
 
