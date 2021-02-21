@@ -196,15 +196,21 @@ int compare(Table table, union record_item *row1, union record_item *row2) {
  */
 void write_page_to_disk(Page page) {
     char *database_path = malloc(sizeof(char*)*strlen(BUFFER->db_location)+1);
-    copyStringForFilePath(database_path, BUFFER->db_location);
+    strcpy(database_path, BUFFER->db_location);
 
     // create path to the table in the database
     char *page_file = appendIntToString("", page->page_id); // this was just used to test we will find this later
     char *page_path = malloc(sizeof(char *) * (strlen(database_path) + strlen(page_file)));
     strcpy(page_path, database_path);
+    // add a file separator if necessary
+    if(strcmp( (page_path + strlen(page_path) - strlen(FILE_SEPARATOR)) ,  FILE_SEPARATOR) != 0){
+        strcat(page_path, FILE_SEPARATOR); // need to test this on windows
+    }
     strcat(page_path, page_file);
 
     FILE *file = fopen(page_path, "wb");
+
+    printf("writing to file from write_page_to_disk: %s\n", page_path);
 
     if(file != NULL){
         // write table id
@@ -338,17 +344,45 @@ bool bufferIsFull(Buffer buffer) {
     return buffer->pages_within_buffer == buffer->buffer_size;
 }
 
-/**
- * Read in a page.
- * Note a Page* that is populated must be freed.
- * @param page_id - The id of the page to read in.
- * @param page - The Page to populate
- * @return EXIT_SUCCESS if page exists, EXIT_FAILURE if page doesn't exist.
- */
-int read_page(int page_id, Page *page) {
-    // allocate memory for for struct pointer
-    // populate struct from page.
-    return -1;
+int add_page_to_buffer(Page page) {
+
+    int buffer_index;
+
+    if (bufferIsFull(BUFFER)) {
+        printf("BUFFER FULL: ");
+        // point to the LRU index of the buffer
+        buffer_index = getLRUIndexForBuffer(BUFFER->cache);
+
+        // purge LRU index of buffer onto disk
+        Page pageToWrite = BUFFER->buffer[buffer_index];
+
+        // write pageToWrite to disk.
+        write_page_to_disk(pageToWrite);
+        printf("page %d written to disk\n", pageToWrite->page_id);
+
+        // remove memory space used for records
+        // free(pageToWrite.records);
+
+        // nullify the index. This shouldn't be necessary, just being safe.
+        // BUFFER->buffer[buffer_index] = &(struct Page_S) {};
+        BUFFER->buffer[buffer_index] = NULL;
+
+        // create new page at that index
+        BUFFER->buffer[buffer_index] = page;
+    } else {
+        buffer_index = BUFFER->pages_within_buffer;
+        printf("buffer index?: %d\n", buffer_index);
+        BUFFER->buffer[buffer_index] = page;
+        BUFFER->pages_within_buffer++;
+    }
+
+    printf("Wrote page to buffer\n");
+
+    // reference the LRU page.
+    // tell LRU we used the page
+    referencePage(BUFFER->cache, buffer_index);
+
+    return 0;
 }
 
 /**
@@ -359,7 +393,6 @@ int read_page(int page_id, Page *page) {
  */
 int create_page(int table_id, int page_index) {
 
-    int buffer_index;
     Table table;
     table = getTable(table_id, BUFFER->db_location);
 
@@ -373,41 +406,7 @@ int create_page(int table_id, int page_index) {
 
     printf("page_id: %d\n", newPage->page_id);
 
-
-    // iterate through list of page id's
-    // update the page links?
-    if (bufferIsFull(BUFFER)) {
-        printf("BUFFER FULL: ");
-        // point to the LRU index of the buffer
-        buffer_index = getLRUIndexForBuffer(BUFFER->cache);
-
-        // purge LRU index of buffer onto disk
-        Page pageToWrite = BUFFER->buffer[buffer_index];
-
-        // write pageToWrite to disk.
-        write_page_to_disk(pageToWrite);
-
-        // remove memory space used for records
-        // free(pageToWrite.records);
-
-        // nullify the index. This shouldn't be necessary, just being safe.
-        // BUFFER->buffer[buffer_index] = &(struct Page_S) {};
-        BUFFER->buffer[buffer_index] = NULL;
-
-        // create new page at that index
-        BUFFER->buffer[buffer_index] = newPage;
-    } else {
-        buffer_index = BUFFER->pages_within_buffer;
-        printf("buffer index?: %d\n", buffer_index);
-        BUFFER->buffer[buffer_index] = newPage;
-        BUFFER->pages_within_buffer++;
-    }
-
-    printf("Wrote page to buffer...\n");
-
-    // reference the LRU page.
-    // tell LRU we used the page
-    referencePage(BUFFER->cache, buffer_index);
+    add_page_to_buffer(newPage);
 
     // Add a page id to a table's page id array.
     addPageIdToTable(table_id, newPage->page_id, BUFFER->db_location, page_index);
@@ -416,6 +415,15 @@ int create_page(int table_id, int page_index) {
     BUFFER->page_count++;
     freeTable(table);
     return newPage->page_id;
+}
+
+int get_buffer_index(int page_id) {
+    for (int i = 0; i < BUFFER->pages_within_buffer; i++) {
+        if (BUFFER->buffer[i]->page_id == page_id) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 Page load_page(int page_id) {
@@ -438,12 +446,16 @@ Page load_page(int page_id) {
         }
     }
 
-    if(page == NULL){
-        page = read_page_from_disk(page_id);
+    //TODO read from memory if not in buffer
+    if (page == NULL) {
+        printf("page %d not in buffer, reading from disk\n", page_id);
+        //page = read_page_from_disk(page_id);
+        //add_page_to_buffer(page);
     }
 
-    return page;
+    referencePage(BUFFER->cache, get_buffer_index(page_id));
 
+    return page;
 }
 
 /**
@@ -460,6 +472,7 @@ int write_buffer_to_disk(char *filename, Buffer buffer) {
     strcat(fileLocation, filename);
 
     FILE *file = fopen(fileLocation, "wb");
+    printf("writing to file from write_buffer_to_disk: %s\n", fileLocation);
     if (file != NULL) {
         fwrite(buffer, sizeof(struct Buffer_S), 1, file);
         fclose(file);
@@ -647,6 +660,8 @@ int get_records(int table_id, union record_item ***table) {
 
     while (current_page != NULL) {
 
+        referencePage(BUFFER->cache, get_buffer_index(current_page->page_id));
+
         if (grid == NULL) {
             grid = malloc(current_page->num_records * sizeof(union record_item));
         } else {
@@ -806,6 +821,7 @@ int insert_record(int table_id, union record_item *record) {
     //union record_item *insert_key = get_primary_key(record, table);
     while (current_page != NULL) {
         printf("number of records on page %d: %zu\n", current_page_id, current_page->num_records);
+        referencePage(BUFFER->cache, get_buffer_index(current_page_id));
         for (int i = 0; i < current_page->num_records; i++) {
 
             printf("checking against record %d\n", i);
@@ -1017,6 +1033,8 @@ int update_record(int table_id, union record_item *record) {
 
     while (current_page != NULL) {
 
+        referencePage(BUFFER->cache, current_page->page_id);
+
         for (int i = 0; i < current_page->num_records; i++) {
             int comparison = compare(table, record, current_page->records[i]);
 
@@ -1082,6 +1100,8 @@ int remove_record(int table_id, union record_item *key_values) {
     Page current_page = load_page(table.page_ids[0]);
 
     while (current_page != NULL) {
+
+        referencePage(BUFFER->cache, current_page->page_id);
 
         for (int i = 0; i < current_page->num_records; i++) {
             union record_item *current_key = get_primary_key(current_page->records[i], table);
@@ -1232,6 +1252,8 @@ int clear_table(int table_id) {
 
     FILE *table_file = fopen(table_location, "wb");
 
+    printf("writing to file from clear_table: %s\n", table_location);
+
     if (table_file != NULL) {
         // re-write the Table file.
         fwrite(&table.data_types_size, sizeof(int), 1, table_file);
@@ -1278,8 +1300,11 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
     // create path to the table in the database
     char *table_id_string = appendIntToString("table_", table_id); // this was just used to test we will find this later
     // refactor into function
-    char *table_path = malloc(strlen(database_path) + strlen(table_id_string) + 1);
+    char *table_path = calloc((strlen(database_path) + strlen(table_id_string) + 3), sizeof(char));
     strcpy(table_path, database_path);
+    if(strcmp( (table_path + strlen(table_path) - strlen(FILE_SEPARATOR)) ,  FILE_SEPARATOR) != 0){
+        strcat(table_path, FILE_SEPARATOR); // need to test this on windows
+    }
     strcat(table_path, table_id_string);
 
     // build the struct for the table
@@ -1294,6 +1319,8 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
     // write the table to disk
     // was storing address of int arrays before not actual data
     FILE *table_file = fopen(table_path, "wb");
+
+    printf("writing to file from add_table: %s\n", table_path);
     if (table_file != NULL) {
         fwrite(&table_content.data_types_size, sizeof(int), 1, table_file);
         fwrite(&table_content.key_indices_size, sizeof(int), 1, table_file);
