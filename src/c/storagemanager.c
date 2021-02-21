@@ -374,7 +374,7 @@ int write_buffer_to_disk(char *filename, Buffer buffer) {
 int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer) {
     int result = EXIT_SUCCESS;
     buffer = malloc(sizeof(struct Buffer_S));
-    char *fileLocation = malloc(sizeof(char *) * strlen(db_location + 1);
+    char *fileLocation = malloc(sizeof(char *) * strlen(db_location) + 1);
 
     copyStringForFilePath(fileLocation, db_location);
     strcat(fileLocation, filename);
@@ -610,6 +610,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
             }
             free(test_values);
             if (matches) {
+                freeTable(table);
                 data = &current_page->records[i];
                 return 0;
             }
@@ -617,6 +618,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
         current_page = current_page->nextPage;
     }
 
+    freeTable(table);
     // get key_indices from table
     // get array of page id's from table
     // iterate through all the rows
