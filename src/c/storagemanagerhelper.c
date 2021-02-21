@@ -158,14 +158,7 @@ void freeStore(DBStore store){
     free(store);
 }
 
-void freeTable(Table table){
-    free(table.data_types);
-    free(table.key_indices);
-    free(table.page_ids);
-}
-
 Table getTable(int table_id, char * database_path){
-    Table table = {};
 
     // convert int table_id to string for file path
     char* table_id_string = appendIntToString("table_", table_id);
@@ -181,27 +174,25 @@ Table getTable(int table_id, char * database_path){
 
     // open table file
     //printf("%s\n", table_path);
-    FILE* table_file = fopen(table_path, "rb");
+    FILE* table_file = fopen (table_path, "rb");
 
-    if(table_file != NULL){
-        // read file contents into struct
-        fread(&table.data_types_size, sizeof(int), 1, table_file);
-        fread(&table.key_indices_size, sizeof(int), 1, table_file);
-        fread(&table.page_ids_size, sizeof(int), 1, table_file);
+    // read file contents into struct
+    Table table;
+    fread(&table.data_types_size, sizeof(int), 1, table_file);
+    fread(&table.key_indices_size, sizeof(int), 1, table_file);
+    fread(&table.page_ids_size, sizeof(int), 1, table_file);
 
-        // allocate space for the int arrays
-        table.data_types = malloc(sizeof(int) * table.data_types_size);
-        table.key_indices = malloc(sizeof(int) * table.key_indices_size);
-        table.page_ids = malloc(sizeof(int) * table.page_ids_size);
+    // allocate space for the int arrays
+    table.data_types = malloc(sizeof(int) * table.data_types_size);
+    table.key_indices = malloc(sizeof(int) * table.key_indices_size);
+    table.page_ids = malloc(sizeof(int) * table.page_ids_size);
 
-        fread(table.key_indices, sizeof(int), table.key_indices_size, table_file);
-        fread(table.data_types, sizeof(int), table.data_types_size, table_file);
-        fread(table.page_ids, sizeof(int), table.page_ids_size, table_file);
+    fread(table.key_indices, sizeof(int), table.key_indices_size, table_file);
+    fread(table.data_types, sizeof(int), table.data_types_size, table_file);
+    fread(table.page_ids, sizeof(int), table.page_ids_size, table_file);
 
-        // free all dynamic memory
-        fclose(table_file);
-    }
-
+    // free all dynamic memory
+    fclose(table_file);
     free(table_path);
     free(table_id_string);
 
@@ -333,17 +324,11 @@ int addPageIdToTable(int table_id, int page_id, char * database_path, int new_pa
 
     }
 
-    // free the previous allocated array
-    free(table.page_ids);
-
-    // point to the new array pf id's
+    // may need to reallocate
     table.page_ids = temp;
 
     // write to disk
     writeTable(table, table_id, database_path);
 
-    // free the rest of the memory
-    free(table.data_types);
-    free(table.key_indices);
     return 0;
 }
