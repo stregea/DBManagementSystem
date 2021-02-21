@@ -669,6 +669,7 @@ int insert_record(int table_id, union record_item *record) {
                 printf("equal, not inserting\n\n");
                 free(insert_key);
                 freePage(current_page);
+                freeTable(table);
                 return -1;
             }
             // if more
@@ -691,6 +692,7 @@ int insert_record(int table_id, union record_item *record) {
                 }
                 free(insert_key);
                 freePage(current_page);
+                freeTable(table);
                 return 0;
             }
 
@@ -717,6 +719,7 @@ int insert_record(int table_id, union record_item *record) {
             }
             free(insert_key);
             freePage(current_page);
+            freeTable(table);
             return 0;
         }
     }
