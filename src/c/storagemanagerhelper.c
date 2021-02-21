@@ -331,10 +331,12 @@ int addPageIdToTable(int table_id, int page_id, char * database_path, int new_pa
     }
 
     // may need to reallocate
+    free(table.page_ids);
     table.page_ids = temp;
 
     // write to disk
     writeTable(table, table_id, database_path);
-
+    free(table.data_types);
+    free(table.key_indices);
     return 0;
 }
