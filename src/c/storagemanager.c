@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 /// This will represent a Page that will store the table and record entries.
 struct Page_S {
@@ -89,73 +90,101 @@ union record_item *get_primary_key(union record_item *row, Table table) {
     printf("getting primary key\n");
     union record_item *primary_key = malloc(sizeof(union record_item) * table.key_indices_size);
     for (int i = 0; i < table.key_indices_size; i++) {
-        primary_key[i] = row[table.key_indices[i]];
+        int location = -1;
+        for (int j = 0; j < table.data_types_size; j++) {
+            if (table.data_types[j] == table.key_indices[i]) {
+                location = j;
+                break;
+            }
+        }
+
+        if (location < 0) {
+            // couldn't find the right data type in the list, key cannot be created
+            return NULL;
+        }
+
+        primary_key[i] = row[location];
     }
+    printf("returning primary key: [%g, %s]\n", primary_key[0].d, primary_key[1].c);
     return primary_key;
 }
 
 /**
- * Determine if a pair of keys match, or compare if one key is less than or greater than the other
- * depending on the selected operation.
+ * Determine if a pair of rows match, based on the primary key defined by the table
  * Iterate through each index of the keys and perform a check dependent
  * upon the value of the index of the table's key indices array.
- *      Note: The valid operations are COMPARE_EQUALS (0), COMPARE_LESS_THAN (-1), and COMPARE_GREATER_THAN (1).
  * @param table - The table containing key information.
- * @param key1 - The first key to compare.
- * @param key2 - The second key to compare
- * @param operation - The type of operation to perform when comparing the strings.
- * @return true (1) if the keys match, otherwise false (-1).
+ * @param row1 - The first row to compare.
+ * @param row2 - The second row to compare
+ * @return -1, 0, or 1 depending on if the first row should come before, is equal to, or should come after the second
  */
-int compare_keys(Table table, union record_item *key1, union record_item *key2) {
+int compare(Table table, union record_item *row1, union record_item *row2) {
 
     //printf("comparing\n");
 
     // index through both keys then perform the selected operation to check.
     for (int i = 0; i < table.key_indices_size; i++) {
-        printf("running with %d\n", table.key_indices[i]);
+        printf("comparing keys: %d\n", table.key_indices[i]);
+
+        int location = -1;
+        // find where the desired data type is in the row
+        for (int j = 0; j < table.data_types_size; j++) {
+             if (table.data_types[j] == table.key_indices[i]) {
+                 location = j;
+                 break;
+             }
+        }
+        if (location < 0) {
+            // Desired primary key attribute does not exist in domain for table
+            return -1;
+        }
         switch (table.key_indices[i]) {
             case 0: // integer comparison
-                if (key1[i].i < key2[i].i) {
+                if (row1[location].i < row2[location].i) {
                     return -1;
-                } else if (key1[i].i == key2[i].i) {
+                } else if (row1[location].i == row2[location].i) {
                     break;
                 } else {
                     return 1;
                 }
             case 1: // double comparison
-                if (key1[i].d < key2[i].d) {
+                if (row1[location].d < row2[location].d) {
                     return -1;
-                } else if (key1[i].d == key2[i].d) {
+                } else if (row1[location].d == row2[location].d) {
                     break;
                 } else {
                     return 1;
                 }
             case 2: // boolean comparison
                 // booleans can only be true or false, but false (0) is less than true (1)
-                if (key1[i].b < key2[i].b) {
+                if (row1[location].b < row2[location].b) {
                     return -1;
-                } else if (key1[i].b == key2[i].b) {
+                } else if (row1[location].b == row2[location].b) {
                     break;
                 } else {
                     return 1;
                 }
             case 3: // char comparison
                     // check if < or > than 0
-                if (strcmp(key1[i].c, key2[i].c) < 0) {
+                printf("row1: %s, row2: %s\n", row1[location].c, row2[location].c);
+                if (strcmp(row1[location].c, row2[location].c) < 0) {
                     return -1;
-                } else if (strcmp(key1[i].c, key2[i].c) == 0) {
+                } else if (strcmp(row1[location].c, row2[location].c) == 0) {
                     break;
                 } else {
                     return 1;
                 }
             case 4: // varchar comparison
-                if (strcmp(key1[i].v, key2[i].v) < 0) {
+                if (strcmp(row1[location].v, row2[location].v) < 0) {
                     return -1;
-                } else if (strcmp(key1[i].v, key2[i].v) == 0) {
+                } else if (strcmp(row1[location].v, row2[location].v) == 0) {
                     break;
                 } else {
                     return 1;
                 }
+            default:
+                // This will cause it to reject the record, thinking they are equal
+                return 0;
         }
     }
     return 0;
@@ -207,9 +236,6 @@ bool bufferIsFull(Buffer buffer) {
  * @return EXIT_SUCCESS if page exists, EXIT_FAILURE if page doesn't exist.
  */
 int read_page(int page_id, Page *page) {
-    // search through all pages
-    // if page id isn't found -> return -1
-    // else find page with matching page id
     // allocate memory for for struct pointer
     // populate struct from page.
     return -1;
@@ -218,6 +244,8 @@ int read_page(int page_id, Page *page) {
 /**
  * Create a page.
  * param - page_index location to place page id into page_id array
+ *
+ * @return the page_id of the newly created page
  */
 int create_page(int table_id, int page_index) {
 
@@ -232,8 +260,8 @@ int create_page(int table_id, int page_index) {
     newPage->records = malloc(BUFFER->page_size);
     newPage->data_types_size = table.data_types_size;
     newPage->nextPage = NULL;
-    table.page_ids[table.page_ids_size] = page_index;
-    table.page_ids_size = table.page_ids_size + 1;
+
+    printf("page_id: %d\n", newPage->page_id);
 
 
     // iterate through list of page id's
@@ -260,6 +288,7 @@ int create_page(int table_id, int page_index) {
         BUFFER->buffer[buffer_index] = newPage;
     } else {
         buffer_index = BUFFER->pages_within_buffer;
+        printf("buffer index?: %d\n", buffer_index);
         BUFFER->buffer[buffer_index] = newPage;
         BUFFER->pages_within_buffer++;
     }
@@ -276,7 +305,35 @@ int create_page(int table_id, int page_index) {
     // increment the total page count
     BUFFER->page_count++;
 
-    return EXIT_SUCCESS;
+    return newPage->page_id;
+}
+
+Page load_page(int page_id) {
+
+    //printf("current num records: %zu\n", BUFFER->buffer[0]->num_records);
+
+    Page page = NULL;
+    for (int i = 0; i < BUFFER->pages_within_buffer; i++) {
+        //printf("checking page id: %d\n", BUFFER->buffer[i]->page_id);
+        //printf("looking for page id: %d\n", page_id);
+        if (BUFFER->buffer[i]->page_id == page_id) {
+            page = BUFFER->buffer[i];
+            break;
+            //referencePage(BUFFER->cache, i);
+        }
+    }
+
+    //printf("", page->)
+
+    if (page != NULL) {
+        return page;
+    }
+
+    //TODO read page from memory if not found
+    //check buffer
+    //call read_page
+    //add page to buffer
+    //update LRU
 }
 
 /**
@@ -502,6 +559,56 @@ int get_page(int page_id, union record_item ***page) {
 int get_record(int table_id, union record_item *key_values, union record_item **data) {
     int result = EXIT_SUCCESS;
 
+    Table table = getTable(table_id, BUFFER->db_location);
+
+    if (table.page_ids <= 0) {
+        // can't have any data without pages
+        return -1;
+    }
+
+     Page current_page = load_page(table.page_ids[0]);
+
+    while (current_page != NULL) {
+
+        for (int i = 0; i < current_page->num_records; i++) {
+            union record_item *test_values = get_primary_key(current_page->records[i], table);
+
+            bool matches = true;
+
+            for (int j = 0; j < table.key_indices_size; j++) {
+                switch (table.key_indices[i]) {
+                    case 0:
+                        if (test_values[j].i != key_values[j].i) matches = false;
+                        break;
+                    case 1:
+                        // double
+                        if (test_values[j].d != key_values[j].d) matches = false;
+                        break;
+                    case 2:
+                        // bool
+                        if (test_values[j].b != key_values[j].b) matches = false;
+                        break;
+                    case 3:
+                        // char
+                        if (strcmp(test_values[j].c, key_values[j].c) != 0) matches = false;
+                        break;
+                    case 4:
+                        // varchar
+                        if (strcmp(test_values[j].v, key_values[j].v) != 0) matches = false;
+                        break;
+                    default:
+                        return -1;
+                }
+            }
+
+            if (matches) {
+                data = &current_page->records[i];
+                return 0;
+            }
+        }
+        current_page = current_page->nextPage;
+    }
+
     // get key_indices from table
     // get array of page id's from table
     // iterate through all the rows
@@ -509,7 +616,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
     // compare created primary with key_values
     // if primary key matches, store data into data parameter.
     // return -1 if not found
-    return result;
+    return -1;
 }
 
 /*
@@ -522,164 +629,138 @@ int get_record(int table_id, union record_item *key_values, union record_item **
  */
 int insert_record(int table_id, union record_item *record) {
     int result = EXIT_SUCCESS;
-    printf("Inserting record into table_%d\n", table_id);
+    printf("Inserting record into table_%d: [%s, %d, %g]\n", table_id, record[0].c, record[1].i, record[2].d);
 
     Table table = getTable(table_id, BUFFER->db_location);
 
-//    union record_item * insert_key = get_primary_key(record, table);
-    int current_page_id;
-    Page current_page;
+    int current_page_id = -1;
+    Page current_page = NULL;
 
     // If the table does not have any existing pages, make a new one
     if (table.page_ids_size <= 0) {
 
         printf("making new page\n");
         // Create a new page, gets added to table
-        create_page(table_id, 0);
-        current_page = BUFFER->buffer[0];
-
-//        // allocate memory for 1 row of data
-//        current_page->records = malloc(sizeof(union record_item) * table.data_types_size);
-//
-//        // copy the record to insert into this newly allocated memory
-//        memcpy(current_page->records, record, sizeof(union record_item) * table.data_types_size);
-//        current_page->num_records = 1;
-
-        //printRecord((union record_item *) current_page->records, table.data_types_size, table.data_types);
+        current_page_id = create_page(table_id, 0);
+        printf("current_page_id: %d\n", current_page_id);
     } else {
-
-        printf("found existing page\n");
-
         current_page_id = table.page_ids[0];
-
-        for (int i = 0; i < BUFFER->buffer_size; i++) {
-            if (BUFFER->buffer[i]->page_id == current_page_id) {
-                current_page = BUFFER->buffer[i];
-            }
-        }
-
-//        int buffer_index = 0;
-//        union record_item *updated_records;
-//        for (int i = 0; i < table.page_ids_size; i++) {
-//            current_page_id = table.page_ids[i];
-//            // find the page in buffer where page matches page_id
-//            // add binary search in future
-//            do {
-//                current_page = BUFFER->buffer[buffer_index];
-//                buffer_index++;
-//            } while (current_page->page_id != current_page_id && buffer_index < BUFFER->buffer_size);
-//
-//            // If the page_ids don't match check on disk
-//            if (current_page->page_id != current_page_id) {
-//                // check on disk stopped here this need
-//                printf("Search Disk for Pages\n");
-//            }
-//
-//            // adding record this will need to find correct location
-//            // Note: for now just adding to end of array
-//            // allocate enough space for current record array + 1
-//            size_t record_items_in_table = table.data_types_size * current_page->num_records;
-//            updated_records = malloc(
-//                    sizeof(union record_item) * table.data_types_size * (current_page->num_records + 1));
-//
-//            // copy all of the existing records into the new version of the table
-//            memcpy(updated_records, current_page->records, sizeof(union record_item) * record_items_in_table);
-//
-//            // copy the new record to the end of the table
-//            memcpy(updated_records + record_items_in_table, record, sizeof(union record_item) * table.data_types_size);
-//
-//            current_page->num_records++;
-//
-//            // make the temporary table the new table and free the old one
-//            free(current_page->records);
-//            current_page->records = (union record_item **) updated_records;
-//
-//             test only two records for now
-//            printf("Records: \n");
-//            printRecord((union record_item *) current_page->records, table.data_types_size, table.data_types);
-//            printRecord((union record_item *) current_page->records + 1 * table.data_types_size, table.data_types_size,
-//                        table.data_types);
-//            free(updated_records);
-//        }
+        printf("found existing page: %d\n", current_page_id);
     }
 
-    // check if page is null
-    // iterate through all pages on disk and assign.
-    // if page is still null, return error
+    // get the desired page either from the buffer or from memory
+    current_page = load_page(current_page_id);
 
-    // find first available page with record space. | Need to insert record
-
-    // create 2d array of records
-
-    // iterate through array
-
-    // create primary key from prev_records in page and from record passed in
-    // compare the records via primary keys
-    // when at desired location insert the record
-
-    // increment page record size
-
-    // if record size > max_record_size
-    // split page records
-    // create new page and insert other half of pages there
-    // resort pages.
-
-
-
-    // Psuedocode for algorithm
-
-    // Create primary key array based on record and primary key
-    // Starting at the first page in the table, compare to primary key arrays of rows
-
-    // Comparison algorithm (looks like O(n^2) but isn't I promise:
-    // Start: pointer to page references first page in table]
-
-    // comparing based on first index in primary key
-
-    // while pointer to page is not null:
-    // for record in record size:
-
-    union record_item *insert_key = get_primary_key(record, table);
+    //union record_item *insert_key = get_primary_key(record, table);
     while (current_page != NULL) {
-        printf("number of records: %zu\n", current_page->num_records);
+        printf("number of records on page %d: %zu\n", current_page_id, current_page->num_records);
         for (int i = 0; i < current_page->num_records; i++) {
 
-            printf(" checking against record %d\n", i);
+            printf("checking against record %d\n", i);
 
             // create primary key array for record
             // compare primary key array of record to primary key array of new record
-            union record_item *temp_key = get_primary_key(current_page->records[i], table);
+            //union record_item *temp_key = get_primary_key(current_page->records[i], table);
 
-            int compare = compare_keys(table, insert_key, temp_key);
+            int comparison = compare(table, record, current_page->records[i]);
 
-            printf("comparison: %d\n", compare);
-            // if less, move on
-            if (compare == 0) {
+            printf("comparison: %d\n", comparison);
+
+            // if equal, stop and don't insert the record
+            if (comparison== 0) {
                 printf("equal, not inserting\n\n");
                 return -1;
             }
             // if more
-            if(compare > 0) {
-                // step back one
+            if(comparison < 0) {
                 // does the page have room to fit the record we're about to add?
                 size_t size_after_adding = (current_page->num_records + 1) * table.data_types_size * sizeof(union record_item);
                 printf("page size after adding: %zu\n", size_after_adding);
                 if (size_after_adding > BUFFER->page_size) {
                     printf("out of space in page\n");
 
+                    // Get index after last item in first half of page, keeping more items in first half when necessary
+                    int half = floor(((double) current_page->num_records + 1) / 2.0);
+                    printf("index after first half: %d\n", half);
+
+                    int current_page_index = -1;
+
+                    for (int j = 0; j < table.page_ids_size; j++) {
+                        if (table.page_ids[j] == current_page_id) {
+                            current_page_index = j;
+                        }
+                    }
+                    if (current_page_index < 0) {
+                        // should not happen
+                        return -1;
+                    }
+
+                    int new_page_id = create_page(table_id, current_page_index + 1);
+
+                    // tables are created with exactly enough space to hold their current page ids
+                    table.page_ids = realloc(table.page_ids, (table.page_ids_size + 1) * sizeof(int));
+
+                    for (int j = table.page_ids_size - 1; j > current_page_index; j--) {
+                        table.page_ids[j+1] = table.page_ids[j];
+                    }
+
+                    // update page_id list and size of list
+                    table.page_ids[current_page_index + 1] = new_page_id;
+                    table.page_ids_size = table.page_ids_size + 1;
+
+                    Page new_page = load_page(new_page_id);
+
+                    // copy second half of records over to new page
+                    for (int j = half; j < current_page->num_records; j++) {
+                        new_page->records[j - half] = current_page->records[j];
+                        current_page->records[j] = NULL;
+                    }
+
+                    // update next page references
+                    new_page->nextPage = current_page->nextPage;
+                    current_page->nextPage = new_page;
+
+                    // figure out where to put new record after split
+                    int new_pos = -1;
+                    Page adding_to = NULL;
+                    if (i < half) {
+                        // insert on current page
+                        new_pos = i;
+                        adding_to = current_page;
+                    } else {
+                        // insert on new page
+                        new_pos = i - half;
+                        adding_to = new_page;
+                    }
+
+                    // update number of records for pages
+                    new_page->num_records = current_page->num_records - half;
+                    current_page->num_records = half;
+
+                    printf("num_records: %zu\n", adding_to->num_records);
+
+                    for (int j = (int) adding_to->num_records - 1; j >= new_pos; j--) {
+                        adding_to->records[j+1] = adding_to->records[j];
+                        printf("value at new pos %d: [%s, %d, %g]\n", j+1, adding_to->records[j+1][0].c, adding_to->records[j+1][1].i, adding_to->records[j+1][2].d);
+                    }
+
+                    printf("inserting record in position %d on page %d\n\n", new_pos, adding_to->page_id);
+                    adding_to->records[new_pos] = record;
+                    adding_to->num_records = adding_to->num_records + 1;
+
                 } else {
-                    printf("inserting\n\n");
                     // starting at the end of the list, move all records over 1 up to the one we want to insert before
                     for (int j = (int) current_page->num_records - 1; j >= i; j--) {
                         current_page->records[j+1] = current_page->records[j];
+                        printf("value at new pos %d: [%s, %d, %g]\n", j+1, current_page->records[j+1][0].c, current_page->records[j+1][1].i, current_page->records[j+1][2].d);
                     }
+                    printf("inserting record in position %d on page %d\n\n", i, current_page->page_id);
                     current_page->records[i] = record;
-                    current_page->num_records++;
+                    current_page->num_records = current_page->num_records + 1;
                 }
                 return 0;
             }
             // else move on to comparing based on next index in primary key
-            free(temp_key);
         }
         // if reached here, did not insert yet and did not find existing row that matched
 
@@ -687,25 +768,73 @@ int insert_record(int table_id, union record_item *record) {
         if(current_page->nextPage != NULL){
             // change pointer to point to next page
             current_page = current_page->nextPage;
-        }else {
-            // else insert at end and return 0
-            printf("appending\n");
+        } else {
             // does the page have room to fit the record we're about to add?
             size_t size_after_adding = (current_page->num_records + 1) * table.data_types_size * sizeof(union record_item);
             printf("page size after adding: %zu\n", size_after_adding);
             if (size_after_adding > BUFFER->page_size) {
                 printf("out of space in page\n");
 
+                // Get index after last item in first half of page, keeping more items in first half when necessary
+                int half = floor(((double) current_page->num_records + 1) / 2.0);
+                printf("index after first half: %d\n", half);
+
+                int current_page_index = -1;
+
+                for (int i = 0; i < table.page_ids_size; i++) {
+                    if (table.page_ids[i] == current_page_id) {
+                        current_page_index = i;
+                    }
+                }
+                if (current_page_index < 0) {
+                    // should not happen
+                    return -1;
+                }
+
+                int new_page_id = create_page(table_id, current_page_index + 1);
+
+                // tables are created with exactly enough space to hold their current page ids
+                table.page_ids = realloc(table.page_ids, (table.page_ids_size + 1) * sizeof(int));
+
+                for (int i = table.page_ids_size - 1; i > current_page_index; i--) {
+                    table.page_ids[i+1] = table.page_ids[i];
+                }
+
+                // update page_id list and size of list
+                table.page_ids[current_page_index + 1] = new_page_id;
+                table.page_ids_size = table.page_ids_size + 1;
+
+                Page new_page = load_page(new_page_id);
+
+                // copy second half of records over to new page
+                for (int i = half; i < current_page->num_records; i++) {
+                     new_page->records[i - half] = current_page->records[i];
+                     current_page->records[i] = NULL;
+                }
+
+                // update next page references
+                new_page->nextPage = current_page->nextPage;
+                current_page->nextPage = new_page;
+
+                printf("appending record to page %d\n\n", new_page->page_id);
+
+                // add new record to end of new page
+                new_page->records[current_page->num_records - half] = record;
+
+                // update pages with new number of records
+                new_page->num_records = current_page->num_records - half + 1;
+                current_page->num_records = half;
+
+                //printf("help %s", current_page->records[0]->c);
+
             } else {
-                printf("adding record\n\n");
+                printf("appending record to page %d: [%s, %u, %g]\n\n", current_page->page_id, record[0].c, record[1].i, record[2].d);
                 current_page->records[current_page->num_records] = record;
                 current_page->num_records = current_page->num_records + 1;
             }
             return 0;
         }
     }
-    free(insert_key);
-    freePage(current_page);
     return result;
 }
 
