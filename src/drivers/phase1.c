@@ -61,6 +61,8 @@ int main(int argc, char * argv[]){
 
     printf("get_record: %d\n", result);
 
+    free(pointer);
+
    // terminate_database();
     printf("\nHideous Jimmies!!\n");
     return EXIT_SUCCESS;
