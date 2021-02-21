@@ -17,7 +17,7 @@
 #include <string.h>
 #include <stdbool.h>
 #define PAGE_SIZE 1536
-#define BUFFER_SIZE 10
+#define BUFFER_SIZE 2
 
 
 int main(int argc, char * argv[]){
@@ -55,49 +55,49 @@ int main(int argc, char * argv[]){
     insert_record(table_id, person_4);
     insert_record(table_id, person_5);
 
-//    union record_item key1[] = {{.c = "John"}, {.i = 23}};
-//
-//    // give pointer a valid memory address without any meaningful data
-//    union record_item *list;
-//    union record_item **pointer = &list;
-//
-//    int result = get_record(table_id, key1, pointer);
-//
-//    printf("get_record: %d\n", result);
-//
-//    printf("string value of record: %s\n\n", (*pointer)[0].c);
-//
-//    // give pointer a valid memory address without any meaningful data
-//
-//    int* x = malloc(sizeof(int *));
-//
-//    union record_item **twoDeeArray;
-//    union record_item ***point = &twoDeeArray;
-//
-//    int records = get_records(table_id, point);
-//
-//    printf("get_records: %d\n", records);
-//
-//    printf("string value of second tuple: %s\n\n", (*point)[2][0].c);
-//
-//    result = remove_record(table_id, key1);
-//
-//    printf("remove_record: %d\n\n", result);
-//
-//    result = get_record(table_id, key1, pointer);
-//
-//    printf("get_record when record has been removed: %d\n\n", result);
-//
-//    result = remove_record(table_id, key1);
-//
-//    printf("remove_record when record has been removed: %d\n\n", result);
-//
-//    result = update_record(table_id, person_7);
-//
-//    printf("update_record to give bob a better double: %d\n\n", result);
-//
-//    free(*pointer);
-//    free(*point);
+    union record_item key1[] = {{.c = "John"}, {.i = 23}};
+
+    // give pointer a valid memory address without any meaningful data
+    union record_item *list;
+    union record_item **pointer = &list;
+
+    int result = get_record(table_id, key1, pointer);
+
+    printf("get_record: %d\n", result);
+
+    printf("string value of record: %s\n\n", (*pointer)[0].c);
+
+    // give pointer a valid memory address without any meaningful data
+
+    int* x = malloc(sizeof(int *));
+
+    union record_item **twoDeeArray;
+    union record_item ***point = &twoDeeArray;
+
+    int records = get_records(table_id, point);
+
+    printf("get_records: %d\n", records);
+
+    printf("string value of second tuple: %s\n\n", (*point)[2][0].c);
+
+    result = remove_record(table_id, key1);
+
+    printf("remove_record: %d\n\n", result);
+
+    result = get_record(table_id, key1, pointer);
+
+    printf("get_record when record has been removed: %d\n\n", result);
+
+    result = remove_record(table_id, key1);
+
+    printf("remove_record when record has been removed: %d\n\n", result);
+
+    result = update_record(table_id, person_7);
+
+    printf("update_record to give bob a better double: %d\n\n", result);
+
+    free(*pointer);
+    free(*point);
 
     terminate_database(); // write_buffer_to_disk() crashes on linux
     //restart_database(databasePath);
