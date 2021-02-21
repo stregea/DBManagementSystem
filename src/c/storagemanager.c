@@ -296,9 +296,9 @@ Page read_page_from_disk(int page_id){
 
         // read in the records.
         for(int i = 0; i < page->num_records; i++){
-            page->records[i] = malloc(sizeof(union record_item*));
-            union record_item* record = malloc(sizeof(union record_item) * table.data_types_size);
-            page->records[i] = record;
+            page->records[i] = malloc(sizeof(union record_item)* table.data_types_size);
+//            union record_item* record = malloc(sizeof(union record_item) * table.data_types_size);
+//            page->records[i] = record;
             for(int j = 0; j < table.data_types_size; j++){
                 switch(table.data_types[j]){
                     case 0:
