@@ -498,7 +498,7 @@ int new_database(char *db_loc, int page_size, int buffer_size) {
 
         // set null values
         for (int i = 0; i < BUFFER->buffer_size; i++) {
-            BUFFER->buffer[i] = malloc(sizeof(struct Page_S));
+            BUFFER->buffer[i] = NULL;
         }
 
         BUFFER->page_count = 0;
