@@ -280,6 +280,7 @@ int create_page(int table_id, int page_index) {
     // increment the total page count
     BUFFER->page_count++;
 
+    freeTable(table);
     return EXIT_SUCCESS;
 }
 
