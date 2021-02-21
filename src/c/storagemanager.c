@@ -302,19 +302,19 @@ Page read_page_from_disk(int page_id){
             for(int j = 0; j < table.data_types_size; j++){
                 switch(table.data_types[j]){
                     case 0:
-                        fread(&page->records[i][j].i, sizeof(int), 1, file);
+                        fread(&page->records[i][j].i, sizeof(union record_item), 1, file);
                         break;
                     case 1:
-                        fread(&page->records[i][j].d, sizeof(double), 1, file);
+                        fread(&page->records[i][j].d, sizeof(union record_item), 1, file);
                         break;
                     case 2:
-                        fread(&page->records[i][j].b, sizeof(bool), 1, file);
+                        fread(&page->records[i][j].b, sizeof(union record_item), 1, file);
                         break;
                     case 3:
-                        fread(page->records[i][j].c, sizeof(char)*255, 1, file);
+                        fread(page->records[i][j].c, sizeof(union record_item), 1, file);
                         break;
                     case 4:
-                        fread(page->records[i][j].v, sizeof(char)*255, 1, file);
+                        fread(page->records[i][j].v, sizeof(union record_item), 1, file);
                         break;
                 }
             }
