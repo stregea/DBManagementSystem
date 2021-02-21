@@ -213,6 +213,9 @@ void write_page_to_disk(Page page) {
         // write page id
         fwrite(&page->page_id, sizeof(int), 1, file);
 
+        // write the id of the next page.
+        fwrite(&page->next_page_id, sizeof(int), 1, file);
+
         // write the total number of records
         fwrite(&page->num_records, sizeof(size_t), 1, file);
 
@@ -221,8 +224,6 @@ void write_page_to_disk(Page page) {
 
         // write all the records to the page.
         Table table = getTable(page->table_id, database_path);
-
-        size_t page_size = BUFFER->page_size / ((sizeof(union record_item)) * table.data_types_size);
 
         for(int i = 0; i < page->num_records; i++){
             for(int j = 0; j < table.data_types_size; j++){
@@ -246,7 +247,6 @@ void write_page_to_disk(Page page) {
                 }
             }
         }
-//        fwrite(page->records, sizeof(union record_item)*BUFFER->page_size, page->num_records, file);
 
         freeTable(table);
         fclose(file);
@@ -272,7 +272,7 @@ Page read_page_from_disk(int page_id){
     strcpy(page_path, database_path);
     strcat(page_path, page_file);
 
-    FILE *file = fopen(page_path, "wb");
+    FILE *file = fopen(page_path, "rb");
 
     if(file != NULL){
         // read the table id
@@ -280,6 +280,9 @@ Page read_page_from_disk(int page_id){
 
         // read the page id
         fread(&page->page_id, sizeof(int), 1, file);
+
+        // read the id of the next page.
+        fread(&page->next_page_id, sizeof(int), 1, file);
 
         // read the total number of records
         fread(&page->num_records, sizeof(size_t), 1, file);
@@ -292,8 +295,28 @@ Page read_page_from_disk(int page_id){
         page->records = malloc(BUFFER->page_size);
 
         // read in the records.
-        fread(page->records, BUFFER->page_size / ((sizeof(union record_item)) * table.data_types_size), page->num_records, file);
+        for(int i = 0; i < page->num_records; i++){
+            for(int j = 0; j < table.data_types_size; j++){
 
+                switch(table.data_types[j]){
+                    case 0:
+                        fread(&page->records[i][j].i, sizeof(int), 1, file);
+                        break;
+                    case 1:
+                        fread(&page->records[i][j].d, sizeof(double), 1, file);
+                        break;
+                    case 2:
+                        fread(&page->records[i][j].b, sizeof(bool), 1, file);
+                        break;
+                    case 3:
+                        fread(page->records[i][j].c, sizeof(char)*255, 1, file);
+                        break;
+                    case 4:
+                        fread(page->records[i][j].v, sizeof(char)*255, 1, file);
+                        break;
+                }
+            }
+        }
         freeTable(table);
         fclose(file);
     }else{
@@ -412,10 +435,10 @@ Page load_page(int page_id) {
     }
 
     //TODO read from memory if not in buffer
+    page = read_page_from_disk(page_id);
 
     return page;
 
-    page = read_page_from_disk(page_id);
 }
 
 /**
@@ -1315,6 +1338,8 @@ int terminate_database() {
     result = purge_buffer();
 
     Page test = read_page_from_disk(2);
+//    Page test2 = read_page_from_disk(1);
+//    Page test3 = read_page_from_disk(0);
     // write buffer info to disk
     char *buffer_file = BUFFER_FILE;
     result = write_buffer_to_disk(buffer_file, BUFFER); // breaks valgrind
