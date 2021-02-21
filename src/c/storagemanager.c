@@ -895,8 +895,63 @@ int insert_record(int table_id, union record_item *record) {
  * @return 0 if successfully updated, -1 otherwise
  */
 int update_record(int table_id, union record_item *record) {
-    int result = EXIT_SUCCESS;
-    return result;
+
+    Table table = getTable(table_id, BUFFER->db_location);
+
+    if (table.page_ids_size <= 0) {
+        // Can't update a record in a table with no pages
+        return -1;
+    }
+
+    Page current_page = load_page(table.page_ids[0]);
+
+    while (current_page != NULL) {
+
+        for (int i = 0; i < current_page->num_records; i++) {
+            int comparison = compare(table, record, current_page->records[i]);
+
+            if (comparison == 0) {
+                union record_item *updating = current_page->records[i];
+                for (int j = 0; j < table.data_types_size; j++) {
+                    switch (table.data_types[j]) {
+                        case 0:
+                            if (record[j].i != updating[j].i) {
+                                updating[j].i = record[j].i;
+                            }
+                            break;
+                        case 1:
+                            if (record[j].d != updating[j].d) {
+                                updating[j].d = record[j].d;
+                                printf("double value for entry %d in page %d is now %g\n", i, current_page->page_id, current_page->records[i][2].d);
+                            }
+                            break;
+                        case 2:
+                            if (record[j].b != updating[j].b) {
+                                updating[j].b = record[j].b;
+                            }
+                            break;
+                        case 3:
+                            if (strcmp(record[j].c, updating[j].c) != 0) {
+                                strncpy(updating[j].c, record[j].c, sizeof(union record_item));
+                            }
+                            break;
+                        case 4:
+                            if (strcmp(record[j].v, updating[j].v) != 0) {
+                                strncpy(updating[j].v, record[j].v, sizeof(union record_item));
+                            }
+                            break;
+                        default:
+                            return -1;
+                    }
+                }
+                return 0;
+            }
+        }
+
+        current_page = current_page->nextPage;
+    }
+
+    return -1;
 }
 
 /*
@@ -945,6 +1000,7 @@ int remove_record(int table_id, union record_item *key_values) {
                         if (strcmp(current_key[j].v, key_values[j].v) != 0) matches = false;
                         break;
                     default:
+                        free(current_key);
                         return -1;
                 }
             }
@@ -966,13 +1022,14 @@ int remove_record(int table_id, union record_item *key_values) {
                 memset(current_page->records[current_page->num_records - 1], 0,  sizeof(union record_item));
                 current_page->num_records = current_page->num_records - 1;
                 printf("page %d now has %d records\n", current_page->page_id, current_page->num_records);
+                free(current_key);
                 return 0;
             }
+            free(current_key);
         }
 
         current_page = current_page->nextPage;
     }
-
     return -1;
 }
 
