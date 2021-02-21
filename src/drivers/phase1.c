@@ -46,6 +46,7 @@ int main(int argc, char * argv[]){
     union record_item person_4[] = { {.c = "Paul"}, {.i = 26}, {.d = 180.20} };
     union record_item person_5[] = { {.c = "Bob"}, {.i = 28}, {.d = 180.20} };
     union record_item person_6[] = { {.c = "Bob"}, {.i = 31}, {.d = 168.23} };
+    union record_item person_7[] = { {.c = "Bob"}, {.i = 31}, {.d = 169.23} };
 
     insert_record(table_id, person_2);
     insert_record(table_id, person_1);
@@ -90,6 +91,10 @@ int main(int argc, char * argv[]){
     result = remove_record(table_id, key1);
 
     printf("remove_record when record has been removed: %d\n\n", result);
+
+    result = update_record(table_id, person_7);
+
+    printf("update_record to give bob a better double: %d\n\n", result);
 
     free(*pointer);
     free(*point);
