@@ -64,8 +64,8 @@ int main(int argc, char * argv[]){
    // free(pointer);
 
     terminate_database(); // write_buffer_to_disk() crashes on linux
-    restart_database(databasePath);
-    terminate_database();
+   // restart_database(databasePath);
+    //:terminate_database();
     printf("\nHideous Jimmies!!\n");
     return EXIT_SUCCESS;
 }
