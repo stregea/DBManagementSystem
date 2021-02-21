@@ -115,46 +115,59 @@ int compare(Table table, union record_item *row1, union record_item *row2) {
     // index through both keys then perform the selected operation to check.
     for (int i = 0; i < table.key_indices_size; i++) {
         printf("comparing keys: %d\n", table.key_indices[i]);
+
+        int location = -1;
+        // find where the desired data type is in the row
+        for (int j = 0; j < table.data_types_size; j++) {
+             if (table.data_types[j] == table.key_indices[i]) {
+                 location = j;
+                 break;
+             }
+        }
+        if (location < 0) {
+            // Desired primary key attribute does not exist in domain for table
+            return -1;
+        }
         switch (table.key_indices[i]) {
             case 0: // integer comparison
-                if (row1[i].i < row2[i].i) {
+                if (row1[location].i < row2[location].i) {
                     return -1;
-                } else if (row1[i].i == row2[i].i) {
+                } else if (row1[location].i == row2[location].i) {
                     break;
                 } else {
                     return 1;
                 }
             case 1: // double comparison
-                if (row1[i].d < row2[i].d) {
+                if (row1[location].d < row2[location].d) {
                     return -1;
-                } else if (row1[i].d == row2[i].d) {
+                } else if (row1[location].d == row2[location].d) {
                     break;
                 } else {
                     return 1;
                 }
             case 2: // boolean comparison
                 // booleans can only be true or false, but false (0) is less than true (1)
-                if (row1[i].b < row2[i].b) {
+                if (row1[location].b < row2[location].b) {
                     return -1;
-                } else if (row1[i].b == row2[i].b) {
+                } else if (row1[location].b == row2[location].b) {
                     break;
                 } else {
                     return 1;
                 }
             case 3: // char comparison
                     // check if < or > than 0
-                printf("row1: %s, row2: %s\n", row1[i].c, row2[i].c);
-                if (strcmp(row1[i].c, row2[i].c) < 0) {
+                printf("row1: %s, row2: %s\n", row1[location].c, row2[location].c);
+                if (strcmp(row1[location].c, row2[location].c) < 0) {
                     return -1;
-                } else if (strcmp(row1[i].c, row2[i].c) == 0) {
+                } else if (strcmp(row1[location].c, row2[location].c) == 0) {
                     break;
                 } else {
                     return 1;
                 }
             case 4: // varchar comparison
-                if (strcmp(row1[i].v, row2[i].v) < 0) {
+                if (strcmp(row1[location].v, row2[location].v) < 0) {
                     return -1;
-                } else if (strcmp(row1[i].v, row2[i].v) == 0) {
+                } else if (strcmp(row1[location].v, row2[location].v) == 0) {
                     break;
                 } else {
                     return 1;

@@ -36,7 +36,7 @@ int main(int argc, char * argv[]){
     int data_types_size = 3;
     int data_types[] = {3, 0, 1};
     int key_indices_size = 2;
-    int key_indices[] = {3, 0};
+    int key_indices[] = {1, 3};
     int table_id = add_table(data_types, key_indices, data_types_size, key_indices_size);
 
     // table(name, age, weight)
