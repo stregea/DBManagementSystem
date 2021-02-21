@@ -159,15 +159,9 @@ void freeStore(DBStore store){
 }
 
 void freeTable(Table table){
-    if(table.data_types != NULL){
-        free(table.data_types);
-    }
-    if(table.key_indices != NULL){
-        free(table.key_indices);
-    }
-    if(table.page_ids != NULL){
-        free(table.page_ids);
-    }
+    free(table.data_types);
+    free(table.key_indices);
+    free(table.page_ids);
 }
 
 Table getTable(int table_id, char * database_path){
@@ -344,6 +338,6 @@ int addPageIdToTable(int table_id, int page_id, char * database_path, int new_pa
 
     // write to disk
     writeTable(table, table_id, database_path);
-    freeTable(table);
+//    freeTable(table);
     return 0;
 }
