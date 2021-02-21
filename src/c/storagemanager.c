@@ -661,11 +661,14 @@ int insert_record(int table_id, union record_item *record) {
             union record_item *temp_key = get_primary_key(current_page->records[i], table);
 
             int compare = compare_keys(table, insert_key, temp_key);
+            free(temp_key);
 
             printf("comparison: %d\n", compare);
             // if less, move on
             if (compare == 0) {
                 printf("equal, not inserting\n\n");
+                free(insert_key);
+                freePage(current_page);
                 return -1;
             }
             // if more
@@ -686,10 +689,11 @@ int insert_record(int table_id, union record_item *record) {
                     current_page->records[i] = record;
                     current_page->num_records++;
                 }
+                free(insert_key);
+                freePage(current_page);
                 return 0;
             }
-            // else move on to comparing based on next index in primary key
-            free(temp_key);
+
         }
         // if reached here, did not insert yet and did not find existing row that matched
 
@@ -711,6 +715,8 @@ int insert_record(int table_id, union record_item *record) {
                 current_page->records[current_page->num_records] = record;
                 current_page->num_records = current_page->num_records + 1;
             }
+            free(insert_key);
+            freePage(current_page);
             return 0;
         }
     }

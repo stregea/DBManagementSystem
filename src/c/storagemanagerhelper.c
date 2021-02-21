@@ -192,6 +192,7 @@ Table getTable(int table_id, char * database_path){
     fread(table.page_ids, sizeof(int), table.page_ids_size, table_file);
 
     // free all dynamic memory
+    fclose(table_file);
     free(table_path);
     free(table_id_string);
 
