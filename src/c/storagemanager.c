@@ -466,7 +466,7 @@ Page load_page(int page_id) {
  */
 int write_buffer_to_disk(char *filename, Buffer buffer) {
     int result = EXIT_SUCCESS;
-    char *fileLocation = malloc(sizeof(char *) * strlen(buffer->db_location) + 1);
+    char *fileLocation = malloc(sizeof(char *) * strlen(buffer->db_location) + 3);
 
     copyStringForFilePath(fileLocation, buffer->db_location);
     strcat(fileLocation, filename);

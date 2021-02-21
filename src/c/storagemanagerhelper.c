@@ -219,7 +219,7 @@ int writeTable(Table table, int table_id, char * database_path){
     char *table_id_string = appendIntToString("table_", table_id); // this was just used to test we will find this later
     
     // refactor into function
-    char *table_path = malloc(strlen(database_path) + strlen(table_id_string) + 1);
+    char *table_path = malloc(strlen(database_path) + strlen(table_id_string) + 3);
     strcpy(table_path, database_path);
     if(strcmp( (table_path + strlen(table_path) - strlen(FILE_SEPARATOR)) ,  FILE_SEPARATOR) != 0){
         strcat(table_path, FILE_SEPARATOR); // need to test this on windows
