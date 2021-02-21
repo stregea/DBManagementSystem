@@ -61,9 +61,11 @@ int main(int argc, char * argv[]){
 
     printf("get_record: %d\n", result);
 
-    free(pointer);
+   // free(pointer);
 
-   // terminate_database();
+    terminate_database(); // write_buffer_to_disk() crashes on linux
+    //restart_database(databasePath);
+    //terminate_database();
     printf("\nHideous Jimmies!!\n");
     return EXIT_SUCCESS;
 }

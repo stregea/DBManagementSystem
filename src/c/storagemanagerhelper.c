@@ -158,6 +158,12 @@ void freeStore(DBStore store){
     free(store);
 }
 
+void freeTable(Table table){
+    free(table.data_types);
+    free(table.key_indices);
+    free(table.page_ids);
+}
+
 Table getTable(int table_id, char * database_path){
 
     // convert int table_id to string for file path
@@ -192,6 +198,7 @@ Table getTable(int table_id, char * database_path){
     fread(table.page_ids, sizeof(int), table.page_ids_size, table_file);
 
     // free all dynamic memory
+    fclose(table_file);
     free(table_path);
     free(table_id_string);
 
@@ -324,10 +331,12 @@ int addPageIdToTable(int table_id, int page_id, char * database_path, int new_pa
     }
 
     // may need to reallocate
+    free(table.page_ids);
     table.page_ids = temp;
 
     // write to disk
     writeTable(table, table_id, database_path);
-
+    free(table.data_types);
+    free(table.key_indices);
     return 0;
 }

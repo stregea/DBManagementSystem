@@ -89,6 +89,8 @@ DBStore readDBStore(char * store_loc);
  */
 void freeStore(DBStore store);
 
+void freeTable(Table table);
+
 Table getTable(int table_id, char * database_path);
 
 int writeTable(Table table, int table_id, char * database_path); 
