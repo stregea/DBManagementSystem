@@ -438,8 +438,9 @@ Page load_page(int page_id) {
         }
     }
 
-    //TODO read from memory if not in buffer
-    page = read_page_from_disk(page_id);
+    if(page == NULL){
+        page = read_page_from_disk(page_id);
+    }
 
     return page;
 
@@ -1346,9 +1347,6 @@ int terminate_database() {
     // purge the buffer
     result = purge_buffer();
 
-    Page test = read_page_from_disk(2);
-//    Page test2 = read_page_from_disk(1);
-//    Page test3 = read_page_from_disk(0);
     // write buffer info to disk
     char *buffer_file = BUFFER_FILE;
     result = write_buffer_to_disk(buffer_file, BUFFER); // breaks valgrind
