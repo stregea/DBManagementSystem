@@ -348,7 +348,7 @@ Page load_page(int page_id) {
  */
 int write_buffer_to_disk(char *filename, Buffer buffer) {
     int result = EXIT_SUCCESS;
-    char *fileLocation = malloc(sizeof(char *));
+    char *fileLocation = malloc(sizeof(char *) * strlen(buffer->db_location) + 1);
 
     copyStringForFilePath(fileLocation, buffer->db_location);
     strcat(fileLocation, filename);
@@ -361,6 +361,7 @@ int write_buffer_to_disk(char *filename, Buffer buffer) {
         result = EXIT_FAILURE;
     }
 
+    free(fileLocation);
     return result;
 }
 
@@ -676,6 +677,7 @@ int insert_record(int table_id, union record_item *record) {
             // if equal, stop and don't insert the record
             if (comparison== 0) {
                 printf("equal, not inserting\n\n");
+                freeTable(table);
                 return -1;
             }
             // if more
@@ -699,6 +701,7 @@ int insert_record(int table_id, union record_item *record) {
                     }
                     if (current_page_index < 0) {
                         // should not happen
+                        freeTable(table);
                         return -1;
                     }
 
@@ -1080,7 +1083,7 @@ int terminate_database() {
 
     // write buffer info to disk
     char *buffer_file = BUFFER_FILE;
-  //  result = write_buffer_to_disk(buffer_file, BUFFER); // breaks valgrind
+    result = write_buffer_to_disk(buffer_file, BUFFER); // breaks valgrind
 
     // perform proper memory wipes.
     freeBuffer(BUFFER);
