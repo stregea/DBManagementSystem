@@ -196,14 +196,21 @@ int compare(Table table, union record_item *row1, union record_item *row2) {
  */
 void write_page_to_disk(Page page) {
     char *database_path = malloc(sizeof(char*)*strlen(BUFFER->db_location)+1);
+    strcpy(database_path, BUFFER->db_location);
 
     // create path to the table in the database
     char *page_file = appendIntToString("", page->page_id); // this was just used to test we will find this later
     char *page_path = malloc(sizeof(char *) * (strlen(database_path) + strlen(page_file)));
     strcpy(page_path, database_path);
+    // add a file separator if necessary
+    if(strcmp( (page_path + strlen(page_path) - strlen(FILE_SEPARATOR)) ,  FILE_SEPARATOR) != 0){
+        strcat(page_path, FILE_SEPARATOR); // need to test this on windows
+    }
     strcat(page_path, page_file);
 
     FILE *file = fopen(page_path, "wb");
+
+    printf("writing to file from write_page_to_disk: %s\n", page_path);
 
     if(file != NULL){
         // write table id
@@ -414,6 +421,7 @@ int write_buffer_to_disk(char *filename, Buffer buffer) {
     strcat(fileLocation, filename);
 
     FILE *file = fopen(fileLocation, "wb");
+    printf("writing to file from write_buffer_to_disk: %s\n", fileLocation);
     if (file != NULL) {
         fwrite(buffer, sizeof(struct Buffer_S), 1, file);
         fclose(file);
@@ -1188,6 +1196,8 @@ int clear_table(int table_id) {
 
     FILE *table_file = fopen(table_location, "wb");
 
+    printf("writing to file from clear_table: %s\n", table_location);
+
     if (table_file != NULL) {
         // re-write the Table file.
         fwrite(&table.data_types_size, sizeof(int), 1, table_file);
@@ -1234,8 +1244,11 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
     // create path to the table in the database
     char *table_id_string = appendIntToString("table_", table_id); // this was just used to test we will find this later
     // refactor into function
-    char *table_path = malloc(strlen(database_path) + strlen(table_id_string) + 1);
+    char *table_path = calloc((strlen(database_path) + strlen(table_id_string) + 3), sizeof(char));
     strcpy(table_path, database_path);
+    if(strcmp( (table_path + strlen(table_path) - strlen(FILE_SEPARATOR)) ,  FILE_SEPARATOR) != 0){
+        strcat(table_path, FILE_SEPARATOR); // need to test this on windows
+    }
     strcat(table_path, table_id_string);
 
     // build the struct for the table
@@ -1250,6 +1263,8 @@ int add_table(int *data_types, int *key_indices, int data_types_size, int key_in
     // write the table to disk
     // was storing address of int arrays before not actual data
     FILE *table_file = fopen(table_path, "wb");
+
+    printf("writing to file from add_table: %s\n", table_path);
     if (table_file != NULL) {
         fwrite(&table_content.data_types_size, sizeof(int), 1, table_file);
         fwrite(&table_content.key_indices_size, sizeof(int), 1, table_file);
