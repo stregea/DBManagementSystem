@@ -61,7 +61,7 @@ int main(int argc, char * argv[]){
 
     printf("get_record: %d\n", result);
 
-    free(pointer);
+   // free(pointer);
 
     terminate_database(); // write_buffer_to_disk() crashes on linux
     printf("\nHideous Jimmies!!\n");

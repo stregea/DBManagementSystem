@@ -409,7 +409,6 @@ void freeBuffer(Buffer buffer) {
  * @param page - The page to free.
  */
 void freePage(Page page) {
-    free(page->nextPage);
     free(page->records);
     free(page);
 }
@@ -608,7 +607,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
                         return -1;
                 }
             }
-
+            free(test_values);
             if (matches) {
                 data = &current_page->records[i];
                 return 0;
