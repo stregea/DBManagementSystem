@@ -48,20 +48,20 @@ int main(int argc, char * argv[]){
     union record_item person_6[] = { {.c = "Bob"}, {.i = 31}, {.d = 168.23} };
 
     insert_record(table_id, person_2);
-//    insert_record(table_id, person_1);
-//    insert_record(table_id, person_6);
-//    insert_record(table_id, person_3);
-//    insert_record(table_id, person_4);
-//    insert_record(table_id, person_5);
+    insert_record(table_id, person_1);
+    insert_record(table_id, person_6);
+    insert_record(table_id, person_3);
+    insert_record(table_id, person_4);
+    insert_record(table_id, person_5);
 
-//    union record_item key1[] = {{.d = 180.2}, {.c = "John"}};
-//    union record_item **pointer;
-//
-//    int result = get_record(table_id, key1, pointer);
-//
-//    printf("get_record: %d\n", result);
-//
-//    free(pointer);
+    union record_item key1[] = {{.d = 180.2}, {.c = "John"}};
+    union record_item **pointer;
+
+    int result = get_record(table_id, key1, pointer);
+
+    printf("get_record: %d\n", result);
+
+    free(pointer);
 
     terminate_database(); // write_buffer_to_disk() crashes on linux
     printf("\nHideous Jimmies!!\n");
