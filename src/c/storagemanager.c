@@ -573,7 +573,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
         return -1;
     }
 
-     Page current_page = load_page(table.page_ids[0]);
+    Page current_page = load_page(table.page_ids[0]);
 
     while (current_page != NULL) {
 
@@ -765,6 +765,7 @@ int insert_record(int table_id, union record_item *record) {
                     current_page->records[i] = record;
                     current_page->num_records = current_page->num_records + 1;
                 }
+                freeTable(table);
                 return 0;
             }
             // else move on to comparing based on next index in primary key
@@ -795,6 +796,7 @@ int insert_record(int table_id, union record_item *record) {
                 }
                 if (current_page_index < 0) {
                     // should not happen
+                    freeTable(table);
                     return -1;
                 }
 
@@ -839,9 +841,11 @@ int insert_record(int table_id, union record_item *record) {
                 current_page->records[current_page->num_records] = record;
                 current_page->num_records = current_page->num_records + 1;
             }
+            freeTable(table);
             return 0;
         }
     }
+    freeTable(table);
     return result;
 }
 
