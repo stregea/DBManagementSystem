@@ -129,10 +129,10 @@ int compare(Table table, union record_item *row1, union record_item *row2) {
         int location = -1;
         // find where the desired data type is in the row
         for (int j = 0; j < table.data_types_size; j++) {
-             if (table.data_types[j] == table.key_indices[i]) {
-                 location = j;
-                 break;
-             }
+            if (table.data_types[j] == table.key_indices[i]) {
+                location = j;
+                break;
+            }
         }
         if (location < 0) {
             // Desired primary key attribute does not exist in domain for table
@@ -165,7 +165,7 @@ int compare(Table table, union record_item *row1, union record_item *row2) {
                     return 1;
                 }
             case 3: // char comparison
-                    // check if < or > than 0
+                // check if < or > than 0
                 printf("row1: %s, row2: %s\n", row1[location].c, row2[location].c);
                 if (strcmp(row1[location].c, row2[location].c) < 0) {
                     return -1;
@@ -205,22 +205,26 @@ void write_page_to_disk(Page page) {
 
     FILE *file = fopen(page_path, "wb");
 
-    // write table id
-    fwrite(&page->table_id, sizeof(int), 1, file);
+    if(file != NULL){
+        // write table id
+        fwrite(&page->table_id, sizeof(int), 1, file);
 
-    // write page id
-    fwrite(&page->page_id, sizeof(int), 1, file);
+        // write page id
+        fwrite(&page->page_id, sizeof(int), 1, file);
 
-    // write the total number of records
-    fwrite(&page->num_records, sizeof(size_t), 1, file);
+        // write the total number of records
+        fwrite(&page->num_records, sizeof(size_t), 1, file);
 
-    // write the total number of attrs (5)
-    fwrite(&page->data_types_size, sizeof(size_t), 1, file);
+        // write the total number of attrs (5)
+        fwrite(&page->data_types_size, sizeof(size_t), 1, file);
 
-    // write all the records to the page.
-    fwrite(page->records, sizeof(union record_item), page->num_records, file);
+        // write all the records to the page.
+        fwrite(page->records, sizeof(union record_item), page->num_records, file);
 
-    fclose(file);
+        fclose(file);
+    }
+
+    free(page_path);
     free(page_file);
 }
 
@@ -304,7 +308,7 @@ int create_page(int table_id, int page_index) {
 
     // increment the total page count
     BUFFER->page_count++;
-
+    freeTable(table);
     return newPage->page_id;
 }
 
@@ -345,7 +349,7 @@ Page load_page(int page_id) {
  */
 int write_buffer_to_disk(char *filename, Buffer buffer) {
     int result = EXIT_SUCCESS;
-    char *fileLocation = malloc(sizeof(char *));
+    char *fileLocation = malloc(sizeof(char *) * strlen(buffer->db_location) + 1);
 
     copyStringForFilePath(fileLocation, buffer->db_location);
     strcat(fileLocation, filename);
@@ -358,6 +362,7 @@ int write_buffer_to_disk(char *filename, Buffer buffer) {
         result = EXIT_FAILURE;
     }
 
+    free(fileLocation);
     return result;
 }
 
@@ -370,7 +375,7 @@ int write_buffer_to_disk(char *filename, Buffer buffer) {
 int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer) {
     int result = EXIT_SUCCESS;
     buffer = malloc(sizeof(struct Buffer_S));
-    char *fileLocation = malloc(sizeof(char *));
+    char *fileLocation = malloc(sizeof(char *) * strlen(db_location) + 1);
 
     copyStringForFilePath(fileLocation, db_location);
     strcat(fileLocation, filename);
@@ -383,6 +388,7 @@ int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer) {
         result = EXIT_FAILURE;
     }
 
+    free(fileLocation);
     return result;
 }
 
@@ -393,6 +399,9 @@ int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer) {
 void freeBuffer(Buffer buffer) {
     freeLRUCache(BUFFER->cache);
     free(buffer->db_location);
+    for(int i = 0; i < buffer->buffer_size; i++){
+        free(buffer->buffer[i]);
+    }
     free(buffer->buffer);
     free(buffer);
 }
@@ -402,7 +411,6 @@ void freeBuffer(Buffer buffer) {
  * @param page - The page to free.
  */
 void freePage(Page page) {
-    free(page->nextPage);
     free(page->records);
     free(page);
 }
@@ -491,7 +499,7 @@ int new_database(char *db_loc, int page_size, int buffer_size) {
 
         // set null values
         for (int i = 0; i < BUFFER->buffer_size; i++) {
-            BUFFER->buffer[i] = malloc(sizeof(struct Page_S));
+            BUFFER->buffer[i] = NULL;
         }
 
         BUFFER->page_count = 0;
@@ -595,7 +603,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
         return -1;
     }
 
-     Page current_page = load_page(table.page_ids[0]);
+    Page current_page = load_page(table.page_ids[0]);
 
     while (current_page != NULL) {
 
@@ -631,7 +639,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
                         return -1;
                 }
             }
-
+            free(test_values);
             if (matches) {
                 size_t data_size = sizeof(union record_item) * table.data_types_size;
                 *data = malloc(data_size);
@@ -642,6 +650,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
         current_page = current_page->nextPage;
     }
 
+    freeTable(table);
     // get key_indices from table
     // get array of page id's from table
     // iterate through all the rows
@@ -702,6 +711,7 @@ int insert_record(int table_id, union record_item *record) {
             // if equal, stop and don't insert the record
             if (comparison== 0) {
                 printf("equal, not inserting\n\n");
+                freeTable(table);
                 return -1;
             }
             // if more
@@ -725,13 +735,14 @@ int insert_record(int table_id, union record_item *record) {
                     }
                     if (current_page_index < 0) {
                         // should not happen
+                        freeTable(table);
                         return -1;
                     }
 
                     int new_page_id = create_page(table_id, current_page_index + 1);
 
                     // tables are created with exactly enough space to hold their current page ids
-                    realloc(table.page_ids, (table.page_ids_size + 1) * sizeof(int));
+                    table.page_ids = realloc(table.page_ids, (table.page_ids_size + 1) * sizeof(int));
 
                     for (int j = table.page_ids_size - 1; j > current_page_index; j--) {
                         table.page_ids[j+1] = table.page_ids[j];
@@ -791,6 +802,7 @@ int insert_record(int table_id, union record_item *record) {
                     current_page->records[i] = record;
                     current_page->num_records = current_page->num_records + 1;
                 }
+                freeTable(table);
                 return 0;
             }
             // else move on to comparing based on next index in primary key
@@ -821,13 +833,14 @@ int insert_record(int table_id, union record_item *record) {
                 }
                 if (current_page_index < 0) {
                     // should not happen
+                    freeTable(table);
                     return -1;
                 }
 
                 int new_page_id = create_page(table_id, current_page_index + 1);
 
                 // tables are created with exactly enough space to hold their current page ids
-                realloc(table.page_ids, (table.page_ids_size + 1) * sizeof(int));
+                table.page_ids = realloc(table.page_ids, (table.page_ids_size + 1) * sizeof(int));
 
                 for (int i = table.page_ids_size - 1; i > current_page_index; i--) {
                     table.page_ids[i+1] = table.page_ids[i];
@@ -841,8 +854,8 @@ int insert_record(int table_id, union record_item *record) {
 
                 // copy second half of records over to new page
                 for (int i = half; i < current_page->num_records; i++) {
-                     new_page->records[i - half] = current_page->records[i];
-                     current_page->records[i] = NULL;
+                    new_page->records[i - half] = current_page->records[i];
+                    current_page->records[i] = NULL;
                 }
 
                 // update next page references
@@ -865,9 +878,11 @@ int insert_record(int table_id, union record_item *record) {
                 current_page->records[current_page->num_records] = record;
                 current_page->num_records = current_page->num_records + 1;
             }
+            freeTable(table);
             return 0;
         }
     }
+    freeTable(table);
     return result;
 }
 
@@ -1144,9 +1159,11 @@ int purge_buffer() {
 
     // foreach page in buffer
     for (int i = 0; i < BUFFER->buffer_size; i++) {
-        write_page_to_disk(BUFFER->buffer[i]);
-//        BUFFER->buffer[i] = &(struct Page_S) {}; // null out the index
-        BUFFER->buffer[i] = NULL;
+        if(BUFFER->buffer[i] != NULL){
+            write_page_to_disk(BUFFER->buffer[i]);
+            freePage(BUFFER->buffer[i]);
+            BUFFER->buffer[i] = NULL;
+        }
     }
 
     BUFFER->pages_within_buffer = 0;
@@ -1165,7 +1182,7 @@ int terminate_database() {
 
     // write buffer info to disk
     char *buffer_file = BUFFER_FILE;
-    result = write_buffer_to_disk(buffer_file, BUFFER);
+    result = write_buffer_to_disk(buffer_file, BUFFER); // breaks valgrind
 
     // perform proper memory wipes.
     freeBuffer(BUFFER);

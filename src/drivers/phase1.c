@@ -64,6 +64,7 @@ int main(int argc, char * argv[]){
 
     printf("get_record: %d\n", result);
 
+<<<<<<< HEAD
     printf("string value of record: %s\n\n", (*pointer)[0].c);
 
     // give pointer a valid memory address without any meaningful data
@@ -94,7 +95,9 @@ int main(int argc, char * argv[]){
     free(*pointer);
     free(*point);
 
-   // terminate_database();
+    terminate_database(); // write_buffer_to_disk() crashes on linux
+    //restart_database(databasePath);
+    //terminate_database();
     printf("\nHideous Jimmies!!\n");
     return EXIT_SUCCESS;
 }
