@@ -842,6 +842,8 @@ int insert_record(int table_id, union record_item *record) {
             return 0;
         }
     }
+    freePage(current_page);
+    freeTable(table);
     return result;
 }
 
