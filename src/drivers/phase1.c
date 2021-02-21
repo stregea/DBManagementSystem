@@ -16,8 +16,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#define PAGE_SIZE 10   
-#define BUFFER_SIZE 1
+#define PAGE_SIZE 1536
+#define BUFFER_SIZE 10
 
 
 int main(int argc, char * argv[]){
@@ -28,22 +28,36 @@ int main(int argc, char * argv[]){
     }
 
     char* databasePath = argv[1];
+
+    // create new database
+    create_database(databasePath, PAGE_SIZE, BUFFER_SIZE, false);
     
-    new_database(databasePath, PAGE_SIZE, BUFFER_SIZE);
-    
-    // TESTING TABLE
-    // Table(char[] name, int age, float weight)
+    // add table
     int data_types_size = 3;
     int data_types[] = {3, 0, 1};
-    int key_indices_size = 1;
-    int key_indices[] = {0};
+    int key_indices_size = 2;
+    int key_indices[] = {1, 3};
+    int table_id = add_table(data_types, key_indices, data_types_size, key_indices_size);
 
-    int table_1_id = add_table(data_types, key_indices, data_types_size, key_indices_size);
-    
-    // Since getTable will only be called inside storagemanager.c the db path have the "/"
-    // added to the path because it reference the formatted path in buffer
-    Table t0 = getTable(table_1_id, databasePath);
-        
-    printf("Hideous Jimmies!!\n");
+    // table(name, age, weight)
+    union record_item person_1[] = { {.c = "Bob\0"}, {.i = 31}, {.d = 168.23} };
+    union record_item person_2[] = { {.c = "John\0"}, {.i = 23}, {.d = 180.20} };
+    union record_item person_3[] = { {.c = "George\0"}, {.i = 24}, {.d = 180.20} };
+    union record_item person_4[] = { {.c = "Paul\0"}, {.i = 26}, {.d = 180.20} };
+    union record_item person_5[] = { {.c = "Bob\0"}, {.i = 28}, {.d = 180.20} };
+    union record_item person_6[] = { {.c = "Bob\0"}, {.i = 31}, {.d = 168.23} };
+
+    insert_record(table_id, person_2);
+    insert_record(table_id, person_1);
+    insert_record(table_id, person_6);
+    insert_record(table_id, person_3);
+    insert_record(table_id, person_4);
+    insert_record(table_id, person_5);
+
+
+
+
+   // terminate_database();
+    printf("\nHideous Jimmies!!\n");
     return EXIT_SUCCESS;
 }

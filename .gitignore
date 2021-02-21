@@ -53,3 +53,10 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+.vscode/
+test
+
+# CLion/CMake files
+.idea
+cmake-build-debug
+cmake-build-debug-mingw

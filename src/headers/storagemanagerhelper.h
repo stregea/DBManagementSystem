@@ -12,6 +12,7 @@
 #ifndef storagemanagerhelper_h
 #define storagemanagerhelper_h
 
+#include "../headers/storagemanager.h"
 #include <stdio.h>
 #include <stdbool.h>
 struct DBStore_S{
@@ -54,6 +55,14 @@ char * appendIntToString( char * original, int number );
 bool isProperSize( int page_size, int buffer_size );
 
 /**
+ * Copy a string for a filepath.
+ * Note: This needs to be tested on windows.
+ * @param destination - The location to store the new string.
+ * @param original_str - The original string that is used to check and copy information.
+ */
+void copyStringForFilePath(char* destination, char* original_str);
+
+/**
  * Go to a specified directory and clear its contents but keep the parent directory..
  * @param dir_name - The directory to clear.
  */
@@ -82,5 +91,13 @@ void freeStore(DBStore store);
 
 Table getTable(int table_id, char * database_path);
 
-int addPageIdToTable(int table_id, int page_id, char * database_path);
+int writeTable(Table table, int table_id, char * database_path); 
+
+void printIntArray(int *array, int size);
+
+void printTable(Table table);
+
+void printRecord(union record_item *record, int data_types_size, int * data_types);
+
+int addPageIdToTable(int table_id, int page_id, char * database_path, int new_page_index);
 #endif /* storagemanagerhelper_h */
