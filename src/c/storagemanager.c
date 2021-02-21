@@ -404,19 +404,6 @@ int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer) {
     return result;
 }
 
-/**
- * Free the memory locations the buffer is using.
- * @param buffer - The buffer to free.
- */
-void freeBuffer(Buffer buffer) {
-    freeLRUCache(BUFFER->cache);
-    free(buffer->db_location);
-    for(int i = 0; i < buffer->buffer_size; i++){
-        free(buffer->buffer[i]);
-    }
-    free(buffer->buffer);
-    free(buffer);
-}
 
 /**
  * Free the memory location a page pointer is using.
@@ -426,6 +413,22 @@ void freePage(Page page) {
     free(page->nextPage);
     free(page->records);
     free(page);
+}
+
+/**
+ * Free the memory locations the buffer is using.
+ * @param buffer - The buffer to free.
+ */
+void freeBuffer(Buffer buffer) {
+    freeLRUCache(BUFFER->cache);
+    free(buffer->db_location);
+    for(int i = 0; i < buffer->buffer_size; i++){
+        if(buffer->buffer[i] != NULL){
+            freePage(buffer->buffer[i]);
+        }
+    }
+    free(buffer->buffer);
+    free(buffer);
 }
 
 /*
@@ -978,7 +981,7 @@ int terminate_database() {
 
     // write buffer info to disk
     char *buffer_file = BUFFER_FILE;
-  //  result = write_buffer_to_disk(buffer_file, BUFFER); // breaks valgrind
+    result = write_buffer_to_disk(buffer_file, BUFFER); // breaks valgrind
 
     // perform proper memory wipes.
     freeBuffer(BUFFER);
