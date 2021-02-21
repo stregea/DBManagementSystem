@@ -16,8 +16,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#define PAGE_SIZE 1536
-#define BUFFER_SIZE 10
+#define PAGE_SIZE 4096
+#define BUFFER_SIZE 1
 
 
 int main(int argc, char * argv[]){
@@ -36,35 +36,27 @@ int main(int argc, char * argv[]){
     int data_types_size = 3;
     int data_types[] = {3, 0, 1};
     int key_indices_size = 2;
-    int key_indices[] = {1, 3};
+    int key_indices[] = {0, 1};
     int table_id = add_table(data_types, key_indices, data_types_size, key_indices_size);
 
     // table(name, age, weight)
     union record_item person_1[] = { {.c = "Bob"}, {.i = 31}, {.d = 168.23} };
+    union record_item person_6[] = { {.c = "Bob"}, {.i = 31}, {.d = 168.23} };
     union record_item person_2[] = { {.c = "John"}, {.i = 23}, {.d = 180.20} };
     union record_item person_3[] = { {.c = "George"}, {.i = 24}, {.d = 180.20} };
     union record_item person_4[] = { {.c = "Paul"}, {.i = 26}, {.d = 180.20} };
     union record_item person_5[] = { {.c = "Bob"}, {.i = 28}, {.d = 180.20} };
-    union record_item person_6[] = { {.c = "Bob"}, {.i = 31}, {.d = 168.23} };
 
-    insert_record(table_id, person_2);
+    //insert_record(table_id, person_2);
     insert_record(table_id, person_1);
-    insert_record(table_id, person_6);
+    //insert_record(table_id, person_6);
     insert_record(table_id, person_3);
-    insert_record(table_id, person_4);
+    //insert_record(table_id, person_4);
     insert_record(table_id, person_5);
 
-    union record_item key1[] = {{.d = 180.2}, {.c = "John"}};
-    union record_item **pointer;
+    
 
-    int result = get_record(table_id, key1, pointer);
 
-    printf("get_record: %d\n", result);
-
-   // free(pointer);
-
-    terminate_database(); // write_buffer_to_disk() crashes on linux
-    //restart_database(databasePath);
    // terminate_database();
     printf("\nHideous Jimmies!!\n");
     return EXIT_SUCCESS;
