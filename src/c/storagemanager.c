@@ -105,7 +105,7 @@ union record_item *get_primary_key(union record_item *row, Table table) {
 
         primary_key[i] = row[location];
     }
-    printf("returning primary key: [%g, %s]\n", primary_key[0].d, primary_key[1].c);
+    printf("returning primary key: [%s, %d]\n", primary_key[0].c, primary_key[1].i);
     return primary_key;
 }
 
@@ -600,6 +600,8 @@ int get_record(int table_id, union record_item *key_values, union record_item **
     while (current_page != NULL) {
 
         for (int i = 0; i < current_page->num_records; i++) {
+
+            printf("comparing against record %d\n", i);
             union record_item *test_values = get_primary_key(current_page->records[i], table);
 
             bool matches = true;
@@ -847,7 +849,7 @@ int insert_record(int table_id, union record_item *record) {
                 new_page->nextPage = current_page->nextPage;
                 current_page->nextPage = new_page;
 
-                printf("appending record to page %d\n\n", new_page->page_id);
+                printf("appending record to page %d: [%s, %u, %g]\n\n", new_page->page_id, record[0].c, record[1].i, record[2].d);
 
                 // add new record to end of new page
                 new_page->records[current_page->num_records - half] = record;
@@ -890,8 +892,73 @@ int update_record(int table_id, union record_item *record) {
  * @return 0 if successfully removed, -1 otherwise
  */
 int remove_record(int table_id, union record_item *key_values) {
-    int result = EXIT_SUCCESS;
-    return result;
+    Table table = getTable(table_id, BUFFER->db_location);
+
+    if (table.page_ids_size <= 0) {
+        // can't remove from a table with no records
+        return -1;
+    }
+
+    Page current_page = load_page(table.page_ids[0]);
+
+    while (current_page != NULL) {
+
+        for (int i = 0; i < current_page->num_records; i++) {
+            union record_item *current_key = get_primary_key(current_page->records[i], table);
+
+            bool matches = true;
+
+            for (int j = 0; j < table.key_indices_size; j++) {
+                switch (table.key_indices[i]) {
+                    case 0:
+                        if (current_key[j].i != key_values[j].i) matches = false;
+                        break;
+                    case 1:
+                        // double
+                        if (current_key[j].d != key_values[j].d) matches = false;
+                        break;
+                    case 2:
+                        // bool
+                        if (current_key[j].b != key_values[j].b) matches = false;
+                        break;
+                    case 3:
+                        // char
+                        if (strcmp(current_key[j].c, key_values[j].c) != 0) matches = false;
+                        break;
+                    case 4:
+                        // varchar
+                        if (strcmp(current_key[j].v, key_values[j].v) != 0) matches = false;
+                        break;
+                    default:
+                        return -1;
+                }
+            }
+
+            if (matches) {
+                // zero out record
+                printf("removing record %d from page %d\n", i, current_page->page_id);
+
+                memset(current_page->records[i], 0, table.data_types_size * sizeof(union record_item));
+
+                // shift all other records over when necessary
+                for (int j = i; j < current_page->num_records - 1; j++) {
+                    for (int k = 0; k < table.data_types_size; k++) {
+                        current_page->records[j][k] = current_page->records[j+1][k];
+                    }
+                }
+
+                // zero out last element to avoid duplicates (won't be accessible, just for safety)
+                memset(current_page->records[current_page->num_records - 1], 0,  sizeof(union record_item));
+                current_page->num_records = current_page->num_records - 1;
+                printf("page %d now has %d records\n", current_page->page_id, current_page->num_records);
+                return 0;
+            }
+        }
+
+        current_page = current_page->nextPage;
+    }
+
+    return -1;
 }
 
 
