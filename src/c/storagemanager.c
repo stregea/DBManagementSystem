@@ -334,6 +334,7 @@ Page load_page(int page_id) {
     //call read_page
     //add page to buffer
     //update LRU
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -519,13 +520,41 @@ int new_database(char *db_loc, int page_size, int buffer_size) {
  * @return the number of records in the output, -1 upon error
  */
 int get_records(int table_id, union record_item ***table) {
-    int result = EXIT_SUCCESS;
+
+    Table table_struct = getTable(table_id, BUFFER->db_location);
+    Page current_page = load_page(table_struct.page_ids[0]);
+
+    int total_records = 0;
+    union record_item ** grid = NULL;
+
+    while (current_page != NULL) {
+
+        if (grid == NULL) {
+            grid = malloc(current_page->num_records * sizeof(union record_item));
+        } else {
+            // Separate branch is needed to use realloc instead
+            grid = realloc(grid, (total_records + current_page->num_records) * (sizeof(union record_item) * table_struct.data_types_size));
+        }
+
+        for (int i = total_records; i < current_page->num_records + total_records; i++) {
+            grid[i] = current_page->records[i-total_records];
+        }
+
+        total_records = total_records + current_page->num_records;
+
+        current_page = current_page->nextPage;
+    }
+
+    if (grid != NULL) {
+        *table = grid;
+        return total_records;
+    }
     // get table by searching through buffer and grabbing the new page if not found
     // get array of page id's
     // calculate total number of rows
     // cols = 5
     // iterate through all pages, storing each row into table array.
-    return result;
+    return -1;
 }
 
 /*
@@ -602,7 +631,9 @@ int get_record(int table_id, union record_item *key_values, union record_item **
             }
 
             if (matches) {
-                data = &current_page->records[i];
+                size_t data_size = sizeof(union record_item) * table.data_types_size;
+                *data = malloc(data_size);
+                memcpy(*data, current_page->records[i], data_size);
                 return 0;
             }
         }
