@@ -1171,8 +1171,8 @@ int remove_record(int table_id, union record_item *key_values) {
                         if (strcmp(current_key[j].v, key_values[j].v) != 0) matches = false;
                         break;
                     default:
-                        free(current_key);
                         freeTable(table);
+                        free(current_key);
                         return -1;
                 }
             }
@@ -1194,8 +1194,9 @@ int remove_record(int table_id, union record_item *key_values) {
                 memset(current_page->records[current_page->num_records - 1], 0,  sizeof(union record_item));
                 current_page->num_records = current_page->num_records - 1;
                 printf("page %d now has %d records\n", current_page->page_id, current_page->num_records);
-                free(current_key);
+              
                 freeTable(table);
+                free(current_key);
                 return 0;
             }
             free(current_key);
