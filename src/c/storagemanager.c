@@ -1251,7 +1251,7 @@ int drop_table(int table_id) {
     }
 
     // delete the table.
-    char *table_location = malloc((sizeof(char *)));
+    char *table_location = malloc(sizeof(char *)*strlen(db_location)+1);
     strcpy(table_location, db_location);
 
     // build the file location
