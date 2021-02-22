@@ -100,6 +100,9 @@ int main(int argc, char * argv[]){
     free(*point);
     free(x);
 
+
+    clear_table(0);
+    drop_table(0);
     terminate_database(); // write_buffer_to_disk() crashes on linux
     //restart_database(databasePath);
     //terminate_database();
