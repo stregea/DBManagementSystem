@@ -680,6 +680,7 @@ int get_records(int table_id, union record_item ***table) {
 
     if (grid != NULL) {
         *table = grid;
+        freeTable(table_struct);
         return total_records;
     }
     // get table by searching through buffer and grabbing the new page if not found
@@ -687,6 +688,7 @@ int get_records(int table_id, union record_item ***table) {
     // calculate total number of rows
     // cols = 5
     // iterate through all pages, storing each row into table array.
+    freeTable(table_struct);
     return -1;
 }
 
@@ -1051,6 +1053,7 @@ int update_record(int table_id, union record_item *record) {
 
     if (table.page_ids_size <= 0) {
         // Can't update a record in a table with no pages
+        freeTable(table);
         return -1;
     }
 
@@ -1119,6 +1122,7 @@ int remove_record(int table_id, union record_item *key_values) {
 
     if (table.page_ids_size <= 0) {
         // can't remove from a table with no records
+        freeTable(table);
         return -1;
     }
 
@@ -1156,6 +1160,7 @@ int remove_record(int table_id, union record_item *key_values) {
                         break;
                     default:
                         free(current_key);
+                        freeTable(table);
                         return -1;
                 }
             }
@@ -1178,6 +1183,7 @@ int remove_record(int table_id, union record_item *key_values) {
                 current_page->num_records = current_page->num_records - 1;
                 printf("page %d now has %d records\n", current_page->page_id, current_page->num_records);
                 free(current_key);
+                freeTable(table);
                 return 0;
             }
             free(current_key);
@@ -1185,6 +1191,7 @@ int remove_record(int table_id, union record_item *key_values) {
 
         current_page = load_page(current_page->next_page_id);
     }
+    freeTable(table);
     return -1;
 }
 
