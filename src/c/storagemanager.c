@@ -438,26 +438,24 @@ Page load_page(int page_id) {
     for (int i = 0; i < BUFFER->pages_within_buffer; i++) {
         //printf("checking page id: %d\n", BUFFER->buffer[i]->page_id);
         //printf("looking for page id: %d\n", page_id);
-        if (BUFFER->buffer[i]->page_id == page_id) {
-            page = BUFFER->buffer[i];
-            break;
-            //referencePage(BUFFER->cache, i);
+        if (BUFFER->buffer[i] != NULL) {
+            if (BUFFER->buffer[i]->page_id == page_id) {
+                page = BUFFER->buffer[i];
+                break;
+                //referencePage(BUFFER->cache, i);
+            }
         }
     }
 
     if (page == NULL) {
         printf("page %d not in buffer, reading from disk\n", page_id);
         page = read_page_from_disk(page_id);
-
-        for(int i = 0; i < page->num_records; i++){
-            for(int j = 0; j < page->data_types_size; j++){
-//                print
-            }
-        }
-        //add_page_to_buffer(page);
+        add_page_to_buffer(page);
     }
 
-    referencePage(BUFFER->cache, get_buffer_index(page_id));
+    if (page != NULL) {
+        referencePage(BUFFER->cache, get_buffer_index(page_id));
+    }
 
     return page;
 }

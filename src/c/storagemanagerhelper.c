@@ -166,9 +166,6 @@ void freeTable(Table table){
     if(table.key_indices != NULL){
         free(table.key_indices);
     }
-    if(table.key_indices != NULL){
-        free(table.page_ids);
-    }
 }
 
 Table getTable(int table_id, char * database_path){
