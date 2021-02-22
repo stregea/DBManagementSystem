@@ -536,7 +536,7 @@ void freeBuffer(Buffer buffer) {
  */
 void freePage(Page page) {
     Table table = getTable(page->table_id, BUFFER->db_location);
-    for(int i = 0; i < page->num_records; i++){
+    for(int i = 0; i < 2; i++){
         free(page->records[i]);
     }
     free(page->records);
