@@ -514,6 +514,22 @@ int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer) {
     free(fileLocation);
     return result;
 }
+
+/**
+ * Free the memory locations the buffer is using.
+ * @param buffer - The buffer to free.
+ */
+void freeBuffer(Buffer buffer) {
+    freeLRUCache(BUFFER->cache);
+    free(buffer->db_location);
+    for(int i = 0; i < 6; i++){
+        free(buffer->buffer[i]);
+
+    }
+    free(buffer->buffer);
+    free(buffer);
+}
+
 /**
  * Free the memory location a page pointer is using.
  * @param page - The page to free.
@@ -526,22 +542,6 @@ void freePage(Page page) {
     free(page->records);
     free(page);
     freeTable(table);
-}
-
-/**
- * Free the memory locations the buffer is using.
- * @param buffer - The buffer to free.
- */
-void freeBuffer(Buffer buffer) {
-    freeLRUCache(BUFFER->cache);
-    free(buffer->db_location);
-    for(int i = 0; i < buffer->buffer_size; i++){
-        if(buffer->buffer[i] != NULL){
-            freePage(buffer->buffer[i]);
-        }
-    }
-    free(buffer->buffer);
-    free(buffer);
 }
 
 /*
@@ -1395,7 +1395,7 @@ int purge_buffer() {
     int result = EXIT_SUCCESS;
 
     // foreach page in buffer
-    for (int i = 0; i < BUFFER->pages_within_buffer; i++) {
+    for (int i = 0; i < 6; i++) {
         if(BUFFER->buffer[i] != NULL){
             write_page_to_disk(BUFFER->buffer[i]);
             freePage(BUFFER->buffer[i]);
