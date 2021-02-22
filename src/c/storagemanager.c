@@ -1097,16 +1097,18 @@ int update_record(int table_id, union record_item *record) {
                             }
                             break;
                         default:
+                            freeTable(table);
                             return -1;
                     }
                 }
+                freeTable(table);
                 return 0;
             }
         }
 
         current_page = load_page(current_page->next_page_id);
     }
-
+    freeTable(table);
     return -1;
 }
 
