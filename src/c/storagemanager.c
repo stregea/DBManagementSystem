@@ -536,7 +536,7 @@ void freeBuffer(Buffer buffer) {
  */
 void freePage(Page page) {
     Table table = getTable(page->table_id, BUFFER->db_location);
-    for(int i = 0; i < 2; i++){
+    for(int i = 0; i < page->num_records; i++){
         free(page->records[i]);
     }
     free(page->records);
@@ -940,7 +940,7 @@ int insert_record(int table_id, union record_item *record) {
                     }
 
                     // update number of records for pages
-                    new_page->num_records = current_page->num_records - half;
+                    new_page->num_records = current_page->num_records - half - 1;
                     current_page->num_records = half;
 
                     printf("num_records: %zu\n", adding_to->num_records);
