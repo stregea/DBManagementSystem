@@ -2,6 +2,13 @@
 This project is the semester-long project required for CSCI-421 @ Rochester Institute of Technology.<br/> 
 The primary objective of this project is to implement a Database Management System.
 
+# Compilation
+To create the executable move to the DBManagementSystem directory and enter on commandline: gcc -o name_of_exe src/drivers/phase1.c src/c/*c
+
+# Run Program
+Once the executable is created enter: ./name_of_exe  /<DatabasePath> 
+to run the program.
+
 # Project Details 
 The project will be broken into 4 phases, and a group evaluation. Each phase will build
 on the prior phase.<br />
@@ -38,13 +45,6 @@ can be found in the myCourses content section for the project in a pdf named pha
 Your solution must be zipped, named phase5.zip, and placed in the Phase5 assignment box
 in myCourses. No late or emailed submissions will be accepted. Only one group member is
 required to submit. Only the last submission is graded.
-
-# Compilation
-To create the executable move to the DBManagementSystem directory and enter on commandline: gcc -o name_of_exe src/drivers/phase1.c src/c/*.c
-
-# Run Program
-Once the executable is created enter: ./name_of_exe  /<DatabasePath> 
-to run the program.
 
 # Authors
 Kyle Collins<br/>
