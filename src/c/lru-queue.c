@@ -19,7 +19,7 @@
  */
 QNode* createNode(int buffer_index){
     // Allocate memory for the node
-    QNode* node = malloc(sizeof(struct QNode));
+    QNode* node = calloc(1, sizeof(struct QNode));
     
     // Assign the node to the corresponding page id.
     node->buffer_index = buffer_index;
@@ -37,7 +37,7 @@ QNode* createNode(int buffer_index){
  */
 Queue* createQueue(int size){
     // Allocate memory for the queue
-    Queue* queue = malloc(sizeof(struct Queue));
+    Queue* queue = calloc(1, sizeof(struct Queue));
     
     // initialize the queue
     queue->size = size;
@@ -55,11 +55,11 @@ Queue* createQueue(int size){
  */
 Hash* createHash(int capacity){
     // Allocate memory for the hash
-    Hash* hash = malloc(sizeof(Hash));
+    Hash* hash = calloc(1, sizeof(Hash));
     
     hash->capacity = capacity;
     
-    hash->array = malloc(hash->capacity * sizeof(QNode));
+    hash->array = calloc(hash->capacity, sizeof(QNode));
     
     for(int i = 0; i < hash->capacity; i++){
         hash->array[i] = NULL;
@@ -74,7 +74,7 @@ Hash* createHash(int capacity){
  * @return a cache pointer.
  */
 LRU_Cache createCache(int size){
-    LRU_Cache cache = malloc(sizeof(struct Cache_Struct));
+    LRU_Cache cache = calloc(1, sizeof(struct Cache_Struct));
     cache->queue = createQueue(size);
     cache->hash = createHash(size);
     return cache;
