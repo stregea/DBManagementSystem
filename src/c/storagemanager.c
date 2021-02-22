@@ -495,7 +495,8 @@ int write_buffer_to_disk(char *filename, Buffer buffer) {
  * @param buffer - The Buffer to populate.
  * @return EXIT_SUCCESS if able to populate, EXIT_FAILURE otherwise.
  */
-int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer) {
+Buffer read_buffer_from_disk(char *db_location, char *filename) {
+    Buffer buffer;
     int result = EXIT_SUCCESS;
     buffer = malloc(sizeof(struct Buffer_S));
     char *fileLocation = malloc(sizeof(char *) * strlen(db_location) + 1);
@@ -513,8 +514,9 @@ int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer) {
     }
 
     free(fileLocation);
-    return result;
+    return buffer;
 }
+
 
 /**
  * Free the memory locations the buffer is using.
@@ -587,10 +589,15 @@ int restart_database(char *db_loc) {
     // re-populate buffer with pre-existing info.
     // The buffer file is created when terminate_database() is called.
     char *buffer_file = BUFFER_FILE;
-    result = read_buffer_from_disk(db_loc, buffer_file, BUFFER);
+    BUFFER = read_buffer_from_disk(db_loc, buffer_file);
     BUFFER->buffer = malloc(sizeof(struct Page_S) * BUFFER->buffer_size);
+    BUFFER->cache = createCache(BUFFER->buffer_size);
 
-    return result;
+    if(BUFFER != NULL){
+        return 0;
+    }
+
+    return 1;
 }
 
 /*
