@@ -1221,7 +1221,9 @@ int remove_record(int table_id, union record_item *key_values) {
 int drop_table(int table_id) {
     int result = EXIT_SUCCESS;
     Table table = getTable(table_id, BUFFER->db_location);
-    char *db_location = malloc(sizeof(char *));
+    char *db_location = malloc(sizeof(char *)*strlen(BUFFER->db_location)+1);
+    copyStringForFilePath(db_location, BUFFER->db_location);
+
     strcpy(db_location, BUFFER->db_location);
     strcat(db_location, "/"); // need this to change for windows.
 
@@ -1280,9 +1282,8 @@ int clear_table(int table_id) {
     int result = EXIT_SUCCESS;
 
     Table table = getTable(table_id, BUFFER->db_location);
-    char *db_location = malloc(sizeof(char *));
-    strcpy(db_location, BUFFER->db_location);
-    strcat(db_location, "/"); // need this to change for windows.
+    char *db_location = malloc(sizeof(char *)*strlen(BUFFER->db_location)+1);
+    copyStringForFilePath(db_location, BUFFER->db_location);
 
     // delete pages associated with table.
     for (int i = 0; i < table.page_ids_size; i++) {
@@ -1313,7 +1314,7 @@ int clear_table(int table_id) {
 
     // TODO: re-write to make cleaner, will want to make writing to table file a function.
     char *file_name = appendIntToString("table_", table_id);
-    char *table_location = malloc((sizeof(char *)));
+    char *table_location = malloc((sizeof(char *)*strlen(db_location))+1);
     strcpy(table_location, db_location);
     strcat(table_location, file_name);
 
@@ -1336,7 +1337,6 @@ int clear_table(int table_id) {
 
     free(file_name);
     free(table_location);
-
     free(db_location);
     return result;
 }
