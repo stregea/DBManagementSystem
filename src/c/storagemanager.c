@@ -87,7 +87,6 @@ Buffer BUFFER;
  */
 union record_item *get_primary_key(union record_item *row, Table table) {
 
-    printf("getting primary key\n");
     union record_item *primary_key = malloc(sizeof(union record_item) * table.key_indices_size);
     for (int i = 0; i < table.key_indices_size; i++) {
         int location = -1;
@@ -439,26 +438,24 @@ Page load_page(int page_id) {
     for (int i = 0; i < BUFFER->pages_within_buffer; i++) {
         //printf("checking page id: %d\n", BUFFER->buffer[i]->page_id);
         //printf("looking for page id: %d\n", page_id);
-        if (BUFFER->buffer[i]->page_id == page_id) {
-            page = BUFFER->buffer[i];
-            break;
-            //referencePage(BUFFER->cache, i);
+        if (BUFFER->buffer[i] != NULL) {
+            if (BUFFER->buffer[i]->page_id == page_id) {
+                page = BUFFER->buffer[i];
+                break;
+                //referencePage(BUFFER->cache, i);
+            }
         }
     }
 
     if (page == NULL) {
         printf("page %d not in buffer, reading from disk\n", page_id);
         page = read_page_from_disk(page_id);
-
-        for(int i = 0; i < page->num_records; i++){
-            for(int j = 0; j < page->data_types_size; j++){
-//                print
-            }
-        }
-        //add_page_to_buffer(page);
+        add_page_to_buffer(page);
     }
 
-    referencePage(BUFFER->cache, get_buffer_index(page_id));
+    if (page != NULL) {
+        referencePage(BUFFER->cache, get_buffer_index(page_id));
+    }
 
     return page;
 }
@@ -744,6 +741,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
     if (table.page_ids <= 0) {
         // can't have any data without pages
         freeTable(table);
+        printf("record not found\n");
         return -1;
     }
 
@@ -759,7 +757,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
             bool matches = true;
 
             for (int j = 0; j < table.key_indices_size; j++) {
-                switch (table.key_indices[i]) {
+                switch (table.key_indices[j]) {
                     case 0:
                         if (test_values[j].i != key_values[j].i) matches = false;
                         break;
@@ -781,6 +779,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
                         break;
                     default:
                         freeTable(table);
+                        printf("record not found\n");
                         return -1;
                 }
             }
@@ -804,6 +803,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
     // compare created primary with key_values
     // if primary key matches, store data into data parameter.
     // return -1 if not found
+    printf("record not found\n");
     return -1;
 }
 
