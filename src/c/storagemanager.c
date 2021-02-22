@@ -446,10 +446,15 @@ Page load_page(int page_id) {
         }
     }
 
-    //TODO read from memory if not in buffer
     if (page == NULL) {
         printf("page %d not in buffer, reading from disk\n", page_id);
-        //page = read_page_from_disk(page_id);
+        page = read_page_from_disk(page_id);
+
+        for(int i = 0; i < page->num_records; i++){
+            for(int j = 0; j < page->data_types_size; j++){
+//                print
+            }
+        }
         //add_page_to_buffer(page);
     }
 
@@ -509,21 +514,6 @@ int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer) {
     free(fileLocation);
     return result;
 }
-
-/**
- * Free the memory locations the buffer is using.
- * @param buffer - The buffer to free.
- */
-void freeBuffer(Buffer buffer) {
-    freeLRUCache(BUFFER->cache);
-    free(buffer->db_location);
-    for(int i = 0; i < buffer->buffer_size; i++){
-        free(buffer->buffer[i]);
-    }
-    free(buffer->buffer);
-    free(buffer);
-}
-
 /**
  * Free the memory location a page pointer is using.
  * @param page - The page to free.
@@ -536,6 +526,22 @@ void freePage(Page page) {
     free(page->records);
     free(page);
     freeTable(table);
+}
+
+/**
+ * Free the memory locations the buffer is using.
+ * @param buffer - The buffer to free.
+ */
+void freeBuffer(Buffer buffer) {
+    freeLRUCache(BUFFER->cache);
+    free(buffer->db_location);
+    for(int i = 0; i < buffer->buffer_size; i++){
+        if(buffer->buffer[i] != NULL){
+            freePage(buffer->buffer[i]);
+        }
+    }
+    free(buffer->buffer);
+    free(buffer);
 }
 
 /*
@@ -1389,7 +1395,7 @@ int purge_buffer() {
     int result = EXIT_SUCCESS;
 
     // foreach page in buffer
-    for (int i = 0; i < BUFFER->buffer_size; i++) {
+    for (int i = 0; i < BUFFER->pages_within_buffer; i++) {
         if(BUFFER->buffer[i] != NULL){
             write_page_to_disk(BUFFER->buffer[i]);
             freePage(BUFFER->buffer[i]);
