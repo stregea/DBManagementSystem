@@ -1218,9 +1218,6 @@ int remove_record(int table_id, union record_item *key_values) {
  */
 int drop_table(int table_id) {
     int result = EXIT_SUCCESS;
-    // read in array of page id's
-    // delete pages with page ids
-    // delete table.
     Table table = getTable(table_id, BUFFER->db_location);
     char *db_location = malloc(sizeof(char *));
     strcpy(db_location, BUFFER->db_location);
@@ -1228,6 +1225,16 @@ int drop_table(int table_id) {
 
     // delete pages associated with table.
     for (int i = 0; i < table.page_ids_size; i++) {
+
+        // search through the buffer and clear out the pages.
+        // This isn't optimal but this is good for now.
+        for(int j = 0; j < BUFFER->buffer_size; j++){
+            if(BUFFER->buffer[j] != NULL && BUFFER->buffer[j]->page_id == table.page_ids[i]){
+                freePage(BUFFER->buffer[j]);
+                BUFFER->buffer[j] = NULL;
+                referencePage(BUFFER->cache, j);
+            }
+        }
 
         char *filename = appendIntToString(db_location, table.page_ids[i]);
 
