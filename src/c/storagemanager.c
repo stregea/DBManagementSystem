@@ -538,7 +538,9 @@ void freeBuffer(Buffer buffer) {
 void freePage(Page page) {
     Table table = getTable(page->table_id, BUFFER->db_location);
     for(int i = 0; i < page->num_records; i++){
-        free(page->records[i]);
+        if(page->records != NULL && page->records[i] != NULL){
+            free(page->records[i]);
+        }
     }
     free(page->records);
     free(page);
@@ -611,7 +613,7 @@ int new_database(char *db_loc, int page_size, int buffer_size) {
 
         // delete all contents in db_loc 
         // this doesn't work with windows needs to be fix
-        clearDirectory(db_loc);
+     //   clearDirectory(db_loc);
 
         // set the db location
         BUFFER->db_location = malloc(sizeof(char *) * strlen(db_loc));
@@ -1284,6 +1286,17 @@ int clear_table(int table_id) {
 
     // delete pages associated with table.
     for (int i = 0; i < table.page_ids_size; i++) {
+
+        // search through the buffer and clear out the pages.
+        // This isn't optimal but this is good for now.
+        for(int j = 0; j < BUFFER->buffer_size; j++){
+            if(BUFFER->buffer[j] != NULL && BUFFER->buffer[j]->page_id == table.page_ids[i]){
+                freePage(BUFFER->buffer[j]);
+                BUFFER->buffer[j] = NULL;
+                referencePage(BUFFER->cache, j);
+            }
+        }
+
         char *filename = appendIntToString(db_location, table.page_ids[i]);
 
         // file was unable to be deleted/was not found.
@@ -1294,6 +1307,8 @@ int clear_table(int table_id) {
         free(filename);
     }
 
+    // remove the page_ids
+    free(table.page_ids);
     table.page_ids_size = 0;
 
     // TODO: re-write to make cleaner, will want to make writing to table file a function.
