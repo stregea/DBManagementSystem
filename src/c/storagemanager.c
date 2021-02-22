@@ -727,6 +727,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
 
     if (table.page_ids <= 0) {
         // can't have any data without pages
+        freeTable(table);
         return -1;
     }
 
@@ -763,6 +764,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
                         if (strcmp(test_values[j].v, key_values[j].v) != 0) matches = false;
                         break;
                     default:
+                        freeTable(table);
                         return -1;
                 }
             }
@@ -771,6 +773,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
                 size_t data_size = sizeof(union record_item) * table.data_types_size;
                 *data = malloc(data_size);
                 memcpy(*data, current_page->records[i], data_size);
+                freeTable(table);
                 return 0;
             }
         }
