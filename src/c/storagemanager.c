@@ -1269,6 +1269,7 @@ int drop_table(int table_id) {
     free(table_file);
     free(table_location);
     free(db_location);
+    freeTable(table);
     return result;
 }
 
@@ -1338,6 +1339,7 @@ int clear_table(int table_id) {
     free(file_name);
     free(table_location);
     free(db_location);
+    freeTable(table);
     return result;
 }
 
