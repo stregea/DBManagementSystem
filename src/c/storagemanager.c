@@ -752,7 +752,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
             bool matches = true;
 
             for (int j = 0; j < table.key_indices_size; j++) {
-                switch (table.key_indices[i]) {
+                switch (table.key_indices[j]) {
                     case 0:
                         if (test_values[j].i != key_values[j].i) matches = false;
                         break;
