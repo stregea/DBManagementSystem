@@ -940,7 +940,7 @@ int insert_record(int table_id, union record_item *record) {
                     }
 
                     // update number of records for pages
-                    new_page->num_records = current_page->num_records - half - 1;
+                    new_page->num_records = current_page->num_records - half;
                     current_page->num_records = half;
 
                     printf("num_records: %zu\n", adding_to->num_records);
