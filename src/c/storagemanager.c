@@ -522,7 +522,7 @@ int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer) {
 void freeBuffer(Buffer buffer) {
     freeLRUCache(BUFFER->cache);
     free(buffer->db_location);
-    for(int i = 0; i < 6; i++){
+    for(int i = 0; i < buffer->buffer_size; i++){
         free(buffer->buffer[i]);
 
     }
@@ -1031,7 +1031,7 @@ int insert_record(int table_id, union record_item *record) {
 
                 // update pages with new number of records
                 new_page->num_records = current_page->num_records - half + 1;
-                current_page->num_records = half;
+                current_page->num_records = half + 1;
 
                 //printf("help %s", current_page->records[0]->c);
 
@@ -1395,7 +1395,7 @@ int purge_buffer() {
     int result = EXIT_SUCCESS;
 
     // foreach page in buffer
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < BUFFER->pages_within_buffer; i++) {
         if(BUFFER->buffer[i] != NULL){
             write_page_to_disk(BUFFER->buffer[i]);
             freePage(BUFFER->buffer[i]);
