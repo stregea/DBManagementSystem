@@ -611,7 +611,7 @@ int new_database(char *db_loc, int page_size, int buffer_size) {
 
         // delete all contents in db_loc 
         // this doesn't work with windows needs to be fix
-        //clearDirectory(db_loc);
+        clearDirectory(db_loc);
 
         // set the db location
         BUFFER->db_location = malloc(sizeof(char *) * strlen(db_loc));
