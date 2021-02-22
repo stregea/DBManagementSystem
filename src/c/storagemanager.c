@@ -502,11 +502,12 @@ int read_buffer_from_disk(char *db_location, char *filename, Buffer buffer) {
 
     copyStringForFilePath(fileLocation, db_location);
     strcat(fileLocation, filename);
-    FILE *file = fopen(fileLocation, "wb");
+    FILE *file = fopen(fileLocation, "rb");
 
     if (file != NULL) {
         fread(buffer, sizeof(struct Buffer_S), 1, file);
         fclose(file);
+        buffer->db_location=db_location;
     } else {
         result = EXIT_FAILURE;
     }
