@@ -1202,7 +1202,6 @@ int remove_record(int table_id, union record_item *key_values) {
 
         current_page = load_page(current_page->next_page_id);
     }
-    freePage(current_page);
     freeTable(table);
     return -1;
 }
