@@ -87,7 +87,6 @@ Buffer BUFFER;
  */
 union record_item *get_primary_key(union record_item *row, Table table) {
 
-    printf("getting primary key\n");
     union record_item *primary_key = malloc(sizeof(union record_item) * table.key_indices_size);
     for (int i = 0; i < table.key_indices_size; i++) {
         int location = -1;
@@ -735,6 +734,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
     if (table.page_ids <= 0) {
         // can't have any data without pages
         freeTable(table);
+        printf("record not found\n");
         return -1;
     }
 
@@ -750,7 +750,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
             bool matches = true;
 
             for (int j = 0; j < table.key_indices_size; j++) {
-                switch (table.key_indices[i]) {
+                switch (table.key_indices[j]) {
                     case 0:
                         if (test_values[j].i != key_values[j].i) matches = false;
                         break;
@@ -772,6 +772,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
                         break;
                     default:
                         freeTable(table);
+                        printf("record not found\n");
                         return -1;
                 }
             }
@@ -795,6 +796,7 @@ int get_record(int table_id, union record_item *key_values, union record_item **
     // compare created primary with key_values
     // if primary key matches, store data into data parameter.
     // return -1 if not found
+    printf("record not found\n");
     return -1;
 }
 

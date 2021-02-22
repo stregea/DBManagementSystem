@@ -58,14 +58,14 @@ int main(int argc, char * argv[]){
     union record_item key1[] = {{.c = "John"}, {.i = 23}};
 
     // give pointer a valid memory address without any meaningful data
-    union record_item *list;
-    union record_item **pointer = &list;
+    union record_item *list = NULL;
+    //union record_item **pointer = &list;
 
-    int result = get_record(table_id, key1, pointer);
+    int result = get_record(table_id, key1, &list);
 
     printf("get_record: %d\n", result);
 
-    printf("string value of record: %s\n\n", (*pointer)[0].c);
+    printf("string value of record: %s\n\n", list[0].c);
 
     // give pointer a valid memory address without any meaningful data
 
@@ -84,7 +84,7 @@ int main(int argc, char * argv[]){
 
     printf("remove_record: %d\n\n", result);
 
-    result = get_record(table_id, key1, pointer);
+    result = get_record(table_id, key1, &list);
 
     printf("get_record when record has been removed: %d\n\n", result);
 
@@ -96,7 +96,7 @@ int main(int argc, char * argv[]){
 
     printf("update_record to give bob a better double: %d\n\n", result);
 
-    free(*pointer);
+    //free(*pointer);
     free(*point);
     free(x);
 
