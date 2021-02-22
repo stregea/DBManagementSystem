@@ -55,8 +55,8 @@ void copyStringForFilePath(char* destination, char* original_str){
     
     // check if there is a '/' appended on the destination string
     // if not, append a '/'.
-    if(destination[strlen(destination)-1] != '/'){
-        strcat(destination, "/"); // need to test this on windows
+    if(strcmp( (destination + strlen(destination) - strlen(FILE_SEPARATOR)) ,  FILE_SEPARATOR) != 0){
+        strcat(destination, FILE_SEPARATOR); // need to test this on windows
     }
 }
 
@@ -66,8 +66,8 @@ void copyStringForFilePath(char* destination, char* original_str){
  */
 void clearDirectory( char * dir_name ){
 
-    if(dir_name[strlen(dir_name)-1] != '/'){
-        strcat(dir_name, "/"); // need to test this on windows
+    if(strcmp( (dir_name + strlen(dir_name) - strlen(FILE_SEPARATOR)) ,  FILE_SEPARATOR) != 0){
+        strcat(dir_name, FILE_SEPARATOR); // need to test this on windows
     }
 
     // to avoid damaging the db path string
@@ -121,6 +121,7 @@ void createDBStore( char * db_loc,  int page_size, int buffer_size ){
     // write to the file
     FILE * file = fopen(store_file, "wb");
     if(file != NULL){
+        printf("writing to file: %s\n", store_file);
         fwrite(store, sizeof(struct DBStore_S), 1, file);
         fclose(file);
     }
@@ -171,11 +172,14 @@ Table getTable(int table_id, char * database_path){
 
     // create path to the table in the database
     // add null terminating btye
-    size_t path_buffer_size = strlen(database_path) + strlen(table_id_string) + 1;
-    char* table_path = malloc(path_buffer_size);
+    size_t path_buffer_size = strlen(database_path) + strlen(table_id_string) + 3;
+    char* table_path = calloc(path_buffer_size, sizeof(char));
 
     // preventing buffer overflows
     strncpy(table_path, database_path, path_buffer_size);
+    if(strcmp( (table_path + strlen(table_path) - strlen(FILE_SEPARATOR)) ,  FILE_SEPARATOR) != 0){
+        strcat(table_path, FILE_SEPARATOR); // need to test this on windows
+    }
     strncat(table_path, table_id_string, path_buffer_size - strlen(table_path));
 
     // open table file
@@ -215,14 +219,19 @@ int writeTable(Table table, int table_id, char * database_path){
     char *table_id_string = appendIntToString("table_", table_id); // this was just used to test we will find this later
     
     // refactor into function
-    char *table_path = malloc(strlen(database_path) + strlen(table_id_string) + 1);
+    char *table_path = malloc(strlen(database_path) + strlen(table_id_string) + 3);
     strcpy(table_path, database_path);
+    if(strcmp( (table_path + strlen(table_path) - strlen(FILE_SEPARATOR)) ,  FILE_SEPARATOR) != 0){
+        strcat(table_path, FILE_SEPARATOR); // need to test this on windows
+    }
     strcat(table_path, table_id_string);
 
     printf("%s\n", table_path);
 
     // write the table to disk
     FILE *table_file = fopen(table_path, "wb");
+
+    printf("writing to file from writeTable: %s\n", table_path);
 
     fwrite(&table.data_types_size, sizeof(int), 1, table_file);
     fwrite(&table.key_indices_size, sizeof(int), 1, table_file);

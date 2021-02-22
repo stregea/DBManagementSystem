@@ -37,6 +37,12 @@ struct Table_S{
 #define true 1
 #define false 0
 
+#ifdef _WIN32
+    #define FILE_SEPARATOR "\\"
+#else
+    #define FILE_SEPARATOR "/"
+#endif
+
 /**
  * Append an integer to an existing char*.
  * - Note: the newly created string must be freed once used.

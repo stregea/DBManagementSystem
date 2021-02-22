@@ -170,6 +170,13 @@ void enqueue(LRU_Cache cache, int buffer_index){
  * @param buffer_index - The index of buffer of the page being referenced.
  */
 void referencePage(LRU_Cache cache, int buffer_index){
+
+    if (buffer_index == -1) {
+        // page could not be found, cannot be added to buffer or LRU
+        return;
+    }
+
+    printf("referencing page at index %d\n", buffer_index);
     QNode* requested_page = cache->hash->array[buffer_index];
     
     // if the page is not within the cache, insert it.
