@@ -55,6 +55,7 @@ dkms.conf
 
 .vscode/
 test
+database
 
 # CLion/CMake files
 .idea

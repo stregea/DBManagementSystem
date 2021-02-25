@@ -1202,7 +1202,7 @@ int remove_record(int table_id, union record_item *key_values) {
                 // zero out last element to avoid duplicates (won't be accessible, just for safety)
                 memset(current_page->records[current_page->num_records - 1], 0,  sizeof(union record_item));
                 current_page->num_records = current_page->num_records - 1;
-                printf("page %d now has %d records\n", current_page->page_id, current_page->num_records);
+                printf("page %d now has %zu records\n", current_page->page_id, current_page->num_records);
               
                 freeTable(table);
                 free(current_key);
