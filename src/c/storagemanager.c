@@ -170,7 +170,6 @@ int restart_database( char * db_loc ){
 		fprintf(stderr, "Failed to restart database\n");
 		return -1;
 	}
-	printf("Here1\n");
 	page_buffer = malloc(sizeof(struct page_data *) * db_buffer_size);
 	for(int i = 0; i < db_buffer_size; i++){
 		page_buffer[i] = NULL;
