@@ -19,5 +19,5 @@ add_executable(DBManagementSystem
         old/lru-queue.c
         src/c/dml_parser.c
         src/c/ddl_parser.c
-        src/c/database.c
-        src/drivers/phase1.c)
+        src/drivers/database.c
+        )

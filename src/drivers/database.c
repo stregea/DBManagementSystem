@@ -68,11 +68,11 @@ int main(int argc, char *argv[]) {
     char token[MAX_TOKEN_SIZE];
     scanf("%s", token);
     int tokenLength = strlen(token);
-    
+
     int statementCount = 0;
 
     while(strcmp(token, "quit;")) {
-        
+
         // read in next token for next statement
         if(statementCount > 0) {
             scanf("%s", token);
@@ -87,16 +87,16 @@ int main(int argc, char *argv[]) {
 
         // temp to hold statement contents when reading in statement
         char *temp = malloc(statementLength + 1);
-        
+
         // stop if the ';' character is within the token
         while(token[tokenLength - 1] != ';') {
 
-            // read next token 
+            // read next token
             scanf("%s", token);
             //printf("%s", token);
             tokenLength = strlen(token);
 
-            // copy statement string to temp string 
+            // copy statement string to temp string
             temp = realloc(temp, statementLength + 1);
             strlcpy(temp, statement, statementLength + 1);
 
@@ -115,7 +115,6 @@ int main(int argc, char *argv[]) {
         free(statement);
         free(temp);
         statementCount++;
-
     }
 
 }
