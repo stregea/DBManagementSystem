@@ -11,7 +11,7 @@
  * @author Samuel Tregea  (sdt1093@rit.edu)
  */
 #include "../headers/storagemanager.h"
-#include "../headers/storagemanagerhelper.h"
+#include "old/storagemanagerhelper.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

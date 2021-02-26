@@ -10,7 +10,7 @@
  * @author Samuel Tregea  (sdt1093@rit.edu)
  */
 
-#include "../headers/lru-queue.h"
+#include "lru-queue.h"
 
 /**
  * Create a node for the queue.
