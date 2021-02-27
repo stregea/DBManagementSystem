@@ -10,7 +10,7 @@
  * @param token - The token used for string tokenizing.
  * @return 0 upon success, -1 upon error.
  */
-static int handleCreateTable(char *command, char *token);
+static int parseCreate(char *command, char **token);
 
 /**
  * Parse through the Drop Table command.
@@ -18,7 +18,7 @@ static int handleCreateTable(char *command, char *token);
  * @param token - The token used for string tokenizing.
  * @return 0 upon success, -1 upon error.
  */
-static int handleDropTable(char *command, char *token);
+static int parseDrop(char *command, char **token);
 
 /**
  * Parse through the Alter Table command.
@@ -26,7 +26,7 @@ static int handleDropTable(char *command, char *token);
  * @param token - The token used for string tokenizing.
  * @return 0 upon success, -1 upon error.
  */
-static int handleAlterTable(char *command, char *token);
+static int parseAlter(char *command, char **token);
 
 /**
  * Parse through the SQL statement the user entered..
@@ -77,15 +77,13 @@ static int parseStatement(char *statement) {
 
         // parse the drop command
         if (strcasecmp(command_parser, "drop") == 0) {
-            result = handleDropTable(command_parser, command_token); // command token is different here than within function -- look into.
-        }
-        else if(strcasecmp(command_parser, "alter") == 0){
-            result = handleAlterTable(command_parser, command_token);
-        }
-        else if(strcasecmp(command_parser, "create") == 0){
-            result = handleCreateTable(command_parser, command_token);
-        }else{
-            fprintf(stderr,"Error: Invalid command.\n");
+            result = parseDrop(command_parser, &command_token);
+        } else if (strcasecmp(command_parser, "alter") == 0) {
+            result = parseAlter(command_parser, &command_token);
+        } else if (strcasecmp(command_parser, "create") == 0) {
+            result = parseCreate(command_parser, &command_token);
+        } else {
+            fprintf(stderr, "Error: Invalid command.\n");
             free(command);
             return -1;
         }
@@ -97,12 +95,12 @@ static int parseStatement(char *statement) {
     return result;
 }
 
-static int handleDropTable(char *command, char *token) {
-    command = strtok_r(NULL, " ", &token);
+static int parseDrop(char *command, char **token) {
+    command = strtok_r(NULL, " ", token);
     if (strcasecmp(command, "table") == 0) {
 
         // read in the table name
-        command = strtok_r(NULL, " ", &token);
+        command = strtok_r(NULL, " ", token);
 
         // read table from disk
         // get table id
@@ -114,10 +112,10 @@ static int handleDropTable(char *command, char *token) {
     return -1;
 }
 
-static int handleAlterTable(char *command, char *token) {
+static int parseAlter(char *command, char **token) {
     return 0;
 }
 
-static int handleCreateTable(char *command, char *token) {
+static int parseCreate(char *command, char **token) {
     return 0;
 }
