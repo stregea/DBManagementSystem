@@ -1,11 +1,123 @@
 #include "../headers/ddl_parser.h"
+#include "../headers/storagemanager.h"
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-/*
- * This function handles the parsing of DDL statments
+/**
+ * Parse through the Create Table command.
+ * @param command - the command to parse.
+ * @param token - The token used for string tokenizing.
+ * @return 0 upon success, -1 upon error.
+ */
+static int handleCreateTable(char *command, char *token);
+
+/**
+ * Parse through the Drop Table command.
+ * @param command - the command to parse.
+ * @param token - The token used for string tokenizing.
+ * @return 0 upon success, -1 upon error.
+ */
+static int handleDropTable(char *command, char *token);
+
+/**
+ * Parse through the Alter Table command.
+ * @param command - the command to parse.
+ * @param token - The token used for string tokenizing.
+ * @return 0 upon success, -1 upon error.
+ */
+static int handleAlterTable(char *command, char *token);
+
+/**
+ * Parse through the SQL statement the user entered..
+ * @param statement - the statement to parse.
+ * @return 0 upon success, -1 upon error.
+ */
+static int parseStatement(char *statement);
+
+/**
+ * This function handles the parsing of DDL statements
  *
  * @param statement - the DDL statement to execute
- * @return 0 on sucess; -1 on failure
+ * @return 0 on success; -1 on failure.
  */
-int parse_ddl_statement( char * statement ){
+int parse_ddl_statement(char *statement) {
+    int result = 0;
+    if (strcmp(statement, "") == 0) {
+        fprintf(stderr, "No command entered.\n");
+        return -1;
+    }
+
+    char *statement_token;
+    char *statement_copy = malloc(sizeof(char *) * strlen(statement) + 1);
+    strcpy(statement_copy, statement);
+
+    // Read in first part of statement through semicolon
+    char *statement_parser = strtok_r(statement_copy, ";", &statement_token);
+
+    // Read through all statements ending with ';'
+    while (statement_parser != NULL) {
+        result = parseStatement(statement_parser);
+        statement_parser = strtok_r(NULL, ";", &statement_token);
+    }
+
+    free(statement_copy);
+    return result;
+}
+
+static int parseStatement(char *statement) {
+    int result = 0;
+    char *command = malloc(sizeof(char *) * strlen(statement) + 1);
+    strcpy(command, statement);
+    char *command_token;
+    char *command_parser = strtok_r(command, " ", &command_token);
+
+    // Read through each command within the statement
+    while (command_parser != NULL) {
+
+        // parse the drop command
+        if (strcasecmp(command_parser, "drop") == 0) {
+            result = handleDropTable(command_parser, command_token); // command token is different here than within function -- look into.
+        }
+        else if(strcasecmp(command_parser, "alter") == 0){
+            result = handleAlterTable(command_parser, command_token);
+        }
+        else if(strcasecmp(command_parser, "create") == 0){
+            result = handleCreateTable(command_parser, command_token);
+        }else{
+            fprintf(stderr,"Error: Invalid command.\n");
+            free(command);
+            return -1;
+        }
+
+        command_parser = strtok_r(NULL, " ", &command_token);
+    }
+
+    free(command);
+    return result;
+}
+
+static int handleDropTable(char *command, char *token) {
+    command = strtok_r(NULL, " ", &token);
+    if (strcasecmp(command, "table") == 0) {
+
+        // read in the table name
+        command = strtok_r(NULL, " ", &token);
+
+        // read table from disk
+        // get table id
+        // drop the table with table od
+        // return drop_table(0);
+        return 0;
+    }
+    fprintf(stderr, "Error: Invalid command.\n");
+    return -1;
+}
+
+static int handleAlterTable(char *command, char *token) {
+    return 0;
+}
+
+static int handleCreateTable(char *command, char *token) {
     return 0;
 }
