@@ -1,4 +1,6 @@
 #include "../headers/database.h"
+#include "../headers/storagemanager.h"
+#include "../headers/ddl_parser.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,60 +63,20 @@ int main(int argc, char *argv[]) {
         //restart_database(databasePath);
     } else {
         //printf("restarting database ...\n");
-        //new_database(databasePath, pageSize, bufferSize);
+        new_database(databasePath, pageSize, bufferSize);
     }
 
-    // initialize with first token
-    char token[MAX_TOKEN_SIZE];
-    scanf("%s", token);
-    int tokenLength = strlen(token);
+    // add table
+    int data_types_size = 3;
+    int data_types[] = {3, 0, 1};
+    int key_indices_size = 2;
+    int key_indices[] = {3, 0};
+    int table_id = add_table(data_types, key_indices, data_types_size, key_indices_size);
 
-    int statementCount = 0;
+    terminate_database();
+    // testing different commands.
+    parse_ddl_statement("DROP TABLE HELLO;THIS IS A TEST;drop table sam;");
 
-    while(strcmp(token, "quit;")) {
-
-        // read in next token for next statement
-        if(statementCount > 0) {
-            scanf("%s", token);
-            //printf("%s", token);
-            tokenLength = strlen(token);
-        }
-
-        // initialize statement string
-        int statementLength = tokenLength;
-        char *statement = malloc(statementLength + 1);
-        strlcpy(statement, token, statementLength + 1);
-
-        // temp to hold statement contents when reading in statement
-        char *temp = malloc(statementLength + 1);
-
-        // stop if the ';' character is within the token
-        while(token[tokenLength - 1] != ';') {
-
-            // read next token
-            scanf("%s", token);
-            //printf("%s", token);
-            tokenLength = strlen(token);
-
-            // copy statement string to temp string
-            temp = realloc(temp, statementLength + 1);
-            strlcpy(temp, statement, statementLength + 1);
-
-            // resize the statement memory to hold the contains in new token
-            // memblock = [Statement] + [sizeofchar] + [Token] + [NullTerminator]
-            statement = realloc(statement, statementLength + sizeof(char) + tokenLength + 1);
-            strlcpy(statement, temp, statementLength + 1);
-            statementLength = statementLength + sizeof(char) + tokenLength;
-            strlcat(statement, " ", statementLength + 1);
-            strlcat(statement, token, statementLength + 1);
-
-        }
-
-        // STOPPED HERE call the method to parse the statement
-        //printf("\nStatement:\n%s\n", statement);
-        free(statement);
-        free(temp);
-        statementCount++;
-    }
+//    }
 
 }

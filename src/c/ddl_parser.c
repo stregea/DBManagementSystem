@@ -10,7 +10,7 @@
  * @param token - The token used for string tokenizing.
  * @return 0 upon success, -1 upon error.
  */
-static int parseCreate(char *command, char **token);
+int parseCreate(char *command, char **token);
 
 /**
  * Parse through the Drop Table command.
@@ -18,7 +18,7 @@ static int parseCreate(char *command, char **token);
  * @param token - The token used for string tokenizing.
  * @return 0 upon success, -1 upon error.
  */
-static int parseDrop(char *command, char **token);
+int parseDrop(char *command, char **token);
 
 /**
  * Parse through the Alter Table command.
@@ -26,14 +26,14 @@ static int parseDrop(char *command, char **token);
  * @param token - The token used for string tokenizing.
  * @return 0 upon success, -1 upon error.
  */
-static int parseAlter(char *command, char **token);
+int parseAlter(char *command, char **token);
 
 /**
- * Parse through the SQL statement the user entered..
+ * Parse through the SQL statement the user entered.
  * @param statement - the statement to parse.
  * @return 0 upon success, -1 upon error.
  */
-static int parseStatement(char *statement);
+int parseStatement(char *statement);
 
 /**
  * This function handles the parsing of DDL statements
@@ -42,6 +42,8 @@ static int parseStatement(char *statement);
  * @return 0 on success; -1 on failure.
  */
 int parse_ddl_statement(char *statement) {
+    printf("%s\n", statement);
+
     int result = 0;
     if (strcmp(statement, "") == 0) {
         fprintf(stderr, "No command entered.\n");
@@ -65,22 +67,29 @@ int parse_ddl_statement(char *statement) {
     return result;
 }
 
-static int parseStatement(char *statement) {
+int parseStatement(char *statement) {
+    printf("%s\n", statement);
     int result = 0;
     char *command = malloc(sizeof(char *) * strlen(statement) + 1);
     strcpy(command, statement);
+
+    // token to be used to handle the string tokenizing
     char *command_token;
     char *command_parser = strtok_r(command, " ", &command_token);
 
     // Read through each command within the statement
     while (command_parser != NULL) {
 
-        // parse the drop command
+        // parse the DROP TABLE command
         if (strcasecmp(command_parser, "drop") == 0) {
             result = parseDrop(command_parser, &command_token);
-        } else if (strcasecmp(command_parser, "alter") == 0) {
+        }
+        // parse the ALTER TABLE command
+        else if (strcasecmp(command_parser, "alter") == 0) {
             result = parseAlter(command_parser, &command_token);
-        } else if (strcasecmp(command_parser, "create") == 0) {
+        }
+        // parse the CREATE TABLE command.
+        else if (strcasecmp(command_parser, "create") == 0) {
             result = parseCreate(command_parser, &command_token);
         } else {
             fprintf(stderr, "Error: Invalid command.\n");
@@ -95,7 +104,7 @@ static int parseStatement(char *statement) {
     return result;
 }
 
-static int parseDrop(char *command, char **token) {
+int parseDrop(char *command, char **token) {
     command = strtok_r(NULL, " ", token);
     if (strcasecmp(command, "table") == 0) {
 
@@ -112,10 +121,10 @@ static int parseDrop(char *command, char **token) {
     return -1;
 }
 
-static int parseAlter(char *command, char **token) {
+int parseAlter(char *command, char **token) {
     return 0;
 }
 
-static int parseCreate(char *command, char **token) {
+int parseCreate(char *command, char **token) {
     return 0;
 }
