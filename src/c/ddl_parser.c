@@ -6,11 +6,11 @@
 
 /**
  * Parse through the Create Table command.
- * @param command - the command to parse.
+ * @param tokenizer - the tokenizer to parse a command.
  * @param token - The token used for string tokenizing.
  * @return 0 upon success, -1 upon error.
  */
-int parseCreate(char *command, char **token);
+int parseCreate(char *tokenizer, char **token);
 
 /**
  * Parse through the Drop Table command.
@@ -18,15 +18,15 @@ int parseCreate(char *command, char **token);
  * @param token - The token used for string tokenizing.
  * @return 0 upon success, -1 upon error.
  */
-int parseDrop(char *command, char **token);
+int parseDrop(char *tokenizer, char **token);
 
 /**
  * Parse through the Alter Table command.
- * @param command - the command to parse.
+ * @param tokenizer - the tokenizer to parse a command.
  * @param token - The token used for string tokenizing.
  * @return 0 upon success, -1 upon error.
  */
-int parseAlter(char *command, char **token);
+int parseAlter(char *tokenizer, char **token);
 
 /**
  * Parse through the SQL statement the user entered.
@@ -67,6 +67,12 @@ int parse_ddl_statement(char *statement) {
     return result;
 }
 
+
+/**
+ * Parse through the SQL statement the user entered.
+ * @param statement - the statement to parse.
+ * @return 0 upon success, -1 upon error.
+ */
 int parseStatement(char *statement) {
     printf("%s\n", statement);
     int result = 0;
@@ -84,11 +90,11 @@ int parseStatement(char *statement) {
         if (strcasecmp(command_parser, "drop") == 0) {
             result = parseDrop(command_parser, &command_token);
         }
-        // parse the ALTER TABLE command
+            // parse the ALTER TABLE command
         else if (strcasecmp(command_parser, "alter") == 0) {
             result = parseAlter(command_parser, &command_token);
         }
-        // parse the CREATE TABLE command.
+            // parse the CREATE TABLE command.
         else if (strcasecmp(command_parser, "create") == 0) {
             result = parseCreate(command_parser, &command_token);
         } else {
@@ -104,27 +110,112 @@ int parseStatement(char *statement) {
     return result;
 }
 
+/**
+ * Parse through the Drop Table command.
+ * @param command - the command to parse.
+ * @param token - The token used for string tokenizing.
+ * @return 0 upon success, -1 upon error.
+ */
 int parseDrop(char *command, char **token) {
     command = strtok_r(NULL, " ", token);
+    // table <name>
     if (strcasecmp(command, "table") == 0) {
 
         // read in the table name
         command = strtok_r(NULL, " ", token);
 
-        // read table from disk
-        // get table id
-        // drop the table with table od
-        // return drop_table(0);
+        if (command != NULL && strcasecmp(command, "") != 0) {
+            // read table from disk
+            // get table id
+            // drop the table with table od
+            // drop_table(0);
+            // TODO
+        } else {
+            // no table specified name
+            return -1;
+        }
+
         return 0;
     }
     fprintf(stderr, "Error: Invalid command.\n");
     return -1;
 }
 
-int parseAlter(char *command, char **token) {
-    return 0;
+/**
+ * Parse through the Alter Table command.
+ * @param tokenizer - the tokenizer to parse a command.
+ * @param token - The token used for string tokenizing.
+ * @return 0 upon success, -1 upon error.
+ */
+int parseAlter(char *tokenizer, char **token) {
+    tokenizer = strtok_r(NULL, " ", token);
+    if (strcasecmp(tokenizer, "table") == 0) {
+
+        // read in the table name
+        tokenizer = strtok_r(NULL, " ", token);
+
+        if (tokenizer != NULL && strcasecmp(tokenizer, "") != 0) {
+            // read in function type
+            tokenizer = strtok_r(NULL, " ", token);
+
+            //drop <name>
+            if (strcasecmp(tokenizer, "drop") == 0) {
+                // read attribute name
+                tokenizer = strtok_r(NULL, " ", token);
+
+                if (tokenizer != NULL && strcasecmp(tokenizer, "") != 0) {
+                    // TODO
+                    // read table from disk
+                }
+            }
+
+                // add <a_name> <a_type>
+                // add <a_name> <a_type> default <value>
+            else if (strcasecmp(tokenizer, "add") == 0) {
+                // TODO
+                // read <a_name>
+                tokenizer = strtok_r(NULL, " ", token);
+                if(tokenizer != NULL){
+                    char * a_name = malloc(sizeof(char*)*strlen(tokenizer)+1);
+                    char * a_type;
+                    char * _default;
+                    char * value;
+
+                    strcpy(a_name, tokenizer);
+
+                    // read <a_type>
+                    tokenizer = strtok_r(NULL, " ", token);
+                    if(tokenizer != NULL){
+                        a_type = malloc(sizeof(char*)*strlen(tokenizer)+1);
+                        strcpy(a_type, tokenizer);
+
+                        // read default
+
+                        // TODO: parse default and value
+                        free(a_type);
+                    }
+                    free(a_name);
+                }
+                // return error?
+            } else {
+                // invalid command
+                fprintf(stderr, "Error: Invalid command.\n");
+                return -1;
+            }
+
+        } else {
+            // no table specified name
+            fprintf(stderr, "Error: No table specified.\n");
+            return -1;
+        }
+
+        return 0;
+    }
+    fprintf(stderr, "Error: Invalid command.\n");
+    return -1;
 }
 
 int parseCreate(char *command, char **token) {
+    // TODO
     return 0;
 }
