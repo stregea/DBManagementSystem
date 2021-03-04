@@ -118,15 +118,15 @@ int parseStatement(char *statement) {
  */
 int parseDrop(char *tokenizer, char **token) {
     tokenizer = strtok_r(NULL, " ", token);
-    printf("%s\n", tokenizer);
     // table <name>
     if (strcasecmp(tokenizer, "table") == 0) {
+        printf("%s\n", tokenizer);
 
         // read in the table name
         tokenizer = strtok_r(NULL, " ", token);
-        printf("%s\n", tokenizer);
 
         if (tokenizer != NULL && strcasecmp(tokenizer, "") != 0) {
+            printf("%s\n", tokenizer);
             // read table from disk
             // get table id
             // drop the table with table od
@@ -155,26 +155,28 @@ int parseDrop(char *tokenizer, char **token) {
  */
 int parseAlter(char *tokenizer, char **token) {
     tokenizer = strtok_r(NULL, " ", token);
-    printf("%s\n", tokenizer);
 
     if (strcasecmp(tokenizer, "table") == 0) {
+        printf("%s\n", tokenizer);
 
         // read in the table name
         tokenizer = strtok_r(NULL, " ", token);
-        printf("%s\n", tokenizer);
 
         if (tokenizer != NULL && strcasecmp(tokenizer, "") != 0) {
+            printf("%s\n", tokenizer);
             // read in function type
             tokenizer = strtok_r(NULL, " ", token);
-            printf("%s\n", tokenizer);
 
             //drop <name>
             if (strcasecmp(tokenizer, "drop") == 0) {
-                // read attribute name
-                tokenizer = strtok_r(NULL, " ", token);
                 printf("%s\n", tokenizer);
 
+                // read attribute name
+                tokenizer = strtok_r(NULL, " ", token);
+
                 if (tokenizer != NULL && strcasecmp(tokenizer, "") != 0) {
+                    printf("%s\n", tokenizer);
+
                     // TODO
                     char* table_name = malloc(sizeof(char*)*strlen(tokenizer)+1);
                     strcpy(table_name, tokenizer);
@@ -191,8 +193,8 @@ int parseAlter(char *tokenizer, char **token) {
             else if (strcasecmp(tokenizer, "add") == 0) {
                 // read <a_name>
                 tokenizer = strtok_r(NULL, " ", token);
-                printf("%s\n", tokenizer);
                 if (tokenizer != NULL) {
+                    printf("%s\n", tokenizer);
                     char *a_name = malloc(sizeof(char *) * strlen(tokenizer) + 1);
                     char *a_type;
                     char *_default;
@@ -202,25 +204,25 @@ int parseAlter(char *tokenizer, char **token) {
 
                     // read <a_type>
                     tokenizer = strtok_r(NULL, " ", token);
-                    printf("%s\n", tokenizer);
 
                     if (tokenizer != NULL) {
+                        printf("%s\n", tokenizer);
                         a_type = malloc(sizeof(char *) * strlen(tokenizer) + 1);
                         strcpy(a_type, tokenizer);
 
                         // read default (this is optional)
                         tokenizer = strtok_r(NULL, " ", token);
-                        printf("%s\n", tokenizer);
 
                         if (tokenizer != NULL && strcasecmp(tokenizer, "default") == 0) {
+                            printf("%s\n", tokenizer);
                             _default = malloc(sizeof(char *) * strlen(tokenizer) + 1);
                             strcpy(_default, tokenizer);
 
                             // read <value>
                             tokenizer = strtok_r(NULL, " ", token);
-                            printf("%s\n", tokenizer);
 
                             if(tokenizer != NULL){
+                                printf("%s\n", tokenizer);
                                 value = malloc(sizeof(char *) * strlen(tokenizer) + 1);
                                 strcpy(value, tokenizer);
 
