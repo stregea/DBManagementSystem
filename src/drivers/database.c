@@ -73,9 +73,24 @@ int main(int argc, char *argv[]) {
     int key_indices[] = {3, 0};
     int table_id = add_table(data_types, key_indices, data_types_size, key_indices_size);
 
-    terminate_database();
-    // testing different commands.
+    /// testing different commands.
+    // 'proper' statements
     parse_ddl_statement("DROP TABLE HELLO;THIS IS A TEST;drop table sam;");
+    parse_ddl_statement("alter table foo drop bar;");
+    parse_ddl_statement("alter table foo add gar double;");
+    parse_ddl_statement("alter table foo add far double default 10.1");
+
+    // bad statements
+    parse_ddl_statement("DROP TABLE");
+    parse_ddl_statement("alter table");
+    parse_ddl_statement("alter table foo");
+    parse_ddl_statement("alter table foo drop");
+    parse_ddl_statement("alter table foo add");
+    parse_ddl_statement("alter table foo add gar");
+    parse_ddl_statement("alter table foo add far double default");
+    parse_ddl_statement("alter table foo add far double blah"); // should we error if 'default' not read?
+
+    //    terminate_database();
 
 //    }
 

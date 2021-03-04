@@ -116,26 +116,29 @@ int parseStatement(char *statement) {
  * @param token - The token used for string tokenizing.
  * @return 0 upon success, -1 upon error.
  */
-int parseDrop(char *command, char **token) {
-    command = strtok_r(NULL, " ", token);
+int parseDrop(char *tokenizer, char **token) {
+    tokenizer = strtok_r(NULL, " ", token);
     // table <name>
-    if (strcasecmp(command, "table") == 0) {
+    if (strcasecmp(tokenizer, "table") == 0) {
 
         // read in the table name
-        command = strtok_r(NULL, " ", token);
+        tokenizer = strtok_r(NULL, " ", token);
 
-        if (command != NULL && strcasecmp(command, "") != 0) {
+        if (tokenizer != NULL && strcasecmp(tokenizer, "") != 0) {
             // read table from disk
             // get table id
             // drop the table with table od
             // drop_table(0);
             // TODO
-        } else {
-            // no table specified name
-            return -1;
-        }
+            char* table_name = malloc(sizeof(char*)*strlen(tokenizer)+1);
+            strcpy(table_name, tokenizer);
+            // read table from disk
 
-        return 0;
+            free(table_name);
+            return 0;
+        }
+        // no table specified name
+        return -1;
     }
     fprintf(stderr, "Error: Invalid command.\n");
     return -1;
@@ -166,8 +169,14 @@ int parseAlter(char *tokenizer, char **token) {
 
                 if (tokenizer != NULL && strcasecmp(tokenizer, "") != 0) {
                     // TODO
+                    char* table_name = malloc(sizeof(char*)*strlen(tokenizer)+1);
+                    strcpy(table_name, tokenizer);
                     // read table from disk
+
+                    free(table_name);
+                    return 0; // correct structure
                 }
+                return -1; // incorrect syntax/structure
             }
 
             // add <a_name> <a_type>
@@ -191,7 +200,7 @@ int parseAlter(char *tokenizer, char **token) {
 
                         // read default (this is optional)
                         tokenizer = strtok_r(NULL, " ", token);
-                        if (tokenizer != NULL) {
+                        if (tokenizer != NULL && strcasecmp(tokenizer, "default") == 0) {
                             _default = malloc(sizeof(char *) * strlen(tokenizer) + 1);
                             strcpy(_default, tokenizer);
 
