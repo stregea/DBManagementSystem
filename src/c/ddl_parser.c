@@ -168,7 +168,7 @@ int parseAlter(char *tokenizer, char **token) {
             tokenizer = strtok_r(NULL, " ", token);
 
             //drop <name>
-            if (strcasecmp(tokenizer, "drop") == 0) {
+            if (tokenizer != NULL && strcasecmp(tokenizer, "drop") == 0) {
                 printf("%s\n", tokenizer);
 
                 // read attribute name
