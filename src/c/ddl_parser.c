@@ -76,7 +76,7 @@ int parse_ddl_statement(char *statement) {
 int parseStatement(char *statement) {
 //    printf("%s\n", statement);
     int result = 0;
-    char *command = malloc(sizeof(char *) * strlen(statement) + 1);
+    char *command = malloc(strlen(statement) + 1);
     strcpy(command, statement);
 
     // token to be used to handle the string tokenizing
@@ -132,7 +132,7 @@ int parseDrop(char *tokenizer, char **token) {
             // drop the table with table od
             // drop_table(0);
             // TODO
-            char* table_name = malloc(sizeof(char*)*strlen(tokenizer)+1);
+            char* table_name = malloc(strlen(tokenizer) + 1);
             strcpy(table_name, tokenizer);
             // read table from disk
 
