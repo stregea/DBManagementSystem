@@ -51,8 +51,12 @@ int main(int argc, char *argv[]) {
     }
 
     char *databasePath = argv[1];
-    int pageSize = (int)strtol(argv[2], NULL, 10);
-    int bufferSize = (int)strtol(argv[3], NULL, 10);
+    char* pointer1;
+    char* pointer2;
+    int pageSize = (int)strtol(argv[2], &pointer1, 10);
+    int bufferSize = (int)strtol(argv[3], &pointer2, 10);
+//    int pageSize = (int)strtol(argv[2], NULL, 10);
+//    int bufferSize = (int)strtol(argv[3], NULL, 10);
 
     //printf("db_loc: %s\npage_size: %d\nbuffer_size: %d\n", databasePath, pageSize, bufferSize);
 
