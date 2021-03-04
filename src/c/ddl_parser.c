@@ -143,6 +143,7 @@ int parseDrop(char *command, char **token) {
 
 /**
  * Parse through the Alter Table command.
+ * // TODO: Update the code. It looks hideous.
  * @param tokenizer - the tokenizer to parse a command.
  * @param token - The token used for string tokenizing.
  * @return 0 upon success, -1 upon error.
@@ -169,34 +170,69 @@ int parseAlter(char *tokenizer, char **token) {
                 }
             }
 
-                // add <a_name> <a_type>
-                // add <a_name> <a_type> default <value>
+            // add <a_name> <a_type>
+            // add <a_name> <a_type> default <value>
             else if (strcasecmp(tokenizer, "add") == 0) {
-                // TODO
                 // read <a_name>
                 tokenizer = strtok_r(NULL, " ", token);
-                if(tokenizer != NULL){
-                    char * a_name = malloc(sizeof(char*)*strlen(tokenizer)+1);
-                    char * a_type;
-                    char * _default;
-                    char * value;
+                if (tokenizer != NULL) {
+                    char *a_name = malloc(sizeof(char *) * strlen(tokenizer) + 1);
+                    char *a_type;
+                    char *_default;
+                    char *value;
 
                     strcpy(a_name, tokenizer);
 
                     // read <a_type>
                     tokenizer = strtok_r(NULL, " ", token);
-                    if(tokenizer != NULL){
-                        a_type = malloc(sizeof(char*)*strlen(tokenizer)+1);
+                    if (tokenizer != NULL) {
+                        a_type = malloc(sizeof(char *) * strlen(tokenizer) + 1);
                         strcpy(a_type, tokenizer);
 
-                        // read default
+                        // read default (this is optional)
+                        tokenizer = strtok_r(NULL, " ", token);
+                        if (tokenizer != NULL) {
+                            _default = malloc(sizeof(char *) * strlen(tokenizer) + 1);
+                            strcpy(_default, tokenizer);
 
-                        // TODO: parse default and value
-                        free(a_type);
+                            // read <value>
+                            tokenizer = strtok_r(NULL, " ", token);
+                            if(tokenizer != NULL){
+                                value = malloc(sizeof(char *) * strlen(tokenizer) + 1);
+                                strcpy(value, tokenizer);
+
+                                /**
+                                 * TODO:
+                                 *  will add an attribute
+                                 *  with the given name and data type to the table; as long as an attribute with that name
+                                 *  does not exist already. It will then will add the default value for that attribute to all
+                                 *  existing tuples in the database. The data type of the value must match that of the
+                                 *  attribute, or its an error
+                                 */
+                                free(value);
+                                free(_default);
+                                free(a_type);
+                                free(a_name);
+                                return 0; // proper command structure.
+                            }
+
+                            free(_default); // error since no default value specified.
+                        }
+
+                        /**
+                         * TODO:
+                         *  will add an attribute with the given name
+                         *  and data type to the table; as long as an attribute with that name does not exist
+                         *  already. It will then will add a null value for that attribute to all existing tuples in the
+                         *  database
+                         */
+                        free(a_type); // since no type specified.
+                        free(a_name);
+                        return 0; // proper structure.
                     }
-                    free(a_name);
+                    free(a_name); // error since no name specified.
                 }
-                // return error?
+                return -1; // error invalid command. No type specified.
             } else {
                 // invalid command
                 fprintf(stderr, "Error: Invalid command.\n");
@@ -208,8 +244,6 @@ int parseAlter(char *tokenizer, char **token) {
             fprintf(stderr, "Error: No table specified.\n");
             return -1;
         }
-
-        return 0;
     }
     fprintf(stderr, "Error: Invalid command.\n");
     return -1;
