@@ -942,8 +942,7 @@ static int write_metadata(){
 		if(table_data[i] != NULL)
 			write_table_metadata(table_data[i], meta_file);
 	}
-	free(meta_loc);
-	return 0; 
+	return 0;
 }
 
 static void read_table_metadata(FILE * meta_file){

@@ -190,7 +190,8 @@ int parseAlter(char *tokenizer, char **token) {
 
             // add <a_name> <a_type>
             // add <a_name> <a_type> default <value>
-            else if (strcasecmp(tokenizer, "add") == 0) {
+            else if (tokenizer != NULL && strcasecmp(tokenizer, "add") == 0) {
+                printf("%s\n", tokenizer);
                 // read <a_name>
                 tokenizer = strtok_r(NULL, " ", token);
                 if (tokenizer != NULL) {
