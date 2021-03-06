@@ -189,7 +189,6 @@ int parseDrop(char *tokenizer, char **token);
 int parseAlter(char *tokenizer, char **token);
 
 /**
- * TODO
  * Given a query:
  *  create table <name>(
  *      <a_name> <a_type> <constraint_1> ... <constraint_N>,
@@ -204,10 +203,10 @@ int parseAlter(char *tokenizer, char **token);
  * This function will handle the parsing of 'primarykey( <a_1> ... <a_N> )' and will generate a
  * key_indices[] for a table.
  * @param table - The table to reference.
- * @param tokenizer - The tokenizer containing the string to be parsed.
+ * @param names - The tokenizer containing the string of attribute names to be parsed.
  * @return 0 on success; -1 on error.
  */
-int parsePrimaryKey(Table table, char *tokenizer);
+int parsePrimaryKey(Table table, char *names);
 
 /**
  * TODO
@@ -335,7 +334,7 @@ int parseStatement(char *statement) {
         else if (strcasecmp(command_parser, "create") == 0) {
             result = parseCreate(command_parser, &command_token);
         } else {
-            fprintf(stderr, "Error: Invalid command.\n");
+            fprintf(stderr, "Error: Invalid command.\n"); // remove this later
             free(command);
             return -1;
         }
@@ -383,8 +382,8 @@ int parseDrop(char *tokenizer, char **token) {
 }
 
 /**
- * Parse through the Alter Table command.
  * TODO
+ * Parse through the Alter Table command.
  * @param tokenizer - the tokenizer to parse a command.
  * @param token - The token used for string tokenizing.
  * @return 0 upon success, -1 upon error.
@@ -554,29 +553,30 @@ int parseCreate(char *tokenizer, char **token) {
                  *
                  */
                 // read in table information
-                tokenizer = strtok_r(NULL, "(,", token);
+                tokenizer = strtok_r(NULL, "(),", token);
 
                 // this can potentially be null -> prevent any potential segfaults for bad reads
                 if (tokenizer != NULL) {
 
                     // check for any keywords
                     if (strcasecmp(tokenizer, "primarykey") == 0) {
-                        // TODO: parse primarykey(...)
-                        // set and create table primary key
-                        // may want to create a function here
-                        tokenizer = strtok_r(NULL, "(,", token);
+                        // TODO: test
+                        // read in attribute names
+                        tokenizer = strtok_r(NULL, "(),", token);
+                        parsePrimaryKey(table_data, tokenizer);
                     } else if (strcasecmp(tokenizer, "foreignkey") == 0) {
                         // TODO parse foreignkey(...)
-                        // set delim as ), in tokenizer
-                        // set and create foreign key
-                        tokenizer = strtok_r(NULL, "(,", token);
-                        // parse references table_name(table_col)
+                        // read in attribute names
+                        tokenizer = strtok_r(NULL, "(),", token);
+                        // then parse references table_name(table_col) -- do this parsing within parseForeignKey
                         // may want to create a function here
+                        // parseForeignKey(table_data, tokenizer);
                     } else if (strcasecmp(tokenizer, "unique") == 0) {
                         // TODO parse unique(...)
-                        // set delim as ), in tokenizer
+                        // read in attribute names
+                        tokenizer = strtok_r(NULL, "(),", token);
                         // set unique attributes
-                        // may want to create a function here
+//                        parseUnique(table_data, tokenizer);
                     } else { // parse through the attributes/column information
                         int result = parseAttributes(table_data, tokenizer);
                         if (result == -1) {
@@ -593,6 +593,12 @@ int parseCreate(char *tokenizer, char **token) {
     }
     fprintf(stderr, "Error: Invalid command.\n");
     return -1;
+}
+
+// todo: finalize testing -- need to make sure created primary key is correct.
+int parsePrimaryKey(Table table, char* names){
+    // set and create table primary key
+    return add_primary_key_to_table(table, create_primary_key(names, table));
 }
 
 // TODO
@@ -715,14 +721,13 @@ int get_attribute_type(char *type) {
 // TODO: this hasn't been tested.
 int *create_primary_key(char *attribute_names, Table table) {
     int *key_indices = NULL;
-    int indice_count = 1;
+    int indice_count = 0;
     char *tokenizer = strtok(attribute_names, " "); // split the attributes on space
     while (tokenizer != NULL) {
         for (int i = 0; i < table->attribute_count; i++) {
             if (strcasecmp(tokenizer, table->attributes[i].name) == 0) {
-                key_indices = realloc(key_indices, sizeof(int *) * indice_count);
-                key_indices[indice_count - 1] = table->attributes[i].type;
-                indice_count++;
+                key_indices = realloc(key_indices, sizeof(int *) * (indice_count + 1));
+                key_indices[indice_count++] = table->attributes[i].type;
             }
         }
         tokenizer = strtok(NULL, " ");
