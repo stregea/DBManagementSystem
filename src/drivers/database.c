@@ -85,10 +85,10 @@ int main(int argc, char *argv[]) {
 
     // testing create statements.
     parse_ddl_statement("CREATE TABLE BAZZLE( baz double PRIMARYKEY );");
-    parse_ddl_statement("CREATE TABLE BAZZLE( baz integer,"
-                        "bar Double notnull primarykey,"
-                        "bar Double notnull primarykey,"
-                        "bar Double notnull primarykey,");
+//    parse_ddl_statement("CREATE TABLE BAZZLE( baz integer,"
+//                        "bar Double notnull primarykey,"
+//                        "bar Double notnull primarykey,"
+//                        "bar Double notnull primarykey,");
 //                        "primarykey( bar baz ),"
 //                        "foreignkey( bar ) references bazzle( baz ) );");
 
