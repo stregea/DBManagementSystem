@@ -50,7 +50,7 @@ struct Table {
 };
 typedef struct Table *Table;
 
-// TODO: allocate memory and deallocate on shutdown
+// TODO: allocate memory on startup and deallocate on shutdown
 static struct Table **catalog = NULL;
 
 /**
@@ -136,7 +136,7 @@ void freeTable(struct Table *table);
 int get_attribute_type(char *type);
 
 /**
- * TODO
+ * TODO - test
  * Generate key_indices to be stored in a table to be used to generate a primary key.
  * @param attribute_names - A string of multiple attribute names '<a_1> ... <a_N>'. This is created while parsing.
  * @param table - table that contains all of the current columns/attributes existing within a table.
@@ -364,16 +364,15 @@ int parseDrop(char *tokenizer, char **token) {
 
         if (tokenizer != NULL && strcasecmp(tokenizer, "") != 0) {
             printf("%s\n", tokenizer);
+
             // TODO
             // read table from catalog
-            // get table id
-            // drop the table with table id
-            // drop_table(0);
-            char *table_name = malloc(strlen(tokenizer) + 1);
-            strcpy(table_name, tokenizer);
-            // read table from disk
-
-            free(table_name);
+//            Table table = get_table_from_catalog(tokenizer);
+//            drop_table(table->tableId);
+//            freeTable(table);
+//
+            // TODO
+            // update the catalog to remove reference of table
             return 0;
         }
         // no table specified name
@@ -468,7 +467,7 @@ int parseAlter(char *tokenizer, char **token) {
                                 strcpy(value, tokenizer);
 
                                 /**
-                                 * TODO:
+                                 * TODO: Add attribute to table
                                  * <name> add <a name> <a type> default <value>
                                  *  will add an attribute
                                  *  with the given name and data type to the table; as long as an attribute with that name
@@ -487,7 +486,7 @@ int parseAlter(char *tokenizer, char **token) {
                         }
 
                         /**
-                         * TODO:
+                         * TODO: Add attribute to table
                          * <name> add <a name> <a type>
                          *  will add an attribute with the given name
                          *  and data type to the table; as long as an attribute with that name does not exist
@@ -562,19 +561,19 @@ int parseCreate(char *tokenizer, char **token) {
 
                     // check for any keywords
                     if (strcasecmp(tokenizer, "primarykey") == 0) {
-                        // TODO
+                        // TODO: parse primarykey(...)
                         // set and create table primary key
                         // may want to create a function here
                         tokenizer = strtok_r(NULL, "(,", token);
                     } else if (strcasecmp(tokenizer, "foreignkey") == 0) {
-                        // TODO
+                        // TODO parse foreignkey(...)
                         // set delim as ), in tokenizer
                         // set and create foreign key
                         tokenizer = strtok_r(NULL, "(,", token);
                         // parse references table_name(table_col)
                         // may want to create a function here
                     } else if (strcasecmp(tokenizer, "unique") == 0) {
-                        // TODO
+                        // TODO parse unique(...)
                         // set delim as ), in tokenizer
                         // set unique attributes
                         // may want to create a function here
@@ -588,7 +587,6 @@ int parseCreate(char *tokenizer, char **token) {
                 }
             }
             // TODO: write table to catalog
-
             freeTable(table_data);
             return 0;
         }
@@ -626,6 +624,7 @@ int parseAttributes(Table table, char *tokenizer) {
             // if type == char || varchar
             // TODO
             if (attribute.type == 3 || attribute.type == 4) {
+                // read in tokenizer, parse size of char/varchar
                 // set size of attribute
             }
 
@@ -637,22 +636,25 @@ int parseAttributes(Table table, char *tokenizer) {
                     // TODO
                     if (strcasecmp(tokenizer, "primarykey") == 0) {
                         attribute.constraints.primary_key = true;
-                        // TODO: set primary key for table
+                        // TODO: test
+//                        add_primary_key_to_table(table, create_primary_key(attribute.name, table));
                     } else if (strcasecmp(tokenizer, "unique") == 0) {
                         // TODO: add unique contraint to table
                         attribute.constraints.unique = true;
                     } else if (strcasecmp(tokenizer, "notnull") == 0) {
                         // flag attribute as notnull
                         attribute.constraints.notnull = true;
+                    } else {
+                        // else error since invalid token?
+                        free(attribute.name);
+                        return -1;
                     }
-                    // else error?
                 }
             }
         }
         table->attribute_count++;
         table->attributes = realloc(table->attributes,
-                                    sizeof(struct Attribute) * table->attribute_count +
-                                    1);
+                                    sizeof(struct Attribute) * table->attribute_count + 1);
         table->attributes[table->attribute_count - 1] = attribute;
         return 0;
     }
@@ -681,6 +683,7 @@ void freeTable(Table table) {
     free(table);
 }
 
+// todo: test
 int add_primary_key_to_table(Table table, int *key_indices) {
     if (table->primary_key_count == 0) {
         table->key_indices = key_indices;
@@ -700,10 +703,10 @@ int get_attribute_type(char *type) {
     } else if (strcasecmp(type, "bool") == 0) {
         return 2;
 
-    } else if (strcasecmp(type, "bool") == 0) {
+    } else if (strcasecmp(type, "char") == 0) {
         return 3;
 
-    } else if (strcasecmp(type, "bool") == 0) {
+    } else if (strcasecmp(type, "varchar") == 0) {
         return 4;
     }
     return -1;
@@ -716,7 +719,7 @@ int *create_primary_key(char *attribute_names, Table table) {
     char *tokenizer = strtok(attribute_names, " "); // split the attributes on space
     while (tokenizer != NULL) {
         for (int i = 0; i < table->attribute_count; i++) {
-            if (strcmp(tokenizer, table->attributes[i].name) == 0) {
+            if (strcasecmp(tokenizer, table->attributes[i].name) == 0) {
                 key_indices = realloc(key_indices, sizeof(int *) * indice_count);
                 key_indices[indice_count - 1] = table->attributes[i].type;
                 indice_count++;
