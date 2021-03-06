@@ -16,7 +16,7 @@
  * @return 0 if the statement is executed successfully
            -1 otherwise
  */
-int execute_non_query(char * statement){
+int execute_non_query(char *statement) {
     return 0;
 }
 
@@ -31,7 +31,7 @@ int execute_non_query(char * statement){
                   The user of the function will be resposible for freeing.
  * @return the number of tuples in the result, -1 if upon error.
  */
-int execute_query(char * query, union record_item *** result){
+int execute_query(char *query, union record_item ***result) {
     return 0;
 }
 
@@ -40,25 +40,25 @@ int execute_query(char * query, union record_item *** result){
  * It will store to hardware any data needed to restart the database.
  * @return 0 on success; -1 on failure.
  */
-int shutdown_database(){
+int shutdown_database() {
     return 0;
 }
 
 int main(int argc, char *argv[]) {
-    
-    if(argc < 3) {
+
+    if (argc < 3) {
         fprintf(stderr, "%s", "usage: ./database <db_loc> <page_size> <buffer_size>\n");
         return -1;
     }
 
     char *databasePath = argv[1];
-    int pageSize = (int)strtol(argv[2], NULL, 10);
-    int bufferSize = (int)strtol(argv[3], NULL, 10);
+    int pageSize = (int) strtol(argv[2], NULL, 10);
+    int bufferSize = (int) strtol(argv[3], NULL, 10);
 
     printf("db_loc: %s\npage_size: %d\nbuffer_size: %d\n", databasePath, pageSize, bufferSize);
 
     FILE *databaseFile = fopen(databasePath, "r");
-    if(databaseFile) {
+    if (databaseFile) {
         fclose(databaseFile);
         //printf("restarting database ...\n");
         //restart_database(databasePath);
@@ -72,6 +72,13 @@ int main(int argc, char *argv[]) {
     parse_ddl_statement("alter table foo drop bar;");
     parse_ddl_statement("alter table foo add gar double;");
     parse_ddl_statement("alter table foo add far double default 10.1");
+    parse_ddl_statement("CREATE TABLE BAZZLE( baz double PRIMARYKEY );");
+    parse_ddl_statement("CREATE TABLE BAZZLE( baz integer,"
+                        "bar Double notnull primarykey,"
+                        "bar Double notnull primarykey,"
+                        "bar Double notnull primarykey,"
+                        "primarykey( bar baz ),"
+                        "foreignkey( bar ) references bazzle( baz ) );");
 
     // bad statements
     parse_ddl_statement("DROP TABLE");
@@ -84,13 +91,7 @@ int main(int argc, char *argv[]) {
     parse_ddl_statement("alter table foo add far double blah"); // should we error if 'default' not read?
 
     // testing create statements.
-    parse_ddl_statement("CREATE TABLE BAZZLE( baz double PRIMARYKEY );");
-//    parse_ddl_statement("CREATE TABLE BAZZLE( baz integer,"
-//                        "bar Double notnull primarykey,"
-//                        "bar Double notnull primarykey,"
-//                        "bar Double notnull primarykey,");
-//                        "primarykey( bar baz ),"
-//                        "foreignkey( bar ) references bazzle( baz ) );");
+
 
 
     // initialize with first token
