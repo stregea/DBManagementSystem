@@ -44,14 +44,14 @@ struct Table {
     int primary_key_count; // count used to kep track of the # of primary keys that exist within a table. 1 Max.
     int foreign_key_count; // count used to kep track of the # of foreign keys that exist within a table.
     int attribute_count; // count used to kep track of the # of atributes/columns that exist within a table.
-};
+}; typedef struct Table* Table;
 // TODO: Catalog.
 
-void freeTable(struct Table table);
+void freeTable(struct Table* table);
 
 int get_attribute_type(char *attribute);
 
-int add_primary_key_to_table(struct Table table, int *key_indices);
+int add_primary_key_to_table(struct Table* table, int *key_indices);
 
 /**
  * Parse through the SQL statement the user entered.
@@ -84,7 +84,7 @@ int parseDrop(char *tokenizer, char **token);
  */
 int parseAlter(char *tokenizer, char **token);
 
-int parseAttributes(struct Table table, char *tokenizer);
+int parseAttributes(Table table, char *tokenizer);
 
 /**
  * This function handles the parsing of DDL statements
@@ -329,14 +329,14 @@ int parseAlter(char *tokenizer, char **token) {
 int parseCreate(char *tokenizer, char **token) {
     // TODO
 
-    struct Table table_data; // add create_table function?
-    table_data.attribute_count = 0;
-    table_data.primary_key_count = 0;
-    table_data.foreign_key_count = 0;
-    table_data.attributes = malloc(sizeof(struct Attribute));
-    table_data.key_indices = malloc(sizeof(int*));
-    table_data.data_types = malloc(sizeof(int*));
-    table_data.foreignKey = malloc(sizeof(struct ForeignKey));
+    Table table_data = malloc(sizeof(struct Table)); // add create_table function?
+    table_data->attribute_count = 0;
+    table_data->primary_key_count = 0;
+    table_data->foreign_key_count = 0;
+    table_data->attributes = malloc(sizeof(struct Attribute));
+    table_data->key_indices = malloc(sizeof(int*));
+    table_data->data_types = malloc(sizeof(int*));
+    table_data->foreignKey = malloc(sizeof(struct ForeignKey));
 
     tokenizer = strtok_r(NULL, " ", token);
 
@@ -345,8 +345,8 @@ int parseCreate(char *tokenizer, char **token) {
         // read in Table name
         tokenizer = strtok_r(NULL, " (", token);
         if (tokenizer != NULL) {
-            table_data.name = malloc(sizeof(char *) * strlen(tokenizer) + 1);
-            strcpy(table_data.name, tokenizer);
+            table_data->name = malloc(sizeof(char *) * strlen(tokenizer) + 1);
+            strcpy(table_data->name, tokenizer);
 
             // perform loop to read in rest of attributes and populate Table struct
             while (tokenizer != NULL) {
@@ -405,7 +405,7 @@ int parseCreate(char *tokenizer, char **token) {
 }
 
 // TODO
-int parseAttributes(struct Table table, char *tokenizer) {
+int parseAttributes(Table table, char *tokenizer) {
     printf("%s\n", tokenizer);
 
     char* temp_token;
@@ -455,11 +455,11 @@ int parseAttributes(struct Table table, char *tokenizer) {
                 }
             }
         }
-        table.attribute_count++;
+        table->attribute_count++;
         // todo
-        table.attributes = realloc(table.attributes,
-                                   sizeof(struct Attribute)*table.attribute_count + 1); // this is causing a leak for some reason
-        table.attributes[table.attribute_count-1] = attribute;
+        table->attributes = realloc(table->attributes,
+                                   sizeof(struct Attribute)*table->attribute_count + 1); // this is causing a leak for some reason
+        table->attributes[table->attribute_count-1] = attribute;
 
         // read as column/attribute // set delim as ), in tokenizer
         // split string through space
@@ -469,32 +469,31 @@ int parseAttributes(struct Table table, char *tokenizer) {
     return -1;
 }
 
-void freeTable(struct Table table) {
-    free(table.name);
-    free(table.key_indices);
-    free(table.data_types);
+void freeTable(Table table) {
+    free(table->name);
+    free(table->key_indices);
+    free(table->data_types);
     // TODO: free unique array -- not to sure how I want to save this yet.
 
     // free foreign keys
-    for (int i = 0; i < table.foreign_key_count; i++) {
-        free(table.foreignKey[i].table_name);
-        free(table.foreignKey[i].column_name);
+    for (int i = 0; i < table->foreign_key_count; i++) {
+        free(table->foreignKey[i].table_name);
+        free(table->foreignKey[i].column_name);
     }
-    free(table.foreignKey);
+    free(table->foreignKey);
     // free attributes
-    for (int i = 0; i < table.attribute_count; i++) {
-        free(table.attributes[i].name);
+    for (int i = 0; i < table->attribute_count; i++) {
+        free(table->attributes[i].name);
 //        free(table.attributes[i].constraints);
     }
-    if(table.attributes != NULL){
-        free(table.attributes);
-    }
+    free(table->attributes);
+    free(table);
 }
 
-int add_primary_key_to_table(struct Table table, int *key_indices) {
+int add_primary_key_to_table(Table table, int *key_indices) {
 
-    if (table.primary_key_count == 0) {
-        table.key_indices = key_indices;
+    if (table->primary_key_count == 0) {
+        table->key_indices = key_indices;
     }
     return -1; // error since primary key already exists in table.
 }
