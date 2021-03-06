@@ -334,6 +334,9 @@ int parseCreate(char *tokenizer, char **token) {
     table_data.primary_key_count = 0;
     table_data.foreign_key_count = 0;
     table_data.attributes = malloc(sizeof(struct Attribute));
+    table_data.key_indices = malloc(sizeof(int*));
+    table_data.data_types = malloc(sizeof(int*));
+    table_data.foreignKey = malloc(sizeof(struct ForeignKey));
 
     tokenizer = strtok_r(NULL, " ", token);
 
