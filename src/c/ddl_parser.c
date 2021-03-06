@@ -36,7 +36,7 @@ struct Attribute {
 struct Table {
     int tableId;
     char *name; // the name of the table
-    struct Attribute **attributes; // Array to hold the attributes/columns of a table.
+    struct Attribute *attributes; // Array to hold the attributes/columns of a table.
     int *key_indices; // array to contain the information to create a primary key.
     int *data_types; // array to contain the data types found within a table.
     union record_item **unique; // 2-D array to contain only the unique tuples that can be found in the table.
@@ -458,7 +458,7 @@ int parseAttributes(struct Table table, char *tokenizer) {
         table.attribute_count++;
         table.attributes = realloc(table.attributes,
                                    sizeof(struct Attribute)*table.attribute_count + 1); // this is currently not being set anywhere. need to set default to 0
-        table.attributes[table.attribute_count-1] = &attribute;
+        table.attributes[table.attribute_count-1] = attribute;
 
         // read as column/attribute // set delim as ), in tokenizer
         // split string through space
@@ -482,10 +482,12 @@ void freeTable(struct Table table) {
     free(table.foreignKey);
     // free attributes
     for (int i = 0; i < table.attribute_count; i++) {
-        free(table.attributes[i]->name);
+        free(table.attributes[i].name);
 //        free(table.attributes[i].constraints);
     }
-    free(table.attributes);
+    if(table.attributes != NULL){
+        free(table.attributes)
+    }
 }
 
 int add_primary_key_to_table(struct Table table, int *key_indices) {
