@@ -36,7 +36,7 @@ struct Attribute {
 struct Table {
     int tableId;
     char *name; // the name of the table
-    struct Attribute **attributes; // Array to hold the attributes/columns of a table.
+    struct Attribute *attributes; // Array to hold the attributes/columns of a table.
     int *key_indices; // array to contain the information to create a primary key.
     int *data_types; // array to contain the data types found within a table.
     union record_item **unique; // 2-D array to contain only the unique tuples that can be found in the table.
@@ -334,8 +334,8 @@ int parseCreate(char *tokenizer, char **token) {
     table_data.primary_key_count = 0;
     table_data.foreign_key_count = 0;
     table_data.attributes = malloc(sizeof(struct Attribute));
-    table_data.key_indices = malloc(sizeof(int *));
-    table_data.data_types = malloc(sizeof(int *));
+    table_data.key_indices = malloc(sizeof(int*));
+    table_data.data_types = malloc(sizeof(int*));
     table_data.foreignKey = malloc(sizeof(struct ForeignKey));
 
     tokenizer = strtok_r(NULL, " ", token);
@@ -408,30 +408,30 @@ int parseCreate(char *tokenizer, char **token) {
 int parseAttributes(struct Table table, char *tokenizer) {
     printf("%s\n", tokenizer);
 
-    char *temp_token;
+    char* temp_token;
     tokenizer = strtok_r(tokenizer, " ", &temp_token); // split the string via spaces
-    struct Attribute *attribute;
+    struct Attribute attribute;
 
     // read in attribute/ column name
     if (tokenizer != NULL) {
-        attribute->name = malloc(sizeof(char *) * strlen(tokenizer) + 1); // todo: this is causing leak to
-        attribute->constraints.primary_key = false;
-        attribute->constraints.notnull = false;
-        attribute->constraints.unique = false;
+        attribute.name = malloc(sizeof(char *) * strlen(tokenizer) + 1); // todo: this is causing leak to for whatever reason.
+        attribute.constraints.primary_key = false;
+        attribute.constraints.notnull = false;
+        attribute.constraints.unique = false;
 
-        strcpy(attribute->name, tokenizer);
+        strcpy(attribute.name, tokenizer);
 
         // read in attribute type
         tokenizer = strtok_r(NULL, " ", &temp_token);
         if (tokenizer != NULL) {
 
             // read in column type, function returns 0-4 based on string name (integer-varchar)
-            attribute->type = get_attribute_type(tokenizer);
+            attribute.type = get_attribute_type(tokenizer);
 
             // if type == -1 -> error
             // if type == char || varchar
             // TODO
-            if (attribute->type == 3 || attribute->type == 4) {
+            if (attribute.type == 3 || attribute.type == 4) {
                 // set size of attribute
             }
 
@@ -442,14 +442,14 @@ int parseAttributes(struct Table table, char *tokenizer) {
                 if (tokenizer != NULL) {
                     // TODO
                     if (strcasecmp(tokenizer, "primarykey") == 0) {
-                        attribute->constraints.primary_key = true;
+                        attribute.constraints.primary_key = true;
                         // TODO: set primary key for table
                     } else if (strcasecmp(tokenizer, "unique") == 0) {
                         // TODO: add unique contraint to table
-                        attribute->constraints.unique = true;
+                        attribute.constraints.unique = true;
                     } else if (strcasecmp(tokenizer, "notnull") == 0) {
                         // flag attribute as notnull
-                        attribute->constraints.notnull = true;
+                        attribute.constraints.notnull = true;
                     }
                     // else error?
                 }
@@ -458,9 +458,8 @@ int parseAttributes(struct Table table, char *tokenizer) {
         table.attribute_count++;
         // todo
         table.attributes = realloc(table.attributes,
-                                   sizeof(struct Attribute) * table.attribute_count +
-                                   1); // this is causing a leak for some reason
-        table.attributes[table.attribute_count - 1] = attribute;
+                                   sizeof(struct Attribute)*table.attribute_count + 1); // this is causing a leak for some reason
+        table.attributes[table.attribute_count-1] = attribute;
 
         // read as column/attribute // set delim as ), in tokenizer
         // split string through space
@@ -484,10 +483,12 @@ void freeTable(struct Table table) {
     free(table.foreignKey);
     // free attributes
     for (int i = 0; i < table.attribute_count; i++) {
-        free(table.attributes[i]->name);
+        free(table.attributes[i].name);
 //        free(table.attributes[i].constraints);
     }
-    free(table.attributes);
+    if(table.attributes != NULL){
+        free(table.attributes);
+    }
 }
 
 int add_primary_key_to_table(struct Table table, int *key_indices) {
