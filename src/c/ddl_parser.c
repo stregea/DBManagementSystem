@@ -392,7 +392,7 @@ int parseCreate(char *tokenizer, char **token) {
             }
             // write table to catalog
 
-//            freeTable(table_data);
+            freeTable(table_data);
             return 0;
         }
     }
