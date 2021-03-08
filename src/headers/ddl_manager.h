@@ -7,7 +7,12 @@
 struct ForeignKey {
     char *table_name; // name of referenced table
     char *column_name; // name of referenced column
-};
+}; typedef struct ForeignKey * ForeignKey;
+
+struct PrimaryKey{
+    int *key_indices; // array to contain the information to create a primary key.
+    int key_indices_count; // count used to keep track of the # of indices within a primary key.
+}; typedef struct PrimaryKey * PrimaryKey;
 
 /**
  * Struct to contain booleans to determine if an attribute uses any or all of the constraints.
@@ -37,14 +42,13 @@ struct Table {
     int tableId;
     char *name; // the name of the table
     struct Attribute *attributes; // Array to hold the attributes/columns of a table.
-    int *key_indices; // array to contain the information to create a primary key.
     int *data_types; // array to contain the data types found within a table.
     union record_item **unique; // 2-D array to contain only the unique tuples that can be found in the table.
-    struct ForeignKey *foreignKey; // foreign key to reference another table.
+    PrimaryKey primaryKey;
+    struct ForeignKey *foreignKey; // foreign key to reference another table. -- may want to be array so can reference muliple tables?
     int primary_key_count; // count used to keep track of the # of primary keys that exist within a table. 1 Max.
     int foreign_key_count; // count used to keep track of the # of foreign keys that exist within a table.
     int attribute_count; // count used to keep track of the # of attributes/columns that exist within a table.
-    int key_indices_count; // count used to keep track of the # of indices within a primary key.
 };
 typedef struct Table *Table;
 
@@ -140,7 +144,7 @@ int get_attribute_type(char *type);
  * @param table - table that contains all of the current columns/attributes existing within a table.
  * @return key_indices[] on success; null otherwise.
  */
-int *create_primary_key(char *attribute_names, Table table);
+PrimaryKey create_primary_key(char *attribute_names, Table table);
 
 /**
  * TODO - test
@@ -153,7 +157,7 @@ int *create_primary_key(char *attribute_names, Table table);
  * @param key_indices - The key_indices to store within the table.
  * @return 0 on success; -1 on error.
  */
-int add_primary_key_to_table(Table table, int *key_indices);
+int add_primary_key_to_table(Table table, PrimaryKey key);
 
 /**
  * Parse through the SQL statement the user entered.
