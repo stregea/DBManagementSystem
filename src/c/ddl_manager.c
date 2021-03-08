@@ -451,11 +451,11 @@ int get_attribute_type(char *type) {
 
 // TODO: this hasn't been tested.
 PrimaryKey create_primary_key(char *attribute_names, Table table) {
-    PrimaryKey key = NULL;
+    PrimaryKey key = malloc(sizeof(struct PrimaryKey));
+    key->key_indices = NULL;
     int index_count = 0;
     char *tokenizer = strtok(attribute_names, " "); // split the attributes on space
     if(table->primary_key_count == 0){ // only perform if table doesn't have primary key
-        key = malloc(sizeof(struct PrimaryKey));
         while (tokenizer != NULL) {
             for (int i = 0; i < table->attribute_count; i++) {
                 if (strcasecmp(tokenizer, table->attributes[i].name) == 0) {
@@ -475,8 +475,10 @@ int add_primary_key_to_table(Table table, PrimaryKey key) {
     if (key != NULL && table->primary_key_count == 0) {
         memcpy(table->primaryKey, key, key->key_indices_count * sizeof(int));
         table->primary_key_count++;
+        free(key->key_indices);
         free(key);
         return 0;
     }
+    free(key);
     return -1; // error since primary key already exists in table.
 }
