@@ -93,7 +93,6 @@ int main(int argc, char *argv[]) {
     // testing create statements.
 
 
-
     // initialize with first token
 //    char token[MAX_TOKEN_SIZE];
 //    scanf("%s", token);

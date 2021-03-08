@@ -16,4 +16,5 @@ add_executable(DBManagementSystem
         src/c/dml_parser.c
         src/c/ddl_parser.c
         src/drivers/database.c
-        )
+        src/c/ddl_manager.c
+        src/headers/ddl_manager.h)
