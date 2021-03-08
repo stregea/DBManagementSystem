@@ -50,6 +50,9 @@ struct Table {
 };
 typedef struct Table *Table;
 
+static int num_tables;
+static char *global_db_loc;
+
 // TODO: allocate memory on startup and deallocate on shutdown
 static struct Table **catalog = NULL;
 
@@ -58,7 +61,7 @@ static struct Table **catalog = NULL;
  * This will allocate memory in the catalog to allow for the storage of Tables.
  * @return 0 on success; -1 on error.
  */
-int initialize_ddl_parser();
+int initialize_ddl_parser(char *db_loc, bool restart);
 
 /**
  * TODO
@@ -600,7 +603,7 @@ int parseCreate(char *tokenizer, char **token) {
 }
 
 // todo: finalize testing -- need to make sure created primary key is correct.
-int parsePrimaryKey(Table table, char* names){
+int parsePrimaryKey(Table table, char *names) {
     // set and create table primary key
     return add_primary_key_to_table(table, create_primary_key(names, table));
 }
@@ -737,4 +740,26 @@ int *create_primary_key(char *attribute_names, Table table) {
         tokenizer = strtok(NULL, " ");
     }
     return key_indices;
+}
+
+// todo: test
+int initialize_ddl_parser(char *db_loc, bool restart){
+    global_db_loc = malloc(strlen(db_loc) + 1);
+    strcpy(global_db_loc, db_loc);
+
+    if(restart){
+        return read_catalog_from_disk();
+    }
+
+    // otherwise a new database
+
+    // set table count to 0.
+    num_tables = 0;
+
+    // init catalog to have 1 slot of memory
+    // whenever a table is added, realloc must be called.
+    catalog = malloc(sizeof(Table) * 1);
+    catalog[0] = NULL;
+
+    return 0;
 }
