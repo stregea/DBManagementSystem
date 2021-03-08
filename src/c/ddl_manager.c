@@ -261,7 +261,7 @@ int parseCreate(char *tokenizer, char **token) {
     table_data->foreign_key_count = 0;
     table_data->key_indices_count = 0;
     table_data->attributes = malloc(sizeof(struct Attribute));
-    table_data->key_indices = malloc(sizeof(int *);
+    table_data->key_indices = malloc(sizeof(int *));
     table_data->data_types = malloc(sizeof(int *));
     table_data->foreignKey = malloc(sizeof(struct ForeignKey));
 
@@ -468,7 +468,7 @@ PrimaryKey create_primary_key(char *attribute_names, Table table) {
 // todo: test
 int add_primary_key_to_table(Table table, PrimaryKey key) {
     if (key->key_indices != NULL && table->primary_key_count == 0) {
-        memcpy(table->key_indices, key, key->key_indices_count * sizeof(int *));
+        memcpy(table->key_indices, key->key_indices, key->key_indices_count * sizeof(int *));
         table->primary_key_count++;
         table->key_indices_count = key->key_indices_count;
         free(key->key_indices);
