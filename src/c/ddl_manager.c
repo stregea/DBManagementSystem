@@ -14,7 +14,7 @@ static char *global_db_loc;
 static struct Table **catalog = NULL;
 
 // todo
-int initialize_ddl_parser(char *db_loc, bool restart){
+int initialize_ddl_parser(char *db_loc, bool restart) {
     global_db_loc = malloc(strlen(db_loc) + 1);
     strcpy(global_db_loc, db_loc);
 
@@ -36,7 +36,7 @@ int initialize_ddl_parser(char *db_loc, bool restart){
 }
 
 // todo
-int terminate_ddl_parser(){
+int terminate_ddl_parser() {
     int result = 0;
 //    result = write_catalog_to_disk(); // not yet defined
 //    freeCatalog(); // not yet defined
@@ -261,7 +261,7 @@ int parseCreate(char *tokenizer, char **token) {
     table_data->foreign_key_count = 0;
     table_data->key_indices_count = 0;
     table_data->attributes = malloc(sizeof(struct Attribute));
-    table_data->key_indices = malloc(sizeof(int *));
+    table_data->key_indices = malloc(sizeof(int *);
     table_data->data_types = malloc(sizeof(int *));
     table_data->foreignKey = malloc(sizeof(struct ForeignKey));
 
@@ -448,32 +448,33 @@ int get_attribute_type(char *type) {
 }
 
 // TODO: this hasn't been tested.
-int *create_primary_key(char *attribute_names, Table table) {
-    int* key_indices = NULL;
+PrimaryKey create_primary_key(char *attribute_names, Table table) {
+    PrimaryKey key = malloc(sizeof(struct PrimaryKey));
+    key->key_indices = NULL;
     int index_count = 0;
     char *tokenizer = strtok(attribute_names, " "); // split the attributes on space
-    if(table->primary_key_count == 0){ // only perform if table doesn't have primary key
-        while (tokenizer != NULL) {
-            for (int i = 0; i < table->attribute_count; i++) {
-                if (strcasecmp(tokenizer, table->attributes[i].name) == 0) {
-                    key_indices = realloc(key_indices, sizeof(int *) * (index_count + 1));
-                    key_indices[index_count++] = table->attributes[i].type;
-                }
+    while (tokenizer != NULL) {
+        for (int i = 0; i < table->attribute_count; i++) {
+            if (strcasecmp(tokenizer, table->attributes[i].name) == 0) {
+                key->key_indices = realloc(key->key_indices, sizeof(int *) * (index_count + 1));
+                key->key_indices[index_count++] = table->attributes[i].type;
             }
-            tokenizer = strtok(NULL, " ");
         }
-//        table->key_indices_count = index_count;
+        tokenizer = strtok(NULL, " ");
     }
-    return key_indices;
+    return key;
 }
 
 // todo: test
-int add_primary_key_to_table(Table table, int *key_indices) {
-    if (key_indices != NULL && table->primary_key_count == 0) {
-        memcpy(table->key_indices, key_indices, table->key_indices_count * sizeof(int)); // look into getting size of key (not working properly)
+int add_primary_key_to_table(Table table, PrimaryKey key) {
+    if (key->key_indices != NULL && table->primary_key_count == 0) {
+        memcpy(table->key_indices, key, key->key_indices_count * sizeof(int *));
         table->primary_key_count++;
-        free(key_indices);
+        table->key_indices_count = key->key_indices_count;
+        free(key->key_indices);
+        free(key);
         return 0;
     }
+    free(key);
     return -1; // error since primary key already exists in table.
 }
