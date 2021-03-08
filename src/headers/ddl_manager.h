@@ -41,9 +41,10 @@ struct Table {
     int *data_types; // array to contain the data types found within a table.
     union record_item **unique; // 2-D array to contain only the unique tuples that can be found in the table.
     struct ForeignKey *foreignKey; // foreign key to reference another table.
-    int primary_key_count; // count used to kep track of the # of primary keys that exist within a table. 1 Max.
-    int foreign_key_count; // count used to kep track of the # of foreign keys that exist within a table.
-    int attribute_count; // count used to kep track of the # of attributes/columns that exist within a table.
+    int primary_key_count; // count used to keep track of the # of primary keys that exist within a table. 1 Max.
+    int foreign_key_count; // count used to keep track of the # of foreign keys that exist within a table.
+    int attribute_count; // count used to keep track of the # of attributes/columns that exist within a table.
+    int key_indices_count; // count used to keep track of the # of indices within a primary key.
 };
 typedef struct Table *Table;
 

@@ -259,6 +259,7 @@ int parseCreate(char *tokenizer, char **token) {
     table_data->attribute_count = 0;
     table_data->primary_key_count = 0;
     table_data->foreign_key_count = 0;
+    table_data->key_indices_count = 0;
     table_data->attributes = malloc(sizeof(struct Attribute));
     table_data->key_indices = malloc(sizeof(int *));
     table_data->data_types = malloc(sizeof(int *));
@@ -427,16 +428,6 @@ void freeTable(Table table) {
     free(table);
 }
 
-// todo: test
-int add_primary_key_to_table(Table table, int *key_indices) {
-    if (table->primary_key_count == 0) {
-        table->key_indices = key_indices;
-        table->primary_key_count++;
-        return 0;
-    }
-    return -1; // error since primary key already exists in table.
-}
-
 int get_attribute_type(char *type) {
 
     if (strcasecmp(type, "integer") == 0) {
@@ -470,5 +461,19 @@ int *create_primary_key(char *attribute_names, Table table) {
         }
         tokenizer = strtok(NULL, " ");
     }
+    table->key_indices_count = indice_count;
     return key_indices;
+}
+
+// todo: test
+int add_primary_key_to_table(Table table, int *key_indices) {
+    if (table->primary_key_count == 0) {
+        table->key_indices = key_indices;
+        memcpy(table->key_indices, key_indices, table->key_indices_count * sizeof(int));
+        table->primary_key_count++;
+        free(key_indices);
+        return 0;
+    }
+    free(key_indices);
+    return -1; // error since primary key already exists in table.
 }
