@@ -2,7 +2,7 @@
 // Created by sdtre on 3/8/2021.
 //
 
-#include "ddl_manager.h"
+#include "../headers/ddl_manager.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
