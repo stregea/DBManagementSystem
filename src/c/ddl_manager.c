@@ -462,6 +462,7 @@ PrimaryKey create_primary_key(char *attribute_names, Table table) {
         }
         tokenizer = strtok(NULL, " ");
     }
+    key->key_indices_count = index_count;
     return key;
 }
 
