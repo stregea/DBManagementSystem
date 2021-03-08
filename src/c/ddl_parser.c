@@ -145,7 +145,7 @@ int get_attribute_type(char *type);
 int *create_primary_key(char *attribute_names, Table table);
 
 /**
- * TODO
+ * TODO - test
  * Safely add a primary key to a table.
  * This function will check to see if a table already has an existing key.
  *
@@ -165,6 +165,7 @@ int add_primary_key_to_table(Table table, int *key_indices);
 int parseStatement(char *statement);
 
 /**
+ * TODO
  * Parse through the Create Table command.
  * @param tokenizer - the tokenizer to parse a command.
  * @param token - The token used for string tokenizing.
@@ -173,6 +174,7 @@ int parseStatement(char *statement);
 int parseCreate(char *tokenizer, char **token);
 
 /**
+ * TODO
  * Parse through the Drop Table command.
  * @param command - the command to parse.
  * @param token - The token used for string tokenizing.
@@ -181,6 +183,7 @@ int parseCreate(char *tokenizer, char **token);
 int parseDrop(char *tokenizer, char **token);
 
 /**
+ * TODO
  * Parse through the Alter Table command.
  * @param tokenizer - the tokenizer to parse a command.
  * @param token - The token used for string tokenizing.
@@ -251,6 +254,7 @@ int parseForeignKey(Table table, char *tokenizer);
 int parseUnique(Table table, char *tokenizer);
 
 /**
+ * TODO
  * Given a query:
  *  create table <name>(
  *      <a_name> <a_type> <constraint_1> ... <constraint_N>,
