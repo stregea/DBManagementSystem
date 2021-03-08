@@ -11,7 +11,7 @@ static int num_tables;
 static char *global_db_loc;
 
 // TODO: allocate memory on startup and deallocate on shutdown
-static struct Table **catalog = NULL;
+//static struct Table **catalog = NULL;
 
 // todo
 int initialize_ddl_parser(char *db_loc, bool restart) {
@@ -29,8 +29,8 @@ int initialize_ddl_parser(char *db_loc, bool restart) {
 
     // init catalog to have 1 slot of memory
     // whenever a table is added, realloc must be called.
-    catalog = malloc(sizeof(Table) * 1);
-    catalog[0] = NULL;
+    //catalog = malloc(sizeof(Table) * 1);
+    //catalog[0] = NULL;
 
     return 0;
 }
@@ -64,11 +64,11 @@ int parseStatement(char *statement) {
         if (strcasecmp(command_parser, "drop") == 0) {
             result = parseDrop(command_parser, &command_token);
         }
-            // parse the ALTER TABLE command
+        // parse the ALTER TABLE command
         else if (strcasecmp(command_parser, "alter") == 0) {
             result = parseAlter(command_parser, &command_token);
         }
-            // parse the CREATE TABLE command.
+        // parse the CREATE TABLE command.
         else if (strcasecmp(command_parser, "create") == 0) {
             result = parseCreate(command_parser, &command_token);
         } else {
@@ -255,14 +255,6 @@ int parseAlter(char *tokenizer, char **token) {
 
 // TODO
 int parseCreate(char *tokenizer, char **token) {
-    Table table_data = malloc(sizeof(struct Table)); // add create_table function?
-    table_data->attribute_count = 0;
-    table_data->primary_key_count = 0;
-    table_data->foreign_key_count = 0;
-    table_data->key_indices_count = 0;
-    table_data->attributes = malloc(sizeof(struct Attribute));
-    table_data->key_indices = malloc(sizeof(int *));
-    table_data->data_types = malloc(sizeof(int *));
 
     tokenizer = strtok_r(NULL, " ", token);
 
@@ -271,8 +263,9 @@ int parseCreate(char *tokenizer, char **token) {
         // read in Table name
         tokenizer = strtok_r(NULL, " (", token);
         if (tokenizer != NULL) {
-            table_data->name = malloc(sizeof(char *) * strlen(tokenizer) + 1);
-            strcpy(table_data->name, tokenizer);
+
+            // adding table to catalog will create its ID
+            struct Table *table_data = createTable(tokenizer);
 
             // perform loop to read in rest of attributes and populate Table struct
             while (tokenizer != NULL) {
@@ -285,7 +278,7 @@ int parseCreate(char *tokenizer, char **token) {
                  *       baz integer,
                  *       bar Double notnull,
                  *       primarykey( bar baz ),
-                 *       foreignkey( bar baz ) references bazzle( baz )
+                 *       foreignkey( bar ) references bazzle( baz )
                  *   );
                  *
                  *
@@ -293,8 +286,8 @@ int parseCreate(char *tokenizer, char **token) {
                 // read in table information
                 tokenizer = strtok_r(NULL, "(),", token);
 
-                // this can potentially be null or empty space -> prevent any potential segfaults for bad reads
-                if (tokenizer != NULL && strcmp(tokenizer, " ") != 0) {
+                // this can potentially be null -> prevent any potential segfaults for bad reads
+                if (tokenizer != NULL) {
 
                     // check for any keywords
                     if (strcasecmp(tokenizer, "primarykey") == 0) {
@@ -303,10 +296,12 @@ int parseCreate(char *tokenizer, char **token) {
                         tokenizer = strtok_r(NULL, "(),", token);
                         parsePrimaryKey(table_data, tokenizer);
                     } else if (strcasecmp(tokenizer, "foreignkey") == 0) {
-                        // TODO: test
+                        // TODO parse foreignkey(...)
                         // read in attribute names
                         tokenizer = strtok_r(NULL, "(),", token);
-                        parseForeignKey(table_data, tokenizer, token);
+                        // then parse references table_name(table_col) -- do this parsing within parseForeignKey
+                        // may want to create a function here
+                        // parseForeignKey(table_data, tokenizer);
                     } else if (strcasecmp(tokenizer, "unique") == 0) {
                         // TODO parse unique(...)
                         // read in attribute names
@@ -338,40 +333,34 @@ int parsePrimaryKey(Table table, char *names) {
 }
 
 // TODO
-
-
-// TODO
 int parseAttributes(Table table, char *tokenizer) {
     printf("%s\n", tokenizer);
 
     char *temp_token;
     tokenizer = strtok_r(tokenizer, " ", &temp_token); // split the string via spaces
-    Attribute attribute = malloc(
-            sizeof(struct Attribute)); // this may need to be a pointer since being saved onto the stack rather than heap
+    struct Attribute attribute;
 
     // read in attribute/ column name
     if (tokenizer != NULL) {
-        attribute->name = malloc(strlen(tokenizer) + 1);
-        attribute->foreignKey = malloc(sizeof(struct ForeignKey));
-        attribute->constraints = malloc(sizeof(struct Constraints));
-        attribute->constraints->primary_key = false;
-        attribute->constraints->notnull = false;
-        attribute->constraints->unique = false;
-        attribute->type = 0;
-        attribute->foreign_key_count = 0;
-        strcpy(attribute->name, tokenizer);
+        attribute.name = malloc(
+                sizeof(char *) * strlen(tokenizer) + 1);
+        attribute.constraints.primary_key = false;
+        attribute.constraints.notnull = false;
+        attribute.constraints.unique = false;
+
+        strcpy(attribute.name, tokenizer);
 
         // read in attribute type
         tokenizer = strtok_r(NULL, " ", &temp_token);
         if (tokenizer != NULL) {
 
             // read in column type, function returns 0-4 based on string name (integer-varchar)
-            attribute->type = get_attribute_type(tokenizer);
+            attribute.type = get_attribute_type(tokenizer);
 
             // if type == -1 -> error
             // if type == char || varchar
             // TODO
-            if (attribute->type == 3 || attribute->type == 4) {
+            if (attribute.type == 3 || attribute.type == 4) {
                 // read in tokenizer, parse size of char/varchar
                 // set size of attribute
             }
@@ -383,18 +372,18 @@ int parseAttributes(Table table, char *tokenizer) {
                 if (tokenizer != NULL) {
                     // TODO
                     if (strcasecmp(tokenizer, "primarykey") == 0) {
-                        attribute->constraints->primary_key = true;
+                        attribute.constraints.primary_key = true;
                         // TODO: test
 //                        add_primary_key_to_table(table, create_primary_key(attribute.name, table));
                     } else if (strcasecmp(tokenizer, "unique") == 0) {
                         // TODO: add unique contraint to table
-                        attribute->constraints->unique = true;
+                        attribute.constraints.unique = true;
                     } else if (strcasecmp(tokenizer, "notnull") == 0) {
                         // flag attribute as notnull
-                        attribute->constraints->notnull = true;
+                        attribute.constraints.notnull = true;
                     } else {
                         // else error since invalid token?
-                        free(attribute->name);
+                        free(attribute.name);
                         return -1;
                     }
                 }
@@ -415,20 +404,17 @@ void freeTable(Table table) {
     free(table->key_indices);
     // TODO: free unique array -- not to sure how I want to save this yet.
 
+    // free foreign keys
+    for (int i = 0; i < table->foreign_key_count; i++) {
+        free(table->foreignKey[i].table_name);
+        free(table->foreignKey[i].column_name);
+    }
+    free(table->foreignKey);
+
     // free attributes
     for (int i = 0; i < table->attribute_count; i++) {
-        free(table->attributes[i]->name);
-        free(table->attributes[i]->constraints);
-
-        // free foreign keys associated with attributes (if any)
-        for (int j = 0; j < table->attributes[i]->foreign_key_count; j++) {
-            free(table->attributes[i]->foreignKey[j]->referenced_table_name);
-            free(table->attributes[i]->foreignKey[j]->referenced_key_indices);
-            free(table->attributes[i]->foreignKey[j]);
-        }
-        free(table->attributes[i]->foreignKey);
-
-        free(table->attributes[i]);
+        free(table->attributes[i].name);
+//        free(table.attributes[i].constraints);
     }
     free(table->attributes);
     free(table);
@@ -459,145 +445,17 @@ PrimaryKey create_primary_key(char *attribute_names, Table table) {
     key->key_indices = NULL;
     int index_count = 0;
     char *tokenizer = strtok(attribute_names, " "); // split the attributes on space
-    if (table->primary_key_count == 0) {
-        while (tokenizer != NULL) {
-            for (int i = 0; i < table->attribute_count; i++) {
-                if (strcasecmp(tokenizer, table->attributes[i]->name) == 0) {
-                    key->key_indices = realloc(key->key_indices, sizeof(int *) * (index_count + 1));
-                    key->key_indices[index_count++] = table->attributes[i]->type;
-                }
+    while (tokenizer != NULL) {
+        for (int i = 0; i < table->attribute_count; i++) {
+            if (strcasecmp(tokenizer, table->attributes[i].name) == 0) {
+                key->key_indices = realloc(key->key_indices, sizeof(int *) * (index_count + 1));
+                key->key_indices[index_count++] = table->attributes[i].type;
             }
-            tokenizer = strtok(NULL, " ");
         }
-        key->key_indices_count = index_count;
+        tokenizer = strtok(NULL, " ");
     }
+    key->key_indices_count = index_count;
     return key;
-}
-
-int parseForeignKey(Table table, char *tokenizer, char **token) {
-    printf("%s\n", tokenizer);
-    char *attribute_names = NULL;
-    char *referenced_table_name = NULL;
-    char *referenced_table_attributes = NULL;
-
-    // parse through rest of statement
-    if (tokenizer != NULL) {
-        attribute_names = malloc(strlen(tokenizer) + 1); // copy the attribute names to memory
-        strcpy(attribute_names, tokenizer); // tokenize this string
-
-        // parse references
-        tokenizer = strtok_r(NULL, " ()", token);
-
-        if (tokenizer != NULL && strcasecmp(tokenizer, "references") == 0) {
-
-            // read table name
-            tokenizer = strtok_r(NULL, " ()", token);
-            if (tokenizer != NULL) {
-                referenced_table_name = malloc(strlen(tokenizer) + 1);
-                strcpy(referenced_table_name, tokenizer);
-
-                // read attributes
-                tokenizer = strtok_r(NULL, "()", token);
-                if (tokenizer != NULL) {
-                    referenced_table_attributes = malloc(strlen(tokenizer) + 1);
-                    strcpy(referenced_table_attributes, tokenizer);
-//                    tokenizer = strtok_r(NULL, " (),", token);
-
-                    // NOTE: These are here to make valgrind happy.
-                    free(referenced_table_attributes); // TODO: remove this later on when commenting second half of function back in
-                    free(referenced_table_name); // TODO: remove this later on when commenting second half of function back in
-                    free(attribute_names);// TODO: remove this later on when commenting second half of function back in
-                } else {
-                    // no attributes specified
-                    free(referenced_table_name);
-                    free(attribute_names);
-                    return -1;
-                }
-            } else {
-                // no table name specified
-                free(attribute_names);
-                return -1;
-            }
-        } else {
-            // wrong keyword (not 'reference')
-            free(attribute_names);
-            return -1;
-        }
-    }
-    return 0; // return 0 for now
-//    ///
-//    /// TODO THIS NEEDS TO BE TESTED.
-//    ///
-//    // since we were able to parse the information we needed, assign the foreign keys.
-//    if (attribute_names != NULL && referenced_table_name != NULL && referenced_table_attributes != NULL) {
-//        Table referenced_table = get_table_from_catalog(referenced_table_name);
-//
-//        if (referenced_table != NULL) {
-//            char *attr_token; // token for tokenizing attribute names
-//            char *referenced_attr_token; // token used fro tokenizing referenced attributes;
-//
-//            char *attribute_tokenizer = strtok_r(attribute_names, " ", &attr_token);
-//            char *referenced_attribute_tokenizer = strtok_r(referenced_table_attributes, " ", &attr_token);
-//
-//            // for each attribute
-//            while (attribute_tokenizer != NULL) {
-//
-//                // search for the attribute in table
-//                for (int i = 0; i < table->attribute_count; i++) {
-//                    if (strcasecmp(attribute_tokenizer, table->attributes[i]->name) == 0) {
-//
-//                        // foreach referenced key
-//                        while (referenced_attribute_tokenizer != NULL) {
-//                            // search through second table
-//                            for (int j = 0; j < referenced_table->attribute_count; j++) {
-//                                if (strcasecmp(referenced_attribute_tokenizer, referenced_table->attributes[j]->name) ==
-//                                    0) {
-//                                    int key_count = table->attributes[i]->foreign_key_count;
-//
-//                                    // add space in array
-//                                    table->attributes[i]->foreignKey = realloc(table->attributes[i]->foreignKey,
-//                                                                               key_count + 1);
-//
-//                                    // allocate space within array
-//                                    table->attributes[i]->foreignKey[key_count] = malloc(sizeof(struct ForeignKey));
-//
-//                                    // copy string
-//                                    table->attributes[i]->foreignKey[key_count]->referenced_table_name = malloc(
-//                                            strlen(referenced_table_name) + 1);
-//                                    strcpy(table->attributes[i]->foreignKey[key_count]->referenced_table_name,
-//                                           referenced_table_name);
-//
-//                                    // copy and store primary key as foreign key within attribute
-//                                    table->attributes[i]->foreignKey[key_count]->referenced_key_indices = malloc(
-//                                            sizeof(int *) * referenced_table->key_indices_count);
-//                                    memcpy(table->attributes[i]->foreignKey[key_count]->referenced_key_indices,
-//                                           referenced_table->key_indices,
-//                                           sizeof(int *) * referenced_table->key_indices_count);
-//
-//                                    // update the key count within the attribute
-//                                    table->attributes[i]->foreign_key_count++;
-//
-//                                    // update the total foreign key count
-//                                    table->foreign_key_count++;
-//                                }
-//
-//                                referenced_attribute_tokenizer = strtok_r(NULL, " ", &attr_token);
-//                            }
-//                            attribute_tokenizer = strtok_r(NULL, " ", &attr_token);
-//                        }
-//                    }
-//
-//                }
-//            }
-//
-//            // error since table doesn't exist
-//            free(attribute_names);
-//            free(referenced_table_name);
-//            free(referenced_table_attributes);
-//            return -1;
-//        }
-//    }
-//    return -1;
 }
 
 // todo: test
@@ -613,4 +471,40 @@ int add_primary_key_to_table(Table table, PrimaryKey key) {
     }
     free(key);
     return -1; // error since primary key already exists in table.
+}
+
+struct catalog * createCatalog(Table table) {
+    
+    struct catalog * catalog = malloc(sizeof(struct catalog));
+
+    // allocate memory for struct attributes
+    catalog->table_count = 1;
+    catalog->table_names = malloc(sizeof(char *));
+    catalog->table_ids = malloc(sizeof(int));
+    catalog->tables = malloc(sizeof(struct Table *));
+
+    // add initial table
+    catalog->table_names[0] = table->name;
+    catalog->table_ids[0] = 0;
+    catalog->tables[0] = table;
+
+    return catalog;
+}
+
+struct Table * createTable(char *name){
+    struct Table * table_data = malloc(sizeof(struct Table));
+
+    // set counts and allocate memory
+    table_data->attribute_count = 0;
+    table_data->primary_key_count = 0;
+    table_data->foreign_key_count = 0;
+    table_data->key_indices_count = 0;
+    table_data->attributes = malloc(sizeof(struct Attribute));
+    table_data->key_indices = malloc(sizeof(int));
+    table_data->data_types = malloc(sizeof(int));
+    table_data->foreignKey = malloc(sizeof(struct ForeignKey));
+    table_data->name = malloc(strlen(name) + 1);
+    strcpy(table_data->name, name);
+
+    return table_data;
 }

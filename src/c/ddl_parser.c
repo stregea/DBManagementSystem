@@ -11,7 +11,7 @@
  * @return 0 on success; -1 on failure.
  */
 int parse_ddl_statement(char *statement) {
-    printf("%s\n", statement);
+    printf("Parsing:\n  %s\n", statement);
 
     int result = 0;
     if (strcmp(statement, "") == 0) {
@@ -20,7 +20,7 @@ int parse_ddl_statement(char *statement) {
     }
 
     char *statement_token;
-    char *statement_copy = malloc(sizeof(char *) * strlen(statement) + 1);
+    char *statement_copy = malloc(strlen(statement) + 1);
     strcpy(statement_copy, statement);
 
     // Read in first part of statement through semicolon

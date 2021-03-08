@@ -49,7 +49,7 @@ struct Table {
     char *name; // the name of the table
     Attribute *attributes; // Array to hold the attributes/columns of a table.
     int *data_types; // array to contain the data types found within a table.
-    union record_item **unique; // 2-D array to contain only the unique tuples that can be found in the table.
+    union record_item *unique; // 2-D array to contain only the unique tuples that can be found in the table.
     int *key_indices;
 //    ForeignKey* foreignKeys; // foreign key to reference another table. -- may want to be array so can reference muliple tables?
     int primary_key_count; // count used to keep track of the # of primary keys that exist within a table. 1 Max.
@@ -58,6 +58,13 @@ struct Table {
     int key_indices_count; // count used to keep track of the # of attributes/columns that exist within a table.
 };
 typedef struct Table *Table;
+
+struct catalog{
+    int table_count;
+    char **table_names;
+    int *table_ids;
+	struct Table **tables;
+};
 
 
 /**
@@ -73,6 +80,11 @@ int initialize_ddl_parser(char *db_loc, bool restart);
  * @return 0 on success; -1 on error.
  */
 int terminate_ddl_parser();
+
+/**
+ * Create catalog for first table
+ */
+struct catalog * createCatalog(Table table);
 
 /**
  * TODO
@@ -130,7 +142,14 @@ Table get_table_from_catalog(char *table_name);
  * Free a table struct from memory.
  * @param table - The table to free.
  */
+struct Table * createTable(char *name);
+
+/**
+ * Free a table struct from memory.
+ * @param table - The table to free.
+ */
 void freeTable(struct Table *table);
+
 
 /**
  * Return an integer associated with an attribute type.
