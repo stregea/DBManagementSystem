@@ -83,7 +83,7 @@ int terminate_ddl_parser();
 /**
  * Create catalog for first table
  */
-void createCatalog(Table table);
+int createCatalog(Table table);
 
 /**
  * TODO

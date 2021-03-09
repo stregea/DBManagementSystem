@@ -24,15 +24,15 @@ int initialize_ddl_parser(char *db_loc, bool restart) {
 //    }
 
     // otherwise a new database
-
-    // set table count to 0.
-    //num_tables = 0;
-
-    // init catalog to have 1 slot of memory
-    // whenever a table is added, realloc must be called.
-    //catalog = malloc(sizeof(Table) * 1);
-    //catalog[0] = NULL;
-
+//    catalog = malloc(sizeof(struct Catalog));
+//
+//    // set table count to 0.
+//    catalog->table_count = 0;
+//
+//    // init catalog to have 1 slot of memory
+//    // whenever a table is added, realloc must be called.
+//    catalog->tables = malloc(sizeof(Table) * 1); // initialize array of struct Table*
+//    catalog->tables[0] = NULL;
     return 0;
 }
 
@@ -40,7 +40,7 @@ int initialize_ddl_parser(char *db_loc, bool restart) {
 int terminate_ddl_parser() {
     int result = 0;
 //    result = write_catalog_to_disk(); // not yet defined
-//    freeCatalog(); // not yet defined
+    freeCatalog(); // not yet defined
     return result;
 }
 
@@ -606,16 +606,17 @@ int add_primary_key_to_table(Table table, PrimaryKey key) {
     return -1; // error since primary key already exists in table.
 }
 
-void createCatalog(Table table) {
+int createCatalog(Table table) {
 
     catalog = malloc(sizeof(struct Catalog));
 
     // allocate memory for struct attributes
     catalog->table_count = 1;
-    catalog->tables = malloc(sizeof(Table));
+    catalog->tables = malloc(sizeof(Table) * 1);
 
     // add initial table
     catalog->tables[0] = table;
+    return 0;
 }
 
 Table get_table_from_catalog(char *table_name) {
@@ -628,6 +629,9 @@ Table get_table_from_catalog(char *table_name) {
 }
 
 int add_table_to_catalog(Table table) {
+    if(catalog == NULL){
+        return createCatalog(table);
+    }
     catalog->tables = realloc(catalog->tables, sizeof(Table) * (catalog->table_count + 1));
     catalog->tables[catalog->table_count] = table;
     catalog->table_count++;
@@ -676,4 +680,12 @@ struct Table *createTable(char *name) {
     strcpy(table_data->name, name);
 
     return table_data;
+}
+
+void freeCatalog(){
+    for(int i = 0; i < catalog->table_count; i++){
+        freeTable(catalog->tables[i]);
+    }
+    free(catalog->tables);
+    free(catalog);
 }
