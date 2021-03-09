@@ -623,7 +623,7 @@ Table get_table_from_catalog(char *table_name) {
 }
 
 int add_table_to_catalog(Table table) {
-    realloc(catalog->tables, sizeof(Table) * (catalog->table_count + 1));
+    catalog->tables = realloc(catalog->tables, sizeof(Table) * (catalog->table_count + 1));
     catalog->tables[catalog->table_count] = table;
     catalog->table_count++;
     return 0;
