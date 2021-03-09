@@ -6,9 +6,10 @@
  * Struct to contain foreign key information.
  */
 struct ForeignKey {
-    char *table_name; // name of referenced table
-    char *column_name; // name of referenced column
+    char *referenced_table_name; // name of referenced table
+    int *referenced_key_indices; // name of referenced column
 };
+
 typedef struct ForeignKey *ForeignKey;
 
 struct PrimaryKey {
@@ -24,7 +25,7 @@ struct Constraints {
     bool notnull;
     bool primary_key;
     bool unique;
-};
+}; typedef struct Constraints* Constraints;
 
 /**
  * Struct to contain information in regards to a attribute/column.
@@ -33,8 +34,10 @@ struct Attribute {
     char *name; // name of the attribute (column)
     int type; // the type of data within the column (0-4) / int-varchar
     int size; // used to determine the size of a char or varchar.
-    struct Constraints constraints;
-};
+    int foreign_key_count;
+    Constraints constraints;
+    ForeignKey * foreignKey;
+}; typedef struct Attribute* Attribute;
 
 /**
  * Struct used to represent a Table.
@@ -44,11 +47,11 @@ struct Attribute {
 struct Table {
     int tableId;
     char *name; // the name of the table
-    struct Attribute *attributes; // Array to hold the attributes/columns of a table.
+    Attribute *attributes; // Array to hold the attributes/columns of a table.
     int *data_types; // array to contain the data types found within a table.
     union record_item **unique; // 2-D array to contain only the unique tuples that can be found in the table.
     int *key_indices;
-    struct ForeignKey *foreignKey; // foreign key to reference another table. -- may want to be array so can reference muliple tables?
+//    ForeignKey* foreignKeys; // foreign key to reference another table. -- may want to be array so can reference muliple tables?
     int primary_key_count; // count used to keep track of the # of primary keys that exist within a table. 1 Max.
     int foreign_key_count; // count used to keep track of the # of foreign keys that exist within a table.
     int attribute_count; // count used to keep track of the # of attributes/columns that exist within a table.
@@ -236,7 +239,7 @@ int parsePrimaryKey(Table table, char *names);
  * @param tokenizer - The tokenizer containing the string to be parsed.
  * @return 0 on success; -1 on error.
  */
-int parseForeignKey(Table table, char *tokenizer);
+int parseForeignKey(Table table, char *tokenizer, char **token);
 
 /**
  * TODO
