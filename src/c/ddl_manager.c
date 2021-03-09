@@ -86,7 +86,7 @@ int parseStatement(char *statement) {
 }
 
 /**
- * TODO
+ * TODO - Test
  * Parse through the Drop Table command.
  * @param command - the command to parse.
  * @param token - The token used for string tokenizing.
@@ -104,14 +104,15 @@ int parseDrop(char *tokenizer, char **token) {
         if (tokenizer != NULL && strcasecmp(tokenizer, "") != 0) {
             printf("%s\n", tokenizer);
 
-            // TODO
             // read table from catalog
-//            Table table = get_table_from_catalog(tokenizer);
-//            drop_table(table->tableId);
-//            freeTable(table);
-//
-            // TODO
-            // update the catalog to remove reference of table
+            Table table = get_table_from_catalog(tokenizer);
+
+            // drop the table in storagemanager.
+            if(drop_table(table->tableId) == 0){
+                // update the catalog to remove reference of table
+                remove_table_from_catalog(table->name);
+                freeTable(table);
+            }
             return 0;
         }
         // no table specified name
