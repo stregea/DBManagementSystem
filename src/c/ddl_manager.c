@@ -581,13 +581,16 @@ int parseForeignKey(Table table, char *tokenizer, char **token) {
 
                 }
             }
-
-            // error since table doesn't exist
             free(attribute_names);
             free(referenced_table_name);
             free(referenced_table_attributes);
-            return -1;
+            return 0;
         }
+        // error since table doesn't exist
+        free(attribute_names);
+        free(referenced_table_name);
+        free(referenced_table_attributes);
+        return -1;
     }
     return -1;
 }
