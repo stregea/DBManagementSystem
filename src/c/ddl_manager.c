@@ -7,11 +7,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static int num_tables;
+//static int num_tables;
 static char *global_db_loc;
 
 // TODO: allocate memory on startup and deallocate on shutdown
 //static struct Table **catalog = NULL;
+static Catalog catalog = NULL;
 
 // todo
 int initialize_ddl_parser(char *db_loc, bool restart) {
@@ -25,7 +26,7 @@ int initialize_ddl_parser(char *db_loc, bool restart) {
     // otherwise a new database
 
     // set table count to 0.
-    num_tables = 0;
+    //num_tables = 0;
 
     // init catalog to have 1 slot of memory
     // whenever a table is added, realloc must be called.
@@ -473,22 +474,59 @@ int add_primary_key_to_table(Table table, PrimaryKey key) {
     return -1; // error since primary key already exists in table.
 }
 
-struct catalog * createCatalog(Table table) {
+void createCatalog(Table table) {
     
-    struct catalog * catalog = malloc(sizeof(struct catalog));
+    catalog = malloc(sizeof(struct Catalog));
 
     // allocate memory for struct attributes
     catalog->table_count = 1;
-    catalog->table_names = malloc(sizeof(char *));
-    catalog->table_ids = malloc(sizeof(int));
-    catalog->tables = malloc(sizeof(struct Table *));
+    catalog->tables = malloc(sizeof(Table));
 
     // add initial table
-    catalog->table_names[0] = table->name;
-    catalog->table_ids[0] = 0;
     catalog->tables[0] = table;
+}
 
-    return catalog;
+Table get_table_from_catalog(char *table_name) {
+    for (int i = 0; i < catalog->table_count; i++) {
+        if (strcmp(catalog->tables[i]->name, table_name) == 0) {
+            return catalog->tables[i];
+        }
+    }
+    return NULL;
+}
+
+int add_table_to_catalog(Table table) {
+    realloc(catalog->tables, sizeof(Table) * (catalog->table_count + 1));
+    catalog->tables[catalog->table_count] = table;
+    catalog->table_count++;
+    return 0;
+}
+
+int remove_table_from_catalog(char *table_name) {
+
+    int loc = -1;
+    for (int i = 0; i < catalog->table_count; i++) {
+        if (strcmp(catalog->tables[i]->name, table_name) == 0) {
+            // Nullify position in list of tables
+            catalog->tables[i] = NULL;
+            // Keep track of where the position was
+            loc = i;
+        }
+    }
+
+    // If table was found in list
+    if (loc >= 0) {
+        for (int i = loc; i < catalog->table_count - 1; i++) {
+            // Move everything over one to fill in space
+            catalog->tables[i] = catalog->tables[i+1];
+        }
+
+        // Success
+        return 0;
+    } else {
+        // Table was not found in list
+        return -1;
+    }
 }
 
 struct Table * createTable(char *name){

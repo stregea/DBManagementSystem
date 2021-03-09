@@ -59,12 +59,11 @@ struct Table {
 };
 typedef struct Table *Table;
 
-struct catalog{
+struct Catalog {
     int table_count;
-    char **table_names;
-    int *table_ids;
 	struct Table **tables;
 };
+typedef struct Catalog *Catalog;
 
 
 /**
@@ -84,7 +83,7 @@ int terminate_ddl_parser();
 /**
  * Create catalog for first table
  */
-struct catalog * createCatalog(Table table);
+void createCatalog(Table table);
 
 /**
  * TODO
