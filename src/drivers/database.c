@@ -41,6 +41,8 @@ int execute_query(char *query, union record_item ***result) {
  * @return 0 on success; -1 on failure.
  */
 int shutdown_database() {
+    freeCatalog();
+    terminate_database();
     return 0;
 }
 
@@ -58,14 +60,15 @@ int main(int argc, char *argv[]) {
     printf("db_loc: %s\npage_size: %d\nbuffer_size: %d\n", databasePath, pageSize, bufferSize);
 
     FILE *databaseFile = fopen(databasePath, "r");
-    if (databaseFile) {
-        fclose(databaseFile);
-        //printf("restarting database ...\n");
-        //restart_database(databasePath);
-    } else {
-        //printf("restarting database ...\n");
-        new_database(databasePath, pageSize, bufferSize);
-    }
+    create_database(databasePath, pageSize, bufferSize, databaseFile != NULL);
+//    if (databaseFile) {
+//        fclose(databaseFile);
+//        //printf("restarting database ...\n");
+//        //restart_database(databasePath);
+//    } else {
+//        //printf("restarting database ...\n");
+//        new_database(databasePath, pageSize, bufferSize);
+//    }
 
 
     parse_ddl_statement("DROP TABLE HELLO;THIS IS A TEST;drop table sam;");
@@ -75,9 +78,9 @@ int main(int argc, char *argv[]) {
     parse_ddl_statement("CREATE TABLE BAZZLE( baz double PRIMARYKEY );");
     parse_ddl_statement("CREATE TABLE WAZZLE( baz integer,"
                         "bar Double notnull primarykey,"
-//                        "tab Double notnull,"
-//                        "wap Double notnull,"
-//                        "primarykey( bar baz ),"
+                        //                        "tab Double notnull,"
+                        //                        "wap Double notnull,"
+                        //                        "primarykey( bar baz ),"
                         "foreignkey( bar baz) references bazzle( baz ) );");
 
     // bad statements
@@ -90,10 +93,9 @@ int main(int argc, char *argv[]) {
     parse_ddl_statement("alter table foo add far double default");
     parse_ddl_statement("alter table foo add far double blah"); // should we error if 'default' not read?
 
-    freeCatalog();
 
     // testing create statements.
-
+    shutdown_database();
 
     // initialize with first token
 //    char token[MAX_TOKEN_SIZE];

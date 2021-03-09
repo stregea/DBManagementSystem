@@ -56,6 +56,7 @@ struct Table {
     int attribute_count; // count used to keep track of the # of attributes/columns that exist within a table.
     int key_indices_count; // count used to keep track of the # of attributes/columns that exist within a table.
     int unique_key_count; // count used to keep track of the # of attributes/columns that exist within a table.
+    int data_type_size; // count used to keep track of the # of datatypes within the table.
 };
 typedef struct Table *Table;
 

@@ -3,6 +3,7 @@
 //
 
 #include "../headers/ddl_manager.h"
+#include "../headers/storagemanager.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -317,8 +318,9 @@ int parseCreate(char *tokenizer, char **token) {
                 }
             }
             // TODO: write table to catalog
+            table_data->tableId = add_table(table_data->data_types, table_data->key_indices, table_data->data_type_size,
+                                            table_data->key_indices_count);
             add_table_to_catalog(table_data);
-//            freeTable(table_data);
             return 0;
         }
     }
@@ -359,7 +361,6 @@ int parseAttributes(Table table, char *tokenizer) {
 
             // read in column type, function returns 0-4 based on string name (integer-varchar)
             attribute->type = get_attribute_type(tokenizer);
-
             // if type == -1 -> error
             // if type == char || varchar
             // TODO
@@ -396,6 +397,13 @@ int parseAttributes(Table table, char *tokenizer) {
         table->attributes = realloc(table->attributes,
                                     sizeof(struct Attribute) * table->attribute_count + 1);
         table->attributes[table->attribute_count - 1] = attribute;
+
+        // read in data types.
+        for(int i = 0; i < table->attribute_count; i++){
+            table->data_types = realloc(table->data_types, sizeof(int) * (table->data_type_size + 1));
+            table->data_types[table->data_type_size] = table->attributes[i]->type;
+            table->data_type_size++;
+        }
         return 0;
     }
     return -1;
@@ -405,7 +413,12 @@ void freeTable(Table table) {
     free(table->name);
     free(table->data_types);
     free(table->key_indices);
-    // TODO: free unique array -- not to sure how I want to save this yet.
+
+    // free the unique keys
+    for(int i = 0; i < table->unique_key_count; i++){
+        free(table->unique_keys[i]);
+    }
+    free(table->unique_keys);
 
     // free attributes
     for (int i = 0; i < table->attribute_count; i++) {
@@ -624,7 +637,7 @@ int createCatalog(Table table) {
 }
 
 Table get_table_from_catalog(char *table_name) {
-    if(catalog != NULL){
+    if (catalog != NULL) {
         for (int i = 0; i < catalog->table_count; i++) {
             if (strcasecmp(catalog->tables[i]->name, table_name) == 0) {
                 return catalog->tables[i];
@@ -635,7 +648,7 @@ Table get_table_from_catalog(char *table_name) {
 }
 
 int add_table_to_catalog(Table table) {
-    if(catalog == NULL){
+    if (catalog == NULL) {
         return createCatalog(table);
     }
     catalog->tables = realloc(catalog->tables, sizeof(Table) * (catalog->table_count + 1));
@@ -680,6 +693,7 @@ struct Table *createTable(char *name) {
     table_data->foreign_key_count = 0;
     table_data->key_indices_count = 0;
     table_data->unique_key_count = 0;
+    table_data->data_type_size = 0;
     table_data->attributes = malloc(sizeof(struct Attribute));
     table_data->key_indices = malloc(sizeof(int));
     table_data->unique_keys = malloc(sizeof(int));
@@ -690,8 +704,8 @@ struct Table *createTable(char *name) {
     return table_data;
 }
 
-void freeCatalog(){
-    for(int i = 0; i < catalog->table_count; i++){
+void freeCatalog() {
+    for (int i = 0; i < catalog->table_count; i++) {
         freeTable(catalog->tables[i]);
     }
     free(catalog->tables);
