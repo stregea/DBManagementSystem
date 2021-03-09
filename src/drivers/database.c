@@ -73,12 +73,12 @@ int main(int argc, char *argv[]) {
     parse_ddl_statement("alter table foo add gar double;");
     parse_ddl_statement("alter table foo add far double default 10.1");
     parse_ddl_statement("CREATE TABLE BAZZLE( baz double PRIMARYKEY );");
-    parse_ddl_statement("CREATE TABLE BAZZLE( baz integer,"
+    parse_ddl_statement("CREATE TABLE WAZZLE( baz integer,"
                         "bar Double notnull primarykey,"
-                        "bar Double notnull primarykey,"
-                        "bar Double notnull primarykey,"
+                        "tab Double notnull,"
+                        "wap Double notnull,"
                         "primarykey( bar baz ),"
-                        "foreignkey( bar ) references bazzle( baz ) );");
+                        "foreignkey( bar baz) references bazzle( baz bop bar) );");
 
     // bad statements
     parse_ddl_statement("DROP TABLE");
@@ -91,7 +91,6 @@ int main(int argc, char *argv[]) {
     parse_ddl_statement("alter table foo add far double blah"); // should we error if 'default' not read?
 
     // testing create statements.
-
 
 
     // initialize with first token
