@@ -679,8 +679,10 @@ struct Table *createTable(char *name) {
     table_data->primary_key_count = 0;
     table_data->foreign_key_count = 0;
     table_data->key_indices_count = 0;
+    table_data->unique_key_count = 0;
     table_data->attributes = malloc(sizeof(struct Attribute));
     table_data->key_indices = malloc(sizeof(int));
+    table_data->unique_keys = malloc(sizeof(int));
     table_data->data_types = malloc(sizeof(int));
     table_data->name = malloc(strlen(name) + 1);
     strcpy(table_data->name, name);
