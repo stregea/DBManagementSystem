@@ -1,5 +1,5 @@
 #include "../headers/database.h"
-#include "../headers/storagemanager.h"
+#include "../headers/ddl_manager.h"
 #include "../headers/ddl_parser.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -75,10 +75,10 @@ int main(int argc, char *argv[]) {
     parse_ddl_statement("CREATE TABLE BAZZLE( baz double PRIMARYKEY );");
     parse_ddl_statement("CREATE TABLE WAZZLE( baz integer,"
                         "bar Double notnull primarykey,"
-                        "tab Double notnull,"
-                        "wap Double notnull,"
-                        "primarykey( bar baz ),"
-                        "foreignkey( bar baz) references bazzle( baz bop bar) );");
+//                        "tab Double notnull,"
+//                        "wap Double notnull,"
+//                        "primarykey( bar baz ),"
+                        "foreignkey( bar baz) references bazzle( baz ) );");
 
     // bad statements
     parse_ddl_statement("DROP TABLE");
@@ -89,6 +89,8 @@ int main(int argc, char *argv[]) {
     parse_ddl_statement("alter table foo add gar");
     parse_ddl_statement("alter table foo add far double default");
     parse_ddl_statement("alter table foo add far double blah"); // should we error if 'default' not read?
+
+    freeCatalog();
 
     // testing create statements.
 

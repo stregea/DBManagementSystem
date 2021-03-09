@@ -317,7 +317,8 @@ int parseCreate(char *tokenizer, char **token) {
                 }
             }
             // TODO: write table to catalog
-            freeTable(table_data);
+            add_table_to_catalog(table_data);
+//            freeTable(table_data);
             return 0;
         }
     }
@@ -495,9 +496,9 @@ int parseForeignKey(Table table, char *tokenizer, char **token) {
 //                    tokenizer = strtok_r(NULL, " (),", token);
 
                     // TODO: remove these. this is to make valgrind happy.
-                    free(referenced_table_attributes);
-                    free(referenced_table_name);
-                    free(attribute_names);
+//                    free(referenced_table_attributes);
+//                    free(referenced_table_name);
+//                    free(attribute_names);
                 } else {
                     // no attributes specified
                     free(referenced_table_name);
@@ -515,80 +516,80 @@ int parseForeignKey(Table table, char *tokenizer, char **token) {
             return -1;
         }
     }
-    return 0; // return 0 for now
-//    ///
-//    /// TODO THIS NEEDS TO BE TESTED.
-//    ///
-//    // since we were able to parse the information we needed, assign the foreign keys.
-//    if (attribute_names != NULL && referenced_table_name != NULL && referenced_table_attributes != NULL) {
-//        Table referenced_table = get_table_from_catalog(referenced_table_name);
-//
-//        if (referenced_table != NULL) {
-//            char *attr_token; // token for tokenizing attribute names
-//            char *referenced_attr_token; // token used fro tokenizing referenced attributes;
-//
-//            char *attribute_tokenizer = strtok_r(attribute_names, " ", &attr_token);
-//            char *referenced_attribute_tokenizer = strtok_r(referenced_table_attributes, " ", &attr_token);
-//
-//            // for each attribute
-//            while (attribute_tokenizer != NULL) {
-//
-//                // search for the attribute in table
-//                for (int i = 0; i < table->attribute_count; i++) {
-//                    if (strcasecmp(attribute_tokenizer, table->attributes[i]->name) == 0) {
-//
-//                        // foreach referenced key
-//                        while (referenced_attribute_tokenizer != NULL) {
-//                            // search through second table
-//                            for (int j = 0; j < referenced_table->attribute_count; j++) {
-//                                if (strcasecmp(referenced_attribute_tokenizer, referenced_table->attributes[j]->name) ==
-//                                    0) {
-//                                    int key_count = table->attributes[i]->foreign_key_count;
-//
-//                                    // add space in array
-//                                    table->attributes[i]->foreignKey = realloc(table->attributes[i]->foreignKey,
-//                                                                               key_count + 1);
-//
-//                                    // allocate space within array
-//                                    table->attributes[i]->foreignKey[key_count] = malloc(sizeof(struct ForeignKey));
-//
-//                                    // copy string
-//                                    table->attributes[i]->foreignKey[key_count]->referenced_table_name = malloc(
-//                                            strlen(referenced_table_name) + 1);
-//                                    strcpy(table->attributes[i]->foreignKey[key_count]->referenced_table_name,
-//                                           referenced_table_name);
-//
-//                                    // copy and store primary key as foreign key within attribute
-//                                    table->attributes[i]->foreignKey[key_count]->referenced_key_indices = malloc(
-//                                            sizeof(int *) * referenced_table->key_indices_count);
-//                                    memcpy(table->attributes[i]->foreignKey[key_count]->referenced_key_indices,
-//                                           referenced_table->key_indices,
-//                                           sizeof(int *) * referenced_table->key_indices_count);
-//
-//                                    // update the key count within the attribute
-//                                    table->attributes[i]->foreign_key_count++;
-//
-//                                    // update the total foreign key count
-//                                    table->foreign_key_count++;
-//                                }
-//
-//                                referenced_attribute_tokenizer = strtok_r(NULL, " ", &attr_token);
-//                            }
-//                            attribute_tokenizer = strtok_r(NULL, " ", &attr_token);
-//                        }
-//                    }
-//
-//                }
-//            }
-//
-//            // error since table doesn't exist
-//            free(attribute_names);
-//            free(referenced_table_name);
-//            free(referenced_table_attributes);
-//            return -1;
-//        }
-//    }
-//    return -1;
+//    return 0; // return 0 for now
+    ///
+    /// TODO THIS NEEDS TO BE TESTED.
+    ///
+    // since we were able to parse the information we needed, assign the foreign keys.
+    if (attribute_names != NULL && referenced_table_name != NULL && referenced_table_attributes != NULL) {
+        Table referenced_table = get_table_from_catalog(referenced_table_name);
+
+        if (referenced_table != NULL) {
+            char *attr_token; // token for tokenizing attribute names
+            char *referenced_attr_token; // token used fro tokenizing referenced attributes;
+
+            char *attribute_tokenizer = strtok_r(attribute_names, " ", &attr_token);
+            char *referenced_attribute_tokenizer = strtok_r(referenced_table_attributes, " ", &attr_token);
+
+            // for each attribute
+            while (attribute_tokenizer != NULL) {
+
+                // search for the attribute in table
+                for (int i = 0; i < table->attribute_count; i++) {
+                    if (strcasecmp(attribute_tokenizer, table->attributes[i]->name) == 0) {
+
+                        // foreach referenced key
+                        while (referenced_attribute_tokenizer != NULL) {
+                            // search through second table
+                            for (int j = 0; j < referenced_table->attribute_count; j++) {
+                                if (strcasecmp(referenced_attribute_tokenizer, referenced_table->attributes[j]->name) ==
+                                    0) {
+                                    int key_count = table->attributes[i]->foreign_key_count;
+
+                                    // add space in array
+                                    table->attributes[i]->foreignKey = realloc(table->attributes[i]->foreignKey,
+                                                                               key_count + 1);
+
+                                    // allocate space within array
+                                    table->attributes[i]->foreignKey[key_count] = malloc(sizeof(struct ForeignKey));
+
+                                    // copy string
+                                    table->attributes[i]->foreignKey[key_count]->referenced_table_name = malloc(
+                                            strlen(referenced_table_name) + 1);
+                                    strcpy(table->attributes[i]->foreignKey[key_count]->referenced_table_name,
+                                           referenced_table_name);
+
+                                    // copy and store primary key as foreign key within attribute
+                                    table->attributes[i]->foreignKey[key_count]->referenced_key_indices = malloc(
+                                            sizeof(int *) * referenced_table->key_indices_count);
+                                    memcpy(table->attributes[i]->foreignKey[key_count]->referenced_key_indices,
+                                           referenced_table->key_indices,
+                                           sizeof(int *) * referenced_table->key_indices_count);
+
+                                    // update the key count within the attribute
+                                    table->attributes[i]->foreign_key_count++;
+
+                                    // update the total foreign key count
+                                    table->foreign_key_count++;
+                                }
+
+                                referenced_attribute_tokenizer = strtok_r(NULL, " ", &attr_token);
+                            }
+                            attribute_tokenizer = strtok_r(NULL, " ", &attr_token);
+                        }
+                    }
+
+                }
+            }
+
+            // error since table doesn't exist
+            free(attribute_names);
+            free(referenced_table_name);
+            free(referenced_table_attributes);
+            return -1;
+        }
+    }
+    return -1;
 }
 
 // todo: test
@@ -620,9 +621,11 @@ int createCatalog(Table table) {
 }
 
 Table get_table_from_catalog(char *table_name) {
-    for (int i = 0; i < catalog->table_count; i++) {
-        if (strcmp(catalog->tables[i]->name, table_name) == 0) {
-            return catalog->tables[i];
+    if(catalog != NULL){
+        for (int i = 0; i < catalog->table_count; i++) {
+            if (strcasecmp(catalog->tables[i]->name, table_name) == 0) {
+                return catalog->tables[i];
+            }
         }
     }
     return NULL;
