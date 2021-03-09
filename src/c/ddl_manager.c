@@ -426,6 +426,7 @@ void freeTable(Table table) {
             free(table->attributes[i]->foreignKey[j]->referenced_key_indices);
             free(table->attributes[i]->foreignKey[j]);
         }
+        free(table->attributes[i]->foreignKey);
 
         free(table->attributes[i]);
     }
@@ -502,6 +503,10 @@ int parseForeignKey(Table table, char *tokenizer, char **token) {
                     strcpy(referenced_table_attributes, tokenizer);
 //                    tokenizer = strtok_r(NULL, " (),", token);
 
+                    // NOTE: These are here to make valgrind happy.
+                    free(referenced_table_attributes); // TODO: remove this later on when commenting second half of function back in
+                    free(referenced_table_name); // TODO: remove this later on when commenting second half of function back in
+                    free(attribute_names);// TODO: remove this later on when commenting second half of function back in
                 } else {
                     // no attributes specified
                     free(referenced_table_name);
