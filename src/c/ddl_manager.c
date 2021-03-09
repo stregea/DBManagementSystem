@@ -65,11 +65,11 @@ int parseStatement(char *statement) {
         if (strcasecmp(command_parser, "drop") == 0) {
             result = parseDrop(command_parser, &command_token);
         }
-        // parse the ALTER TABLE command
+            // parse the ALTER TABLE command
         else if (strcasecmp(command_parser, "alter") == 0) {
             result = parseAlter(command_parser, &command_token);
         }
-        // parse the CREATE TABLE command.
+            // parse the CREATE TABLE command.
         else if (strcasecmp(command_parser, "create") == 0) {
             result = parseCreate(command_parser, &command_token);
         } else {
@@ -417,6 +417,7 @@ void freeTable(Table table) {
             free(table->attributes[i]->foreignKey[j]->referenced_key_indices);
             free(table->attributes[i]->foreignKey[j]);
         }
+        free(table->attributes[i]->foreignKey);
 
         free(table->attributes[i]);
     }
@@ -493,6 +494,10 @@ int parseForeignKey(Table table, char *tokenizer, char **token) {
                     strcpy(referenced_table_attributes, tokenizer);
 //                    tokenizer = strtok_r(NULL, " (),", token);
 
+                    // TODO: remove these. this is to make valgrind happy.
+                    free(referenced_table_attributes);
+                    free(referenced_table_name);
+                    free(attribute_names);
                 } else {
                     // no attributes specified
                     free(referenced_table_name);
@@ -645,7 +650,7 @@ int remove_table_from_catalog(char *table_name) {
     if (loc >= 0) {
         for (int i = loc; i < catalog->table_count - 1; i++) {
             // Move everything over one to fill in space
-            catalog->tables[i] = catalog->tables[i+1];
+            catalog->tables[i] = catalog->tables[i + 1];
         }
 
         // Success
@@ -656,8 +661,8 @@ int remove_table_from_catalog(char *table_name) {
     }
 }
 
-struct Table * createTable(char *name){
-    struct Table * table_data = malloc(sizeof(struct Table));
+struct Table *createTable(char *name) {
+    struct Table *table_data = malloc(sizeof(struct Table));
 
     // set counts and allocate memory
     table_data->attribute_count = 0;
