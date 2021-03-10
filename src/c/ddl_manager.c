@@ -108,7 +108,9 @@ int parseDrop(char *tokenizer, char **token) {
             Table table = get_table_from_catalog(tokenizer);
 
             // drop the table in storagemanager.
-            if (table != NULL && drop_table(table->tableId) == 0) {
+//            if (table != NULL && drop_table(table->tableId) == 0) {
+            // TODO - implement with storage manager.
+            if (table != NULL) {
                 // update the catalog to remove reference of table
                 remove_table_from_catalog(table->name);
                 freeTable(table);
@@ -305,11 +307,11 @@ int parseCreate(char *tokenizer, char **token) {
                         tokenizer = strtok_r(NULL, "(),", token);
                         parseForeignKey(table_data, tokenizer, token);
                     } else if (strcasecmp(tokenizer, "unique") == 0) {
-                        // TODO parse unique(...)
+                        // TODO: test
                         // read in attribute names
                         tokenizer = strtok_r(NULL, "(),", token);
                         // set unique attributes
-//                        parseUnique(table_data, tokenizer);
+                        parseUniqueKey(table_data, tokenizer);
                     } else { // parse through the attributes/column information
                         int result = parseAttributes(table_data, tokenizer);
                         if (result == -1) {
@@ -319,12 +321,11 @@ int parseCreate(char *tokenizer, char **token) {
                     }
                 }
             }
-            // TODO: write table to catalog
+            // TODO: write table to storage manager.
 //            table_data->tableId = add_table(table_data->data_types, table_data->primary_key->key_indices,
 //                                            table_data->data_type_size,
 //                                            table_data->primary_key->size);
-//            add_table_to_catalog(table_data); // this doesn't work for whatever reason.
-            freeTable(table_data); // freeing here while adding to table is broken
+            add_table_to_catalog(table_data); // this doesn't work for whatever reason.
             return 0;
         }
     }
@@ -338,7 +339,7 @@ int parsePrimaryKey(Table table, char *names) {
     return add_primary_key_to_table(table, create_key(names, table));
 }
 
-//TODO
+//TODO: test
 int parseUniqueKey(Table table, char *names) {
     return add_unique_key_to_table(table, create_key(names, table));
 }
@@ -372,7 +373,7 @@ int parseAttributes(Table table, char *tokenizer) {
             attribute->type = get_attribute_type(tokenizer);
             // if type == -1 -> error
             // if type == char || varchar
-            // TODO
+            // TODO - set char/varchar attributes
             if (attribute->type == 3 || attribute->type == 4) {
                 // read in tokenizer, parse size of char/varchar
                 // set size of attribute
