@@ -71,16 +71,16 @@ int main(int argc, char *argv[]) {
 //    }
 
 
-    parse_ddl_statement("DROP TABLE HELLO;THIS IS A TEST;drop table sam;");
-    parse_ddl_statement("alter table foo drop bar;");
-    parse_ddl_statement("alter table foo add gar double;");
-    parse_ddl_statement("alter table foo add far double default 10.1");
-    parse_ddl_statement("CREATE TABLE BAZZLE( baz double PRIMARYKEY );");
+//    parse_ddl_statement("DROP TABLE HELLO;THIS IS A TEST;drop table sam;");
+//    parse_ddl_statement("alter table foo drop bar;");
+//    parse_ddl_statement("alter table foo add gar double;");
+//    parse_ddl_statement("alter table foo add far double default 10.1");
+//    parse_ddl_statement("CREATE TABLE BAZZLE( baz double PRIMARYKEY );");
     parse_ddl_statement("CREATE TABLE WAZZLE( baz integer,"
-                        "bar Double notnull primarykey,"
-                        //                        "tab Double notnull,"
-                        //                        "wap Double notnull,"
-                        //                        "primarykey( bar baz ),"
+                        "bar Double notnull"
+                        "tab Double notnull,"
+                        "wap Double notnull,"
+                        "primarykey( bar baz ),"
                         "foreignkey( bar baz) references bazzle( baz ) );");
 
     // bad statements
