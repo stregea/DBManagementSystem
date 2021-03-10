@@ -75,27 +75,25 @@ int main(int argc, char *argv[]) {
 //    parse_ddl_statement("alter table foo drop bar;");
 //    parse_ddl_statement("alter table foo add gar double;");
 //    parse_ddl_statement("alter table foo add far double default 10.1");
-//    parse_ddl_statement("CREATE TABLE BAZZLE( baz double PRIMARYKEY );");
+//    parse_ddl_statement("CREATE TABLE BAZZLE( baz double PRIMARYKEY );"); -- this needs to have separate create key functionality.
     parse_ddl_statement("CREATE TABLE WAZZLE( baz integer,"
                         "bar Double notnull,"
                         "tab Double notnull,"
                         "wap Double notnull,"
-                        "primarykey( bar baz ) );");
-//                        "foreignkey( bar baz) references bazzle( baz ) );");
+                        "primarykey( bar baz ), "
+                        "foreignkey( bar baz) references bazzle( baz ) );");
 
     // bad statements
-//    parse_ddl_statement("DROP TABLE");
-//    parse_ddl_statement("alter table");
-//    parse_ddl_statement("alter table foo");
-//    parse_ddl_statement("alter table foo drop");
-//    parse_ddl_statement("alter table foo add");
-//    parse_ddl_statement("alter table foo add gar");
-//    parse_ddl_statement("alter table foo add far double default");
-//    parse_ddl_statement("alter table foo add far double blah"); // should we error if 'default' not read?
+    parse_ddl_statement("DROP TABLE");
+    parse_ddl_statement("alter table");
+    parse_ddl_statement("alter table foo");
+    parse_ddl_statement("alter table foo drop");
+    parse_ddl_statement("alter table foo add");
+    parse_ddl_statement("alter table foo add gar");
+    parse_ddl_statement("alter table foo add far double default");
+    parse_ddl_statement("alter table foo add far double blah"); // should we error if 'default' not read?
 
-
-    // testing create statements.
-//    freeCatalog();
+    freeCatalog();
 //    shutdown_database();
 
     // initialize with first token
