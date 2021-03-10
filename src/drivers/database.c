@@ -60,15 +60,15 @@ int main(int argc, char *argv[]) {
     printf("db_loc: %s\npage_size: %d\nbuffer_size: %d\n", databasePath, pageSize, bufferSize);
 
     FILE *databaseFile = fopen(databasePath, "r");
-    create_database(databasePath, pageSize, bufferSize, databaseFile != NULL);
-//    if (databaseFile) {
-//        fclose(databaseFile);
-//        //printf("restarting database ...\n");
-//        //restart_database(databasePath);
-//    } else {
-//        //printf("restarting database ...\n");
-//        new_database(databasePath, pageSize, bufferSize);
-//    }
+//    create_database(databasePath, pageSize, bufferSize, databaseFile != NULL);
+    if (databaseFile) {
+        fclose(databaseFile);
+        //printf("restarting database ...\n");
+        //restart_database(databasePath);
+    } else {
+        //printf("restarting database ...\n");
+        new_database(databasePath, pageSize, bufferSize);
+    }
 
 
 //    parse_ddl_statement("DROP TABLE HELLO;THIS IS A TEST;drop table sam;");
@@ -95,7 +95,8 @@ int main(int argc, char *argv[]) {
 
 
     // testing create statements.
-    shutdown_database();
+//    freeCatalog();
+//    shutdown_database();
 
     // initialize with first token
 //    char token[MAX_TOKEN_SIZE];

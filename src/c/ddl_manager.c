@@ -320,10 +320,11 @@ int parseCreate(char *tokenizer, char **token) {
                 }
             }
             // TODO: write table to catalog
-            table_data->tableId = add_table(table_data->data_types, table_data->primary_key->key_indices,
-                                            table_data->data_type_size,
-                                            table_data->primary_key->size);
-            add_table_to_catalog(table_data);
+//            table_data->tableId = add_table(table_data->data_types, table_data->primary_key->key_indices,
+//                                            table_data->data_type_size,
+//                                            table_data->primary_key->size);
+//            add_table_to_catalog(table_data); // this doesn't work for whatever reason.
+            freeTable(table_data); // freeing here while adding to table is broken
             return 0;
         }
     }
@@ -428,7 +429,8 @@ void freeTable(Table table) {
     free(table->data_types);
 
     // free primary key
-    freeKey(table->primary_key);
+    if (table->primary_key != NULL)
+        freeKey(table->primary_key);
 
     // free the unique keys
     for (int i = 0; i < table->unique_key_count; i++) {
@@ -717,7 +719,7 @@ struct Table *createTable(char *name) {
     table_data->unique_key_count = 0;
     table_data->data_type_size = 0;
     table_data->attributes = malloc(sizeof(struct Attribute));
-    table_data->unique_keys = malloc(sizeof(int));
+    table_data->unique_keys = malloc(sizeof(struct Key));
     table_data->data_types = malloc(sizeof(int));
     table_data->primary_key = NULL;
     table_data->name = malloc(strlen(name) + 1);
