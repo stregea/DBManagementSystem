@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 //    parse_ddl_statement("alter table foo drop bar;");
 //    parse_ddl_statement("alter table foo add gar double;");
 //    parse_ddl_statement("alter table foo add far double default 10.1");
-//    parse_ddl_statement("CREATE TABLE BAZZLE( baz double PRIMARYKEY );"); -- this needs to have separate create key functionality.
+    parse_ddl_statement("CREATE TABLE BAZZLE( baz double PRIMARYKEY );");// -- this needs to have separate create key functionality. I don't think it's being added to table.
     parse_ddl_statement("CREATE TABLE WAZZLE( baz integer,"
                         "bar Double notnull,"
                         "tab Double notnull,"
