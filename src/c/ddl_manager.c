@@ -398,24 +398,24 @@ int parseAttributes(Table table, char *tokenizer) {
                     } else {
                         // else error since invalid token?
                         free(attribute->name);
+                        free(attribute->constraints);
+                        free(attribute);
                         return -1;
                     }
                 }
             }
         }
-        table->attribute_count++;
         table->attributes = realloc(table->attributes,
-                                    sizeof(struct Attribute) * table->attribute_count + 1);
-        table->attributes[table->attribute_count - 1] = attribute;
+                                    sizeof(struct Attribute) * (table->attribute_count + 1));
+        table->attributes[table->attribute_count++] = attribute;
 
-        // read in data types.
-        for (int i = 0; i < table->attribute_count; i++) {
-            table->data_types = realloc(table->data_types, sizeof(int) * (table->data_type_size + 1));
-            table->data_types[table->data_type_size] = table->attributes[i]->type;
-            table->data_type_size++;
-        }
+        // read in data type of attribute and add it to array of datatypes.
+        table->data_types = realloc(table->data_types, sizeof(int) * (table->data_type_size + 1));
+        table->data_types[table->data_type_size] = attribute->type;
+        table->data_type_size++;
         return 0;
     }
+    free(attribute);
     return -1;
 }
 
@@ -429,8 +429,9 @@ void freeTable(Table table) {
     free(table->data_types);
 
     // free primary key
-    if (table->primary_key != NULL)
+    if (table->primary_key != NULL){
         freeKey(table->primary_key);
+    }
 
     // free the unique keys
     for (int i = 0; i < table->unique_key_count; i++) {
