@@ -2,21 +2,21 @@
 
 #ifndef DBMANAGEMENTSYSTEM_DDL_MANAGER_H
 #define DBMANAGEMENTSYSTEM_DDL_MANAGER_H
+
+struct Key {
+    int *key_indices; // array to contain the information to create a primary key.
+    int size; // count used to keep track of the # of indices within a primary key.
+};
+typedef struct Key *Key;
 /**
  * Struct to contain foreign key information.
  */
 struct ForeignKey {
     char *referenced_table_name; // name of referenced table
-    int *referenced_key_indices; // name of referenced column
+    Key referenced_key; // name of referenced column -- change to a struct of keys?
 };
 
 typedef struct ForeignKey *ForeignKey;
-
-struct PrimaryKey {
-    int *key_indices; // array to contain the information to create a primary key.
-    int key_indices_count; // count used to keep track of the # of indices within a primary key.
-};
-typedef struct PrimaryKey *PrimaryKey;
 
 /**
  * Struct to contain booleans to determine if an attribute uses any or all of the constraints.
@@ -49,13 +49,14 @@ struct Table {
     char *name; // the name of the table
     Attribute *attributes; // Array to hold the attributes/columns of a table.
     int *data_types; // array to contain the data types found within a table.
-    union record_item *unique; // 2-D array to contain only the unique tuples that can be found in the table.
-    int *key_indices;
-//    ForeignKey* foreignKeys; // foreign key to reference another table. -- may want to be array so can reference muliple tables?
+    Key *unique_keys; // array to contain only the unique keys that can be found in the table.
+    Key primary_key;
     int primary_key_count; // count used to keep track of the # of primary keys that exist within a table. 1 Max.
     int foreign_key_count; // count used to keep track of the # of foreign keys that exist within a table.
     int attribute_count; // count used to keep track of the # of attributes/columns that exist within a table.
     int key_indices_count; // count used to keep track of the # of attributes/columns that exist within a table.
+    int unique_key_count; // count used to keep track of the # of attributes/columns that exist within a table.
+    int data_type_size; // count used to keep track of the # of datatypes within the table.
 };
 typedef struct Table *Table;
 
@@ -169,7 +170,16 @@ int get_attribute_type(char *type);
  * @param table - table that contains all of the current columns/attributes existing within a table.
  * @return key_indices[] on success; null otherwise.
  */
-PrimaryKey create_primary_key(char *attribute_names, Table table);
+Key create_key(char *attribute_names, Table table);
+
+/**
+ * TODO
+ * Generate key_indices to be stored in an array that holds the inique keys found within the table..
+ * @param attribute_names - A string of multiple attribute names '<a_1> ... <a_N>'. This is created while parsing.
+ * @param table - table that contains all of the current columns/attributes existing within a table.
+ * @return int* on success; null otherwise.
+ */
+int* create_unique_key(char *attribute_names, Table table);
 
 /**
  * TODO - test
@@ -182,7 +192,20 @@ PrimaryKey create_primary_key(char *attribute_names, Table table);
  * @param key_indices - The key_indices to store within the table.
  * @return 0 on success; -1 on error.
  */
-int add_primary_key_to_table(Table table, PrimaryKey key);
+int add_primary_key_to_table(Table table, Key key);
+
+/**
+ * TODO
+ * Safely add a unique key to a table.
+ * This function will check to see if a table already has an existing key.
+ *
+ * If the table doesn't have an existing unique key -> success, add the new key.
+ * Otherwise a table already has a key -> error.
+ * @param table - The table to reference.
+ * @param key - The unique key to store within the table.
+ * @return 0 on success; -1 on error.
+ */
+int add_unique_key_to_table(Table table, Key key);
 
 /**
  * Parse through the SQL statement the user entered.
@@ -278,7 +301,7 @@ int parseForeignKey(Table table, char *tokenizer, char **token);
  * @param tokenizer - The tokenizer containing the string to be parsed.
  * @return 0 on success; -1 on error.
  */
-int parseUnique(Table table, char *tokenizer);
+int parseUniqueKey(Table table, char *names);
 
 /**
  * TODO

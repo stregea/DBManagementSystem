@@ -41,6 +41,8 @@ int execute_query(char *query, union record_item ***result) {
  * @return 0 on success; -1 on failure.
  */
 int shutdown_database() {
+    freeCatalog();
+    terminate_database();
     return 0;
 }
 
@@ -58,6 +60,7 @@ int main(int argc, char *argv[]) {
     printf("db_loc: %s\npage_size: %d\nbuffer_size: %d\n", databasePath, pageSize, bufferSize);
 
     FILE *databaseFile = fopen(databasePath, "r");
+//    create_database(databasePath, pageSize, bufferSize, databaseFile != NULL);
     if (databaseFile) {
         fclose(databaseFile);
         //printf("restarting database ...\n");
@@ -68,16 +71,16 @@ int main(int argc, char *argv[]) {
     }
 
 
-    parse_ddl_statement("DROP TABLE HELLO;THIS IS A TEST;drop table sam;");
-    parse_ddl_statement("alter table foo drop bar;");
-    parse_ddl_statement("alter table foo add gar double;");
-    parse_ddl_statement("alter table foo add far double default 10.1");
-    parse_ddl_statement("CREATE TABLE BAZZLE( baz double PRIMARYKEY );");
+//    parse_ddl_statement("DROP TABLE HELLO;THIS IS A TEST;drop table sam;");
+//    parse_ddl_statement("alter table foo drop bar;");
+//    parse_ddl_statement("alter table foo add gar double;");
+//    parse_ddl_statement("alter table foo add far double default 10.1");
+    parse_ddl_statement("CREATE TABLE BAZZLE( baz double PRIMARYKEY );");// -- this needs to have separate create key functionality. I don't think it's being added to table.
     parse_ddl_statement("CREATE TABLE WAZZLE( baz integer,"
-                        "bar Double notnull primarykey,"
-//                        "tab Double notnull,"
-//                        "wap Double notnull,"
-//                        "primarykey( bar baz ),"
+                        "bar Double notnull,"
+                        "tab Double notnull,"
+                        "wap Double notnull,"
+                        "primarykey( bar baz ), "
                         "foreignkey( bar baz) references bazzle( baz ) );");
 
     // bad statements
@@ -91,9 +94,7 @@ int main(int argc, char *argv[]) {
     parse_ddl_statement("alter table foo add far double blah"); // should we error if 'default' not read?
 
     freeCatalog();
-
-    // testing create statements.
-
+//    shutdown_database();
 
     // initialize with first token
 //    char token[MAX_TOKEN_SIZE];
