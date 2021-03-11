@@ -716,7 +716,7 @@ int add_primary_key_to_table(Table table, PrimaryKey key) {
 int add_unique_key_to_table(Table table, PrimaryKey key) {
 //    table->unique_keys = realloc(table->unique_keys, sizeof(Key) * (table->unique_key_count + 1));
 //    table->unique_keys[table->unique_key_count] = key;
-//    return 0;
+    return 0;
 }
 
 char* get_catalog_file_path() {
@@ -817,48 +817,42 @@ void freeCatalog() {
     free(catalog);
 }
 
-int write_key_to_disk(FILE *file, struct Key *key) {
-    // write key size and indices
-    /**
-    if(key == NULL){
-        fwrite(&key, sizeof(int), 1, file);
+int write_primary_key_to_disk(FILE *file, struct PrimaryKey *primaryKey) {
+    // might not be needed if size 0 and null are treated the same
+    if(primaryKey == NULL){
+        fwrite(&primaryKey, sizeof(int), 1, file);
     }
     else {
-        fwrite(&key->size, sizeof(int), 1, file);
-        fwrite(key->key_indices, sizeof(int), key->size, file);
+        fwrite(&primaryKey->size, sizeof(int), 1, file);
+        // write each attribute
+        for(int i = 0; i < primaryKey->size; i++) {
+            write_attribute_to_disk(file, primaryKey->attributes[i]);
+        }
     }
-    */
     return 0;
 }
 
 int write_foreign_key_to_disk(FILE *file, struct ForeignKey *foreignKey) {
-    // write name and key
-    /**
+    // write the corresponding table and column name
     fwrite(foreignKey->referenced_table_name, sizeof(foreignKey->referenced_table_name), 1, file);
-    if(foreignKey->referenced_key != NULL) {
-        write_key_to_disk(file, foreignKey->referenced_key);
-    }
-    */
+    fwrite(foreignKey->referenced_table_name, sizeof(foreignKey->referenced_column_name), 1, file);
+    
     return 0;
 }
 
 int write_attribute_to_disk(FILE *file, struct Attribute *attribute) {
-    // name
-    /**
     fwrite(&attribute->name_size, sizeof(int), 1, file);
     fwrite(attribute->name, sizeof(attribute->name), 1, file);
+    
     // read size of arrays
     fwrite(&attribute->type, sizeof(int), 1, file);
     fwrite(&attribute->size, sizeof(int), 1, file);
-    fwrite(&attribute->foreign_key_count, sizeof(int), 1, file);
     fwrite(&attribute->name_size, sizeof(int), 1, file);
-    // constaints
+    
+    // write constaints
     fwrite(attribute->constraints, sizeof(struct Constraints), 1, file);
-    // write each foreign key
-    for(int i = 0; i < attribute->foreign_key_count; i++) {
-        write_foreign_key_to_disk(file, attribute->foreignKey[i]);
-    }
-    **/
+    // write foreign key
+    write_foreign_key_to_disk(file, attribute->foreignKey);
 
     return 0;
 }
@@ -867,33 +861,31 @@ int write_table_to_disk(FILE *file, struct Table *table) {
     // write id
     printf("table_id: %d\n", table->tableId);
     fwrite(&table->tableId, sizeof(int), 1, file);
+    
     // write name
     printf("name_size: %d\n", table->name_size);
     fwrite(&table->name_size, sizeof(int), 1, file);
     printf("name: %s\n", table->name);
     fwrite(table->name, sizeof(table->name), 1, file);
-
+    
     // write array sizes
     fwrite(&table->primary_key_count, sizeof(int), 1, file);
+    
     //fwrite(&table->foreign_key_count, sizeof(int), 1, file);
     fwrite(&table->attribute_count, sizeof(int), 1, file);
-    //fwrite(&table->unique_key_count, sizeof(int), 1, file);
+    fwrite(&table->key_indices_count, sizeof(int), 1, file);
     fwrite(&table->data_type_size, sizeof(int), 1, file);
-
-    // write data types array
-    fwrite(table->data_types, sizeof(int), table->data_type_size, file);
-    // write primary key
-    write_key_to_disk(file, table->primary_key);
+    
     // write each attribute
     for(int i = 0; i < table->attribute_count; i++) {
         write_attribute_to_disk(file, table->attributes[i]);
     }
-    // write each unique key
-    /*
-    for(int i = 0; i < table->unique_key_count; i++) {
-        write_key_to_disk(file, table->unique_keys[i]);
-    }
-    */
+    // write data types array
+    fwrite(table->data_types, sizeof(int), table->data_type_size, file);
+    
+    // write primary key
+    write_primary_key_to_disk(file, table->primary_key);
+
     return 0;
 }
 
@@ -923,14 +915,14 @@ int write_catalog_to_disk() {
     return 0;
 }
 
-struct Key* read_key_from_disk(FILE *file) {
+struct PrimaryKey* read_primary_key_from_disk(FILE *file) {
     int key_size;
     fread(&key_size, sizeof(int), 1, file);
-    if(key_size == NULL){
+    if(key_size == 0){
         return NULL;
     }
     else {
-        struct Key *key = malloc(sizeof(int) + sizeof(int) * key_size);
+        struct PrimaryKey *key = malloc(sizeof(int) + sizeof(int) * key_size);
         //fread(&key->size, sizeof(int), 1, file);
         //fread(key->key_indices, sizeof(int), key->size, file);
         return key;
@@ -959,10 +951,10 @@ struct Table* read_table_from_disk(FILE *file) {
     fread(&table->data_type_size, sizeof(int), 1, file);
 
     // write primary key
-    table->primary_key = read_key_from_disk(file);
+    table->primary_key = read_primary_key_from_disk(file);
     // write each attribute
     for(int i = 0; i < table->attribute_count; i++) {
-        table->attributes[i] = read_attribute_to_disk(file);
+        //table->attributes[i] = read_attribute_to_disk(file);
     }
     // write each unique key
     /*

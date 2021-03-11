@@ -39,6 +39,7 @@ struct Constraints {
  */
 struct Attribute {
     char *name;
+    int name_size;
     int type; // the type of data within the column (0-4) / int-varchar
     int size; // used to determine the size of a char or varchar.
     Constraints constraints;
@@ -125,7 +126,7 @@ int write_attribute_to_disk();
  * Write a key and all of its contents to disk.
  * @return 0 on success; -1 on error.
  */
-int write_key_to_disk();
+int write_primary_key_to_disk();
 
 /**
  * Write a foreign key and all of its contents to disk.
@@ -139,7 +140,7 @@ int write_foreign_key_to_disk();
  * @param file - pointer to catalog file
  * @return pointer to key struct
  */
-struct Key* read_key_from_disk(FILE *file);
+struct PrimaryKey* read_primary_key_from_disk(FILE *file);
 
 /**
  * Read a table and all of its contents from disk.
