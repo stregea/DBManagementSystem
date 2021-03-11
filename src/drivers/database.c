@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
                         "tab Double notnull,"
                         "wap Double notnull,"
                         "primarykey( bar baz ), "
-                        "foreignkey( bar baz) references bazzle( baz ) );");
+                        "foreignkey( bar baz) references bazzle( far faz ) );");
 
     // bad statements
     parse_ddl_statement("DROP TABLE");
