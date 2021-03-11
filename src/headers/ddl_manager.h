@@ -38,6 +38,7 @@ struct Constraints {
  * Struct to contain information in regards to a attribute/column.
  */
 struct Attribute {
+    char *name;
     int type; // the type of data within the column (0-4) / int-varchar
     int size; // used to determine the size of a char or varchar.
     Constraints constraints;
@@ -52,6 +53,7 @@ struct Attribute {
 struct Table {
     int tableId;
     char *name; // the name of the table
+    int name_size;
     Attribute *attributes; // Array to hold the attributes/columns of a table.
     int *data_types; // array to contain the data types found within a table.
     PrimaryKey primary_key;
