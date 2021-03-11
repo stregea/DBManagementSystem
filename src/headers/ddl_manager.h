@@ -123,14 +123,6 @@ int add_table_to_catalog(Table table);
 int remove_table_from_catalog(char *table_name);
 
 /**
- * TODO
- * Update a Table in the catalog.
- * @param table_name - The name of the table to update.
- * @return 0 on success; -1 on error.
- */
-int update_table_in_catalog(char *table_name);
-
-/**
 * TODO
 * Get a Table to the catalog.
 * @param table_name - The name of the table to retrieve.

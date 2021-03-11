@@ -88,6 +88,7 @@ int main(int argc, char *argv[]) {
     parse_ddl_statement("alter table");
     parse_ddl_statement("alter table foo");
     parse_ddl_statement("alter table foo drop");
+    parse_ddl_statement("alter table foo drop gar");
     parse_ddl_statement("alter table foo add");
     parse_ddl_statement("alter table foo add gar");
     parse_ddl_statement("alter table foo add far double default");

@@ -140,27 +140,72 @@ int parseAlter(char *tokenizer, char **token) {
 
         // read in the table name
         tokenizer = strtok_r(NULL, " ", token);
+        //char *table_name = malloc(sizeof(char *) * strlen(tokenizer) + 1);
+        char *table_name;
+        //printf("length right now: %zu\n", strlen(tokenizer));
 
         if (tokenizer != NULL && strcasecmp(tokenizer, "") != 0) {
             printf("%s\n", tokenizer);
+
+            // Set table name to be used later
+            // TODO free this at every return point
+            table_name = malloc(sizeof(char *) * strlen(tokenizer) + 1);
+            strcpy(table_name, tokenizer);
             // read in function type
             tokenizer = strtok_r(NULL, " ", token);
 
             //drop <name>
             if (tokenizer != NULL && strcasecmp(tokenizer, "drop") == 0) {
-                printf("%s\n", tokenizer);
+                printf("alter operation: %s\n", tokenizer);
 
                 // read attribute name
                 tokenizer = strtok_r(NULL, " ", token);
 
                 if (tokenizer != NULL && strcasecmp(tokenizer, "") != 0) {
-                    printf("%s\n", tokenizer);
+                    printf("attribute name: %s\n", tokenizer);
 
-                    char *table_name = malloc(sizeof(char *) * strlen(tokenizer) + 1);
-                    strcpy(table_name, tokenizer);
+                    //char *table_name = malloc(sizeof(char *) * strlen(tokenizer) + 1);
+                    //strcpy(table_name, tokenizer);
 
                     // TODO
                     // read table from catalog
+                    Table table_to_alter = get_table_from_catalog(table_name);
+
+                    // Error if table is not in the catalog
+                    if (table_to_alter == NULL) {
+                        fprintf(stderr, "Error: Given table does not exist\n");
+                        free(table_name);
+                        return -1;
+                    }
+
+                    for (int i = 0; i < table_to_alter->attribute_count; i++) {
+                        if (strcasecmp(table_to_alter->attributes[i]->name, tokenizer) == 0) {
+                            // Found correct attribute to drop
+
+                            // Check if attribute is part of primary key
+                            for (int j = 0; j < table_to_alter->primary_key_count; j++) {
+                                if (table_to_alter->primary_key->key_indices[j] == i) {
+                                    fprintf(stderr, "Error: cannot drop attribute in primary key\n");
+                                    free(table_name);
+                                    return -1;
+                                }
+                            }
+
+                            // Search for references to the attribute in foreign keys of all other tables
+                            for (int j = 0; j < catalog->table_count; j++) {
+                                // If the table has foreign keys
+                                if (catalog->tables[j]->foreign_key_count > 0) {
+                                    //for (int k = 0; k < catalog->tables[j]->) {}
+                                }
+                            }
+                            // Remove foreign key constraint if present
+
+                            // Remove the attribute from the list of unique attributes, if present
+                            // Remove the attribute from the list of attributes
+
+                            // ===== storagemanager.c stuff =======
+                        }
+                    }
                     // update the table
                     // save the table to catalog
 
