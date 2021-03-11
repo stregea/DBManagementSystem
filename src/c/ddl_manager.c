@@ -4,9 +4,6 @@
 
 #include "../headers/ddl_manager.h"
 #include "../headers/storagemanager.h"
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 //static int num_tables;
 static char *global_db_loc;
@@ -19,6 +16,8 @@ static Catalog catalog = NULL;
 int initialize_ddl_parser(char *db_loc, bool restart) {
     global_db_loc = malloc(strlen(db_loc) + 1);
     strcpy(global_db_loc, db_loc);
+
+    printf("Starting DDL parser: %s\n", global_db_loc);
 
 //    if(restart){
 //        return read_catalog_from_disk(); // this has yet to be defined
@@ -720,16 +719,27 @@ int add_unique_key_to_table(Table table, PrimaryKey key) {
 //    return 0;
 }
 
+char* get_catalog_file_path() {
+    // format the catalog file name and path
+    char * catalog_file_name = "/catalog";
+    char * catalog_path = malloc(strlen(global_db_loc) + strlen(catalog_file_name) + 1);
+    strcpy(catalog_path, global_db_loc);
+    strcat(catalog_path, catalog_file_name);
+
+    return catalog_path;
+
+}
+
 int createCatalog(Table table) {
 
     catalog = malloc(sizeof(struct Catalog));
 
     // allocate memory for struct attributes
-    catalog->table_count = 1;
-    catalog->tables = malloc(sizeof(Table) * 1);
+    catalog->tables = malloc(sizeof(struct Table *));
 
     // add initial table
     catalog->tables[0] = table;
+    catalog->table_count = 1;
     return 0;
 }
 
@@ -793,6 +803,7 @@ struct Table *createTable(char *name) {
     table_data->data_types = malloc(sizeof(int));
     table_data->primary_key = NULL;
     table_data->name = malloc(strlen(name) + 1);
+    table_data->name_size = strlen(name) + 1;
     strcpy(table_data->name, name);
 
     return table_data;
@@ -804,4 +815,172 @@ void freeCatalog() {
     }
     free(catalog->tables);
     free(catalog);
+}
+
+int write_key_to_disk(FILE *file, struct Key *key) {
+    // write key size and indices
+    if(key == NULL){
+        fwrite(&key, sizeof(int), 1, file);
+    }
+    else {
+        fwrite(&key->size, sizeof(int), 1, file);
+        fwrite(key->key_indices, sizeof(int), key->size, file);
+    }
+    return 0;
+}
+
+int write_foreign_key_to_disk(FILE *file, struct ForeignKey *foreignKey) {
+    // write name and key
+    fwrite(foreignKey->referenced_table_name, sizeof(foreignKey->referenced_table_name), 1, file);
+    if(foreignKey->referenced_key != NULL) {
+        write_key_to_disk(file, foreignKey->referenced_key);
+    }
+    return 0;
+}
+
+int write_attribute_to_disk(FILE *file, struct Attribute *attribute) {
+    // name
+    fwrite(&attribute->name_size, sizeof(int), 1, file);
+    fwrite(attribute->name, sizeof(attribute->name), 1, file);
+    // read size of arrays
+    fwrite(&attribute->type, sizeof(int), 1, file);
+    fwrite(&attribute->size, sizeof(int), 1, file);
+    fwrite(&attribute->foreign_key_count, sizeof(int), 1, file);
+    fwrite(&attribute->name_size, sizeof(int), 1, file);
+    // constaints
+    fwrite(attribute->constraints, sizeof(struct Constraints), 1, file);
+    // write each foreign key
+    for(int i = 0; i < attribute->foreign_key_count; i++) {
+        write_foreign_key_to_disk(file, attribute->foreignKey[i]);
+    }
+
+    return 0;
+}
+
+int write_table_to_disk(FILE *file, struct Table *table) {
+    // write id
+    printf("table_id: %d\n", table->tableId);
+    fwrite(&table->tableId, sizeof(int), 1, file);
+    // write name
+    printf("name_size: %d\n", table->name_size);
+    fwrite(&table->name_size, sizeof(int), 1, file);
+    printf("name: %s\n", table->name);
+    fwrite(table->name, sizeof(table->name), 1, file);
+
+    // write array sizes
+    fwrite(&table->primary_key_count, sizeof(int), 1, file);
+    fwrite(&table->foreign_key_count, sizeof(int), 1, file);
+    fwrite(&table->attribute_count, sizeof(int), 1, file);
+    fwrite(&table->unique_key_count, sizeof(int), 1, file);
+    fwrite(&table->data_type_size, sizeof(int), 1, file);
+
+    // write data types array
+    fwrite(table->data_types, sizeof(int), table->data_type_size, file);
+    // write primary key
+    write_key_to_disk(file, table->primary_key);
+    // write each attribute
+    for(int i = 0; i < table->attribute_count; i++) {
+        write_attribute_to_disk(file, table->attributes[i]);
+    }
+    // write each unique key
+    for(int i = 0; i < table->unique_key_count; i++) {
+        write_key_to_disk(file, table->unique_keys[i]);
+    }
+    return 0;
+}
+
+int write_catalog_to_disk() {
+    char * catalog_path = get_catalog_file_path();
+
+    // catalog data
+    int table_count = catalog->table_count;
+    struct Table **tables = catalog->tables;
+
+    // open file and write the catalog data
+    printf("Writing catalog to disk: %s\n", catalog_path);
+    FILE *catalog_file = fopen(catalog_path, "wb");
+
+    // write table count
+    printf("table_count: %d\n", table_count);
+    fwrite(&table_count, sizeof(int), 1, catalog_file);
+    
+
+    // write each table struct and all its data
+    for(int i = 0; i < catalog->table_count; i++){
+        write_table_to_disk(catalog_file, tables[i]);
+    }
+
+    fclose(catalog_file);
+    free(catalog_path);
+    return 0;
+}
+
+struct Key* read_key_from_disk(FILE *file) {
+    int key_size;
+    fread(&key_size, sizeof(int), 1, file);
+    if(key_size == NULL){
+        return NULL;
+    }
+    else {
+        struct Key *key = malloc(sizeof(int) + sizeof(int) * key_size);
+        fread(&key->size, sizeof(int), 1, file);
+        fread(key->key_indices, sizeof(int), key->size, file);
+        return key;
+    }
+}
+
+struct Table* read_table_from_disk(FILE *file) {
+    int tableID;
+    int name_size;
+    char *name = malloc(name_size);
+
+    fread(&tableID, sizeof(int), 1, file);
+    fread(&name_size, sizeof(int), 1, file);
+    fread(name, name_size, 1, file);
+
+    // only adds name and name size to struct
+    struct Table* table = createTable(name);
+    table->tableId = tableID;
+    free(name);
+
+    // write array sizes
+    fread(&table->primary_key_count, sizeof(int), 1, file);
+    fread(&table->foreign_key_count, sizeof(int), 1, file);
+    fread(&table->attribute_count, sizeof(int), 1, file);
+    fread(&table->unique_key_count, sizeof(int), 1, file);
+    fread(&table->data_type_size, sizeof(int), 1, file);
+
+    // write primary key
+    table->primary_key = read_key_from_disk(file);
+    // write each attribute
+    for(int i = 0; i < table->attribute_count; i++) {
+        table->attributes[i] = read_attribute_to_disk(file);
+    }
+    // write each unique key
+    for(int i = 0; i < table->unique_key_count; i++) {
+        //read_key_to_disk(file, table->unique_keys[i]);
+    }
+
+    return 0;
+}
+
+int read_catalog_from_disk() {
+    char * catalog_path = get_catalog_file_path();
+
+    // open file and read the catalog data
+    printf("Reading catalog from disk: %s\n", catalog_path);
+    FILE *catalog_file = fopen(catalog_path, "rb");
+
+    // read table count
+    int table_count;
+    fread(&table_count, sizeof(int), 1, catalog_file);
+
+    // read each table struct and all its data
+    for(int i = 0; i < table_count; i++){
+        read_table_from_disk(catalog_file);
+    }
+
+    fclose(catalog_file);
+    free(catalog_path);
+    return 0;
 }

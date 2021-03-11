@@ -1,4 +1,7 @@
 #include <stdbool.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #ifndef DBMANAGEMENTSYSTEM_DDL_MANAGER_H
 #define DBMANAGEMENTSYSTEM_DDL_MANAGER_H
@@ -19,8 +22,8 @@ struct ForeignKey {
     char *referenced_table_name; // name of referenced table
     char *referenced_column_name; // name of referenced column
 };
-
 typedef struct ForeignKey *ForeignKey;
+
 
 /**
  * Struct to contain booleans to determine if an attribute uses any or all of the constraints.
@@ -35,7 +38,6 @@ struct Constraints {
  * Struct to contain information in regards to a attribute/column.
  */
 struct Attribute {
-    char *name; // name of the attribute (column)
     int type; // the type of data within the column (0-4) / int-varchar
     int size; // used to determine the size of a char or varchar.
     Constraints constraints;
@@ -60,16 +62,19 @@ struct Table {
 };
 typedef struct Table *Table;
 
+/**
+ * Struct used to represent the catalog.
+ *
+ * This is created within the create catalog command.
+ */
 struct Catalog {
     int table_count;
 	struct Table **tables;
-};
-typedef struct Catalog *Catalog;
-
+};typedef struct Catalog *Catalog;
 
 /**
- * TODO
  * This will allocate memory in the catalog to allow for the storage of Tables.
+ * 
  * @return 0 on success; -1 on error.
  */
 int initialize_ddl_parser(char *db_loc, bool restart);
@@ -83,6 +88,7 @@ int terminate_ddl_parser();
 
 /**
  * Create catalog for first table
+ * @param table - pointer to initial table
  */
 int createCatalog(Table table);
 
@@ -93,22 +99,63 @@ int createCatalog(Table table);
 void freeCatalog();
 
 /**
- * TODO
  * Write a catalog and all of its contents to disk.
+ * 
  * @return 0 on success; -1 on error.
  */
 int write_catalog_to_disk();
 
 /**
- * TODO
+ * Write a table and all of its contents to disk.
+ * 
+ * @return 0 on success; -1 on error.
+ */
+int write_table_to_disk();
+
+/**
+ * Write an attribute and all of its contents to disk.
+ * 
+ * @return 0 on success; -1 on error.
+ */
+int write_attribute_to_disk();
+
+/**
+ * Write a key and all of its contents to disk.
+ * @return 0 on success; -1 on error.
+ */
+int write_key_to_disk();
+
+/**
+ * Write a foreign key and all of its contents to disk.
+ * 
+ * @return 0 on success; -1 on error.
+ */
+int write_foreign_key_to_disk();
+
+/**
+ * Read a key and all of its contents from disk.
+ * @param file - pointer to catalog file
+ * @return pointer to key struct
+ */
+struct Key* read_key_from_disk(FILE *file);
+
+/**
+ * Read a table and all of its contents from disk.
+ * @param file - pointer to catalog file
+ * @return pointer to table struct
+ */
+struct Table* read_table_from_disk(FILE *file);
+
+/**
  * Read a catalog from disk.
+ * 
  * @return 0 on success; -1 on error.
  */
 int read_catalog_from_disk();
 
 /**
- * TODO
  * Add a Table to the catalog.
+ * 
  * @param table - The table to add.
  * @return 0 on success; -1 on error.
  */
@@ -318,5 +365,12 @@ int parseUniqueKey(Table table, char *names);
  * @return 0 on success; -1 on error.
  */
 int parseAttributes(Table table, char *tokenizer);
+
+/**
+ * get the catalog file path
+ * 
+ * @return catalog file path
+ */
+char* get_catalog_file_path();
 
 #endif
