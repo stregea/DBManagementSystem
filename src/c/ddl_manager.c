@@ -869,11 +869,13 @@ int write_table_to_disk(FILE *file, struct Table *table) {
     fwrite(table->name, sizeof(table->name), 1, file);
     
     // write array sizes
+    printf("primary_key_count: %d\n", table->primary_key_count);
     fwrite(&table->primary_key_count, sizeof(int), 1, file);
-    
-    //fwrite(&table->foreign_key_count, sizeof(int), 1, file);
+    printf("attribute_count: %d\n", table->attribute_count);
     fwrite(&table->attribute_count, sizeof(int), 1, file);
+    printf("key_indices_count: %d\n", table->attribute_count);
     fwrite(&table->key_indices_count, sizeof(int), 1, file);
+    printf("data_type_size: %d\n", table->data_type_size);
     fwrite(&table->data_type_size, sizeof(int), 1, file);
     
     // write each attribute
@@ -901,7 +903,7 @@ int write_catalog_to_disk() {
     FILE *catalog_file = fopen(catalog_path, "wb");
 
     // write table count
-    printf("table_count: %d\n", table_count);
+    printf("table_count: %d\n\n", table_count);
     fwrite(&table_count, sizeof(int), 1, catalog_file);
     
 
@@ -945,10 +947,16 @@ struct Table* read_table_from_disk(FILE *file) {
 
     // write array sizes
     fread(&table->primary_key_count, sizeof(int), 1, file);
-    //fread(&table->foreign_key_count, sizeof(int), 1, file);
     fread(&table->attribute_count, sizeof(int), 1, file);
-    //fread(&table->unique_key_count, sizeof(int), 1, file);
     fread(&table->data_type_size, sizeof(int), 1, file);
+
+    printf("table_id: %d\n", table->tableId);
+    printf("name_size: %d\n", table->name_size);
+    printf("name: %s\n", table->name);
+    printf("primary_key_count: %d\n", table->primary_key_count);
+    printf("attribute_count: %d\n", table->attribute_count);
+    printf("key_indices_count: %d\n", table->attribute_count);
+    printf("data_type_size: %d\n", table->data_type_size);
 
     // write primary key
     table->primary_key = read_primary_key_from_disk(file);
@@ -976,6 +984,7 @@ int read_catalog_from_disk() {
     // read table count
     int table_count;
     fread(&table_count, sizeof(int), 1, catalog_file);
+    printf("table_count: %d\n\n", table_count);
 
     // read each table struct and all its data
     for(int i = 0; i < table_count; i++){
