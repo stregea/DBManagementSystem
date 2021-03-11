@@ -1,22 +1,24 @@
 #include <stdbool.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #ifndef DBMANAGEMENTSYSTEM_DDL_MANAGER_H
 #define DBMANAGEMENTSYSTEM_DDL_MANAGER_H
 
+#define MAX_NAME_SIZE 20
+
 struct Key {
     int *key_indices; // array to contain the information to create a primary key.
     int size; // count used to keep track of the # of indices within a primary key.
-};
-typedef struct Key *Key;
+}; typedef struct Key *Key;
 /**
  * Struct to contain foreign key information.
  */
 struct ForeignKey {
     char *referenced_table_name; // name of referenced table
-    Key referenced_key; // name of referenced column -- change to a struct of keys?
-};
-
-typedef struct ForeignKey *ForeignKey;
+    struct Key *referenced_key; // name of referenced column -- change to a struct of keys?
+}; typedef struct ForeignKey *ForeignKey;
 
 /**
  * Struct to contain booleans to determine if an attribute uses any or all of the constraints.
@@ -31,12 +33,13 @@ struct Constraints {
  * Struct to contain information in regards to a attribute/column.
  */
 struct Attribute {
-    char *name; // name of the attribute (column)
     int type; // the type of data within the column (0-4) / int-varchar
     int size; // used to determine the size of a char or varchar.
     int foreign_key_count;
-    Constraints constraints;
-    ForeignKey * foreignKey;
+    int name_size;
+    char *name; // name of the attribute (column)
+    struct Constraints *constraints;
+    struct ForeignKey **foreignKey;
 }; typedef struct Attribute* Attribute;
 
 /**
@@ -46,30 +49,32 @@ struct Attribute {
  */
 struct Table {
     int tableId;
-    char *name; // the name of the table
-    Attribute *attributes; // Array to hold the attributes/columns of a table.
-    int *data_types; // array to contain the data types found within a table.
-    Key *unique_keys; // array to contain only the unique keys that can be found in the table.
-    Key primary_key;
     int primary_key_count; // count used to keep track of the # of primary keys that exist within a table. 1 Max.
     int foreign_key_count; // count used to keep track of the # of foreign keys that exist within a table.
     int attribute_count; // count used to keep track of the # of attributes/columns that exist within a table.
-    int key_indices_count; // count used to keep track of the # of attributes/columns that exist within a table.
-    int unique_key_count; // count used to keep track of the # of attributes/columns that exist within a table.
-    int data_type_size; // count used to keep track of the # of datatypes within the table.
-};
-typedef struct Table *Table;
+    int unique_key_count; // count used to keep track of the # of unique keys that exist within a table.
+    int data_type_size;  // count used to keep track of the # of datatypes within the table.
+    int name_size;
+    char *name; // name of the attribute (column)
+    int *data_types; // array to contain the data types found within a table.
+    struct Key *primary_key;
+    struct Attribute **attributes; // Array to hold the attributes/columns of a table.
+    struct Key **unique_keys; // array to contain only the unique keys that can be found in the table.
+}; typedef struct Table *Table;
 
+/**
+ * Struct used to represent the catalog.
+ *
+ * This is created within the create catalog command.
+ */
 struct Catalog {
     int table_count;
 	struct Table **tables;
-};
-typedef struct Catalog *Catalog;
-
+};typedef struct Catalog *Catalog;
 
 /**
- * TODO
  * This will allocate memory in the catalog to allow for the storage of Tables.
+ * 
  * @return 0 on success; -1 on error.
  */
 int initialize_ddl_parser(char *db_loc, bool restart);
@@ -83,6 +88,7 @@ int terminate_ddl_parser();
 
 /**
  * Create catalog for first table
+ * @param table - pointer to initial table
  */
 int createCatalog(Table table);
 
@@ -93,22 +99,63 @@ int createCatalog(Table table);
 void freeCatalog();
 
 /**
- * TODO
  * Write a catalog and all of its contents to disk.
+ * 
  * @return 0 on success; -1 on error.
  */
 int write_catalog_to_disk();
 
 /**
- * TODO
+ * Write a table and all of its contents to disk.
+ * 
+ * @return 0 on success; -1 on error.
+ */
+int write_table_to_disk();
+
+/**
+ * Write an attribute and all of its contents to disk.
+ * 
+ * @return 0 on success; -1 on error.
+ */
+int write_attribute_to_disk();
+
+/**
+ * Write a key and all of its contents to disk.
+ * @return 0 on success; -1 on error.
+ */
+int write_key_to_disk();
+
+/**
+ * Write a foreign key and all of its contents to disk.
+ * 
+ * @return 0 on success; -1 on error.
+ */
+int write_foreign_key_to_disk();
+
+/**
+ * Read a key and all of its contents from disk.
+ * @param file - pointer to catalog file
+ * @return pointer to key struct
+ */
+struct Key* read_key_from_disk(FILE *file);
+
+/**
+ * Read a table and all of its contents from disk.
+ * @param file - pointer to catalog file
+ * @return pointer to table struct
+ */
+struct Table* read_table_from_disk(FILE *file);
+
+/**
  * Read a catalog from disk.
+ * 
  * @return 0 on success; -1 on error.
  */
 int read_catalog_from_disk();
 
 /**
- * TODO
  * Add a Table to the catalog.
+ * 
  * @param table - The table to add.
  * @return 0 on success; -1 on error.
  */
@@ -326,5 +373,12 @@ int parseUniqueKey(Table table, char *names);
  * @return 0 on success; -1 on error.
  */
 int parseAttributes(Table table, char *tokenizer);
+
+/**
+ * get the catalog file path
+ * 
+ * @return catalog file path
+ */
+char* get_catalog_file_path();
 
 #endif
