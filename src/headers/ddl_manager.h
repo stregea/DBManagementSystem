@@ -6,19 +6,24 @@
 #ifndef DBMANAGEMENTSYSTEM_DDL_MANAGER_H
 #define DBMANAGEMENTSYSTEM_DDL_MANAGER_H
 
-#define MAX_NAME_SIZE 20
+struct Attribute;
+typedef struct Attribute *Attribute;
 
-struct Key {
-    int *key_indices; // array to contain the information to create a primary key.
-    int size; // count used to keep track of the # of indices within a primary key.
-}; typedef struct Key *Key;
+struct PrimaryKey {
+    Attribute * attributes; // array with the attributes that make up the primary key
+    int size; // count used to keep track of the # of attributes within a primary key.
+};
+typedef struct PrimaryKey *PrimaryKey;
+
 /**
  * Struct to contain foreign key information.
  */
 struct ForeignKey {
     char *referenced_table_name; // name of referenced table
-    struct Key *referenced_key; // name of referenced column -- change to a struct of keys?
-}; typedef struct ForeignKey *ForeignKey;
+    char *referenced_column_name; // name of referenced column
+};
+typedef struct ForeignKey *ForeignKey;
+
 
 /**
  * Struct to contain booleans to determine if an attribute uses any or all of the constraints.
@@ -35,12 +40,9 @@ struct Constraints {
 struct Attribute {
     int type; // the type of data within the column (0-4) / int-varchar
     int size; // used to determine the size of a char or varchar.
-    int foreign_key_count;
-    int name_size;
-    char *name; // name of the attribute (column)
-    struct Constraints *constraints;
-    struct ForeignKey **foreignKey;
-}; typedef struct Attribute* Attribute;
+    Constraints constraints;
+    ForeignKey foreignKey;
+};
 
 /**
  * Struct used to represent a Table.
@@ -49,18 +51,16 @@ struct Attribute {
  */
 struct Table {
     int tableId;
-    int primary_key_count; // count used to keep track of the # of primary keys that exist within a table. 1 Max.
-    int foreign_key_count; // count used to keep track of the # of foreign keys that exist within a table.
-    int attribute_count; // count used to keep track of the # of attributes/columns that exist within a table.
-    int unique_key_count; // count used to keep track of the # of unique keys that exist within a table.
-    int data_type_size;  // count used to keep track of the # of datatypes within the table.
-    int name_size;
-    char *name; // name of the attribute (column)
+    char *name; // the name of the table
+    Attribute *attributes; // Array to hold the attributes/columns of a table.
     int *data_types; // array to contain the data types found within a table.
-    struct Key *primary_key;
-    struct Attribute **attributes; // Array to hold the attributes/columns of a table.
-    struct Key **unique_keys; // array to contain only the unique keys that can be found in the table.
-}; typedef struct Table *Table;
+    PrimaryKey primary_key;
+    int primary_key_count; // count used to keep track of the # of primary keys that exist within a table. 1 Max.
+    int attribute_count; // count used to keep track of the # of attributes/columns that exist within a table.
+    int key_indices_count; // count used to keep track of the # of attributes/columns that exist within a table.
+    int data_type_size; // count used to keep track of the # of datatypes within the table.
+};
+typedef struct Table *Table;
 
 /**
  * Struct used to represent the catalog.
@@ -170,14 +170,6 @@ int add_table_to_catalog(Table table);
 int remove_table_from_catalog(char *table_name);
 
 /**
- * TODO
- * Update a Table in the catalog.
- * @param table_name - The name of the table to update.
- * @return 0 on success; -1 on error.
- */
-int update_table_in_catalog(char *table_name);
-
-/**
 * TODO
 * Get a Table to the catalog.
 * @param table_name - The name of the table to retrieve.
@@ -217,7 +209,7 @@ int get_attribute_type(char *type);
  * @param table - table that contains all of the current columns/attributes existing within a table.
  * @return key_indices[] on success; null otherwise.
  */
-Key create_key(char *attribute_names, Table table);
+PrimaryKey create_key(char *attribute_names, Table table);
 
 /**
  * TODO
@@ -239,7 +231,7 @@ int* create_unique_key(char *attribute_names, Table table);
  * @param key_indices - The key_indices to store within the table.
  * @return 0 on success; -1 on error.
  */
-int add_primary_key_to_table(Table table, Key key);
+int add_primary_key_to_table(Table table, PrimaryKey key);
 
 /**
  * TODO
@@ -252,7 +244,7 @@ int add_primary_key_to_table(Table table, Key key);
  * @param key - The unique key to store within the table.
  * @return 0 on success; -1 on error.
  */
-int add_unique_key_to_table(Table table, Key key);
+int add_unique_key_to_table(Table table, PrimaryKey key);
 
 /**
  * Parse through the SQL statement the user entered.
