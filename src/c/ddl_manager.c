@@ -1552,5 +1552,14 @@ int is_valid_name(char *name) {
         }
     }
 
+    char keywords[16][11] = {"create", "alter", "drop", "add", "table", "integer", "double", "bool", "char", "varchar", "primarykey", "foreignkey", "unique", "default", "notnull", "references"};
+
+    for (int i = 0; i < 16; i++) {
+        if (strcasecmp(keywords[i], name) == 0) {
+            fprintf(stderr, "Error: %s is a restricted keyword and cannot be used as a name\n", keywords[i]);
+            return -1;
+        }
+    }
+
     return 0;
 }
