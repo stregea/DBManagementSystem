@@ -126,6 +126,7 @@ int parseDrop(char *tokenizer, char **token) {
 
                 // free the memory within the heap
                 freeTable(table);
+                catalog->table_count--;
                 return 0;
             }
             return -1;
