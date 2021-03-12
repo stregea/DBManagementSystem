@@ -78,8 +78,7 @@ int parseStatement(char *statement) {
 }
 
 /**
- * TODO - Test
- * Parse through the Drop Table command.
+Allo * Parse through the Drop Table command.
  * @param command - the command to parse.
  * @param token - The token used for string tokenizing.
  * @return 0 upon success, -1 upon error.
@@ -100,11 +99,31 @@ int parseDrop(char *tokenizer, char **token) {
             Table table = get_table_from_catalog(tokenizer);
 
             // drop the table in storagemanager.
-//            if (table != NULL && drop_table(table->tableId) == 0) {
-            // TODO - implement with storage manager.
-            if (table != NULL) {
+            if (table != NULL && drop_table(table->tableId) == 0) {
+
                 // update the catalog to remove reference of table
                 remove_table_from_catalog(table->name);
+
+                // iterate through tables
+                for(int i = 0; i < catalog->table_count; i++){
+
+                    if(catalog->tables[i] != NULL){
+
+                        // iterate though all attributes
+                        for(int j = 0; j < catalog->tables[i]->attribute_count; j++){
+                            // free foreign key
+                            if(strcasecmp(catalog->tables[i]->attributes[j]->foreignKey->referenced_table_name, table->name) == 0){
+                                free(catalog->tables[i]->attributes[j]->foreignKey->referenced_table_name);
+                                free(catalog->tables[i]->attributes[j]->foreignKey->referenced_column_name);
+                                free(catalog->tables[i]->attributes[j]->foreignKey);
+                                catalog->tables[i]->attributes[j]->foreignKey = NULL;
+                            }
+                        }
+
+                    }
+                }
+
+                // free the memory within the heap
                 freeTable(table);
                 return 0;
             }
