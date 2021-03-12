@@ -137,7 +137,7 @@ int parseAlter(char *tokenizer, char **token) {
         //printf("length right now: %zu\n", strlen(tokenizer));
 
         if (tokenizer != NULL && strcasecmp(tokenizer, "") != 0) {
-            printf("%s\n", tokenizer);
+            printf("table name: %s\n", tokenizer);
 
             // Set table name to be used later
             // TODO free this at every return point
@@ -170,13 +170,17 @@ int parseAlter(char *tokenizer, char **token) {
                         return -1;
                     }
 
+                    printf("Found table in catalog\n");
+
                     for (int i = 0; i < table_to_alter->attribute_count; i++) {
                         if (strcasecmp(table_to_alter->attributes[i]->name, tokenizer) == 0) {
                             // Found correct attribute to drop
+                            printf("Found correct attribute to drop\n");
 
                             // Check if attribute is part of primary key
-                            for (int j = 0; j < table_to_alter->primary_key_count; j++) {
-                                if (table_to_alter->primary_key->attributes[j] == table_to_alter->attributes[i]) {
+                            for (int j = 0; j < table_to_alter->primary_key->size; j++) {
+                                printf("comparing %s to %s\n", table_to_alter->attributes[i]->name, table_to_alter->primary_key->attributes[j]->name);
+                                if (strcmp(table_to_alter->primary_key->attributes[j]->name, table_to_alter->attributes[i]->name) == 0) {
                                     fprintf(stderr, "Error: cannot drop attribute in primary key\n");
                                     free(table_name);
                                     return -1;
@@ -417,8 +421,16 @@ int parseAttributes(Table table, char *tokenizer) {
                 if (tokenizer != NULL) {
 
                     if (strcasecmp(tokenizer, "primarykey") == 0) {
+                        if (table->primary_key_count > 0) {
+                            fprintf(stderr, "Error: Cannot use primarykey constraint on multiple attributes\n");
+                            free(attribute->name);
+                            free(attribute->constraints);
+                            free(attribute);
+                            return -1;
+                        }
                         constraints->primary_key = true;
-                        struct PrimaryKey *key = create_key(attribute->name, table); 
+                        // TODO fix this
+                        struct PrimaryKey *key = create_key_from_attr(attribute);
                         add_primary_key_to_table(table, key);
                     } 
                     else if (strcasecmp(tokenizer, "unique") == 0) {
@@ -501,6 +513,7 @@ int get_attribute_type(char *type) {
 
 // TODO: this hasn't been tested.
 struct PrimaryKey* create_key(char *attribute_names, Table table) {
+    printf("parsing primary key\n");
     struct PrimaryKey* key = malloc(sizeof(struct PrimaryKey));
     key->attributes = NULL;
     key->size = 0;
@@ -520,6 +533,17 @@ struct PrimaryKey* create_key(char *attribute_names, Table table) {
         }
         tokenizer = strtok(NULL, " ");
     }
+    printf("returning primary key with size: %d\n", key->size);
+    return key;
+}
+
+PrimaryKey create_key_from_attr(Attribute attr) {
+    printf("parsing primary key in line\n");
+    PrimaryKey key = malloc(sizeof(struct PrimaryKey));
+    key->attributes = malloc(sizeof(PrimaryKey));
+    key->attributes[0] = attr;
+    key->size = 1;
+
     return key;
 }
 
