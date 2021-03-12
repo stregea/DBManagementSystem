@@ -400,4 +400,6 @@ int parseAttributes(Table table, char *tokenizer);
  */
 char* get_catalog_file_path();
 
+void display_catalog();
+
 #endif
