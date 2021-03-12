@@ -88,13 +88,13 @@ int parseDrop(char *tokenizer, char **token) {
     tokenizer = strtok_r(NULL, " ", token);
     // table <name>
     if (tokenizer != NULL && strcasecmp(tokenizer, "table") == 0) {
-        printf("%s\n", tokenizer);
+        //("%s\n", tokenizer);
 
         // read in the table name
         tokenizer = strtok_r(NULL, " ", token);
 
         if (tokenizer != NULL && strcasecmp(tokenizer, "") != 0) {
-            printf("%s\n", tokenizer);
+            //printf("%s\n", tokenizer);
 
             // read table from catalog
             Table table = get_table_from_catalog(tokenizer);
@@ -369,7 +369,7 @@ int parseUniqueKey(Table table, char *names) {
 
 // TODO
 int parseAttributes(Table table, char *tokenizer) {
-    printf("Attributes: %s\n", tokenizer);
+    //printf("Attributes: %s\n", tokenizer);
 
     char *temp_token;
     tokenizer = strtok_r(tokenizer, " ", &temp_token); // split the string via spaces
@@ -387,15 +387,15 @@ int parseAttributes(Table table, char *tokenizer) {
         constraints->notnull = false;
         constraints->unique = false;
         strcpy(attribute->name, tokenizer);
-        printf("name: %s\n", attribute->name);
-        printf("name_size: %d\n", attribute->name_size);
+        //("name: %s\n", attribute->name);
+        //printf("name_size: %d\n", attribute->name_size);
 
         // read in attribute type
         tokenizer = strtok_r(NULL, " ", &temp_token);
         if (tokenizer != NULL) {
             // read in column type, function returns 0-4 based on string name (integer-varchar)
             attribute->type = get_attribute_type(tokenizer);
-            printf("type: %d\n", attribute->type);
+            //printf("type: %d\n", attribute->type);
             // check for correct attribute
             if(attribute->type == -1)
             {
@@ -408,7 +408,7 @@ int parseAttributes(Table table, char *tokenizer) {
                 attribute->size = 0;
             }
 
-            printf("size: %d\n\n", attribute->size);
+            //printf("size: %d\n\n", attribute->size);
 
             // loop through constraints
             while (tokenizer != NULL) {
@@ -876,7 +876,8 @@ int write_table_to_disk(FILE *file, struct Table *table) {
     
     // write primary key
     write_primary_key_to_disk(file, table->primary_key);
-
+    
+    /**
     printf("table_id: %d\n", table->tableId);
     printf("name_size: %d\n", table->name_size);
     printf("name: %s\n", table->name);
@@ -884,6 +885,7 @@ int write_table_to_disk(FILE *file, struct Table *table) {
     printf("attribute_count: %d\n", table->attribute_count);
     printf("key_indices_count: %d\n", table->attribute_count);
     printf("data_type_size: %d\n\n", table->data_type_size);
+    */
 
     return 0;
 }
@@ -900,7 +902,7 @@ int write_catalog_to_disk() {
     FILE *catalog_file = fopen(catalog_path, "wb");
 
     // write table count
-    printf("table_count: %d\n\n", table_count);
+    //printf("table_count: %d\n\n", table_count);
     fwrite(&table_count, sizeof(int), 1, catalog_file);
     
     // write each table struct and all its data
@@ -993,6 +995,7 @@ struct Table* read_table_from_disk(FILE *file) {
     // read primary key
     table->primary_key = read_primary_key_from_disk(file);
 
+    /*
     printf("table_id: %d\n", table->tableId);
     printf("name_size: %d\n", table->name_size);
     printf("name: %s\n", table->name);
@@ -1000,6 +1003,7 @@ struct Table* read_table_from_disk(FILE *file) {
     printf("attribute_count: %d\n", table->attribute_count);
     printf("key_indices_count: %d\n", table->attribute_count);
     printf("data_type_size: %d\n\n", table->data_type_size);
+    */
 
     return table;
 }
@@ -1033,4 +1037,70 @@ int read_catalog_from_disk() {
     fclose(catalog_file);
     free(catalog_path);
     return 0;
+}
+
+void display_catalog() {
+    printf("\n******************Display the entire catalog bro***************************\n");
+
+    // catalog data
+    printf("\n\ntable count: %d\n", catalog->table_count);
+    struct Table **tables = catalog->tables;
+    struct Table *table;
+    struct Attribute *attribute;
+
+    // write each table struct and all its data
+    for(int i = 0; i < catalog->table_count; i++){
+        table = tables[i];
+        printf("\ntableId: %d\n", table->tableId);
+        printf("name: %s\n", table->name);
+        printf("name_size: %d\n", table->name_size);
+
+        for(int j = 0; j < table->attribute_count; j++){
+            attribute = table->attributes[j];
+            printf("name: %s\n", attribute->name);
+            printf("name_size: %d\n", attribute->name_size);
+            printf("size: %d\n", attribute->size);
+            printf("contraints:\n");
+            printf("    notnull: %d\n", attribute->constraints->notnull);
+            printf("    primary_key: %d\n", attribute->constraints->primary_key);
+            printf("    unique: %d\n", attribute->constraints->unique);
+            if(attribute->foreignKey != NULL) {
+                printf("foreignKey:\n");
+                printf("    column_name: %s\n", attribute->foreignKey->referenced_column_name);
+                printf("    column_name_size: %d\n", attribute->foreignKey->referenced_column_name_size);
+                printf("    table_name: %s\n", attribute->foreignKey->referenced_table_name);
+                printf("    table_name_size: %d\n", attribute->foreignKey->referenced_table_name_size);
+            }
+        }
+
+        printf("Data types:\n   (");
+        for(int j = 0; j < table->data_type_size; j++) {
+            printf("%d, ", table->data_types[j]);
+        }
+        printf(")\n");
+
+        printf("primary_key:\n");
+        printf(" size: %d\n", table->primary_key->size);
+
+        for(int j = 0; j < table->primary_key->size; j++){
+            attribute = table->primary_key->attributes[i];
+            printf("name: %s\n", attribute->name);
+            printf("name_size: %d\n", attribute->name_size);
+            printf("size: %d\n", attribute->size);
+            printf("contraints:\n");
+            printf("    notnull: %d\n", attribute->constraints->notnull);
+            printf("    primary_key: %d\n", attribute->constraints->primary_key);
+            printf("    unique: %d\n", attribute->constraints->unique);
+            printf("foreignKey:\n");
+            printf("    column_name: %s\n", attribute->foreignKey->referenced_column_name);
+            printf("    column_name_size: %d\n", attribute->foreignKey->referenced_column_name_size);
+            printf("    table_name: %s\n", attribute->foreignKey->referenced_table_name);
+            printf("    table_name_size: %d\n", attribute->foreignKey->referenced_table_name_size);
+        }
+
+        printf("primary_key_count: %d\n", table->primary_key_count);
+        printf("attribute_count: %d\n", table->attribute_count);
+        printf("key_indices_count: %d\n", table->key_indices_count);
+        printf("data_type_size: %d\n", table->data_type_size);        
+    }
 }
