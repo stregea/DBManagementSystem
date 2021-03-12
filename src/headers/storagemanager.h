@@ -17,7 +17,7 @@
 union record_item{
 	int i;
 	double d;
-	bool b;
+	bool b[2];
 	char c[255];
 	char v[255];	
 };
