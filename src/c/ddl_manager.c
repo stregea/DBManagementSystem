@@ -829,7 +829,7 @@ struct PrimaryKey *create_key(char *attribute_names, Table table) {
 PrimaryKey create_key_from_attr(Attribute attr, Table table) {
     printf("parsing primary key in line\n");
     PrimaryKey key = malloc(sizeof(struct PrimaryKey));
-    key->attributes = malloc(sizeof(PrimaryKey));
+    key->attributes = malloc(sizeof(struct Attribute *));
     key->attributes[0] = attr;
     key->size = 1;
     table->key_indices_count = key->size;
@@ -1036,11 +1036,10 @@ char* get_catalog_file_path() {
     char last_character = global_db_loc[database_path_length - 1];
     if(last_character == '\'' || last_character == '/') {
         global_db_loc[database_path_length - 1] = 0;
-        catalog_path = malloc(strlen(global_db_loc) - 1 + strlen(catalog_file_name) + 1);
-    }
-    else {
         catalog_path = malloc(strlen(global_db_loc) + strlen(catalog_file_name) + 1);
     }
+
+    catalog_path = malloc(strlen(global_db_loc) + strlen(catalog_file_name) + 1);
 
     strcpy(catalog_path, global_db_loc);
     strcat(catalog_path, catalog_file_name);
@@ -1246,21 +1245,24 @@ int write_catalog_to_disk() {
 
     fclose(catalog_file);
     free(catalog_path);
+    freeCatalog();
     return 0;
 }
 
 struct ForeignKey *read_foreign_key_from_disk(FILE *file) {
-    struct ForeignKey *foreignKey = malloc(sizeof(struct ForeignKey));
+    struct ForeignKey *foreignKey;
 
     // read in the corresponding table and column name
-    fread(&foreignKey->referenced_table_name_size, sizeof(int), 1, file);
+    int first_value;
+    fread(&first_value, sizeof(int), 1, file);
     
     // check if the foreign key is actually null
-    if(foreignKey->referenced_table_name_size == 0){
+    if(first_value == 0){
         foreignKey = NULL;
     }
     else {
-        
+        foreignKey = malloc(sizeof(struct ForeignKey));
+        foreignKey->referenced_table_name_size = first_value;
         fread(&foreignKey->referenced_column_name_size, sizeof(int), 1, file);
         foreignKey->referenced_table_name = malloc(foreignKey->referenced_table_name_size);
         fread(foreignKey->referenced_table_name, sizeof(foreignKey->referenced_table_name), 1, file);
@@ -1296,7 +1298,7 @@ struct Attribute *read_attribute_from_disk(FILE *file) {
 struct PrimaryKey *read_primary_key_from_disk(FILE *file) {
     int key_size;
     fread(&key_size, sizeof(int), 1, file);
-    struct PrimaryKey *primaryKey = malloc(sizeof(int) + sizeof(int) * key_size);
+    struct PrimaryKey *primaryKey = malloc(sizeof(struct PrimaryKey));
 
     if (key_size == 0) {
         primaryKey = NULL;
@@ -1340,6 +1342,7 @@ struct Table *read_table_from_disk(FILE *file) {
     }
 
     // write data types array
+    table->data_types = realloc(table->data_types, sizeof(int) * table->data_type_size);
     fread(table->data_types, sizeof(int), table->data_type_size, file);
 
     // read primary key
