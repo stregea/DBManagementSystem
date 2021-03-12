@@ -397,7 +397,7 @@ int parseUniqueKey(Table table, char *names);
  * @param tokenizer - The tokenizer containing the string to be parsed.
  * @return 0 on success; -1 on error.
  */
-int parseAttributes(Table table, char *tokenizer, char **token);
+int parseAttributes(Table table, char *tokenizer);
 
 /**
  * get the catalog file path
