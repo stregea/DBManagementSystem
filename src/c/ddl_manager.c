@@ -112,12 +112,14 @@ int parseDrop(char *tokenizer, char **token) {
 
                         // iterate though all attributes
                         for(int j = 0; j < catalog->tables[i]->attribute_count; j++){
-                            // free foreign key
-                            if(strcasecmp(catalog->tables[i]->attributes[j]->foreignKey->referenced_table_name, table->name) == 0){
-                                free(catalog->tables[i]->attributes[j]->foreignKey->referenced_table_name);
-                                free(catalog->tables[i]->attributes[j]->foreignKey->referenced_column_name);
-                                free(catalog->tables[i]->attributes[j]->foreignKey);
-                                catalog->tables[i]->attributes[j]->foreignKey = NULL;
+                            if(catalog->tables[i]->attributes[j]->foreignKey != NULL) {
+                                // free foreign key
+                                if(strcasecmp(catalog->tables[i]->attributes[j]->foreignKey->referenced_table_name, table->name) == 0){
+                                    free(catalog->tables[i]->attributes[j]->foreignKey->referenced_table_name);
+                                    free(catalog->tables[i]->attributes[j]->foreignKey->referenced_column_name);
+                                    free(catalog->tables[i]->attributes[j]->foreignKey);
+                                    catalog->tables[i]->attributes[j]->foreignKey = NULL;
+                                }
                             }
                         }
 
