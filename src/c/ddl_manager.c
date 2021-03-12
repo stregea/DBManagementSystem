@@ -174,6 +174,7 @@ int parseAlter(char *tokenizer, char **token) {
                     printf("Found table in catalog, has %d attributes\n", table_to_alter->attribute_count);
 
                     for (int i = 0; i < table_to_alter->attribute_count; i++) {
+                        printf("looking for %s, have %s\n", tokenizer, table_to_alter->attributes[i]->name);
                         if (strcasecmp(table_to_alter->attributes[i]->name, tokenizer) == 0) {
                             // Found correct attribute to drop
                             Attribute dropping = table_to_alter->attributes[i];
@@ -260,6 +261,7 @@ int parseAlter(char *tokenizer, char **token) {
                     printf("%s\n", tokenizer);
                     char *a_name = malloc(sizeof(char *) * strlen(tokenizer) + 1);
                     char *a_type;
+                    char *a_size;
                     char *_default;
                     char *value;
 
@@ -267,12 +269,20 @@ int parseAlter(char *tokenizer, char **token) {
                     printf("name should be %s\n", a_name);
 
                     // read <a_type>
-                    tokenizer = strtok_r(NULL, " ", token);
+                    tokenizer = strtok_r(NULL, " (", token);
 
                     if (tokenizer != NULL) {
                         printf("a_type: %s\n", tokenizer);
-                        a_type = malloc(sizeof(char *) * (strlen(tokenizer) + 1));
+                        a_type = malloc(sizeof(char) * (strlen(tokenizer) + 1));
                         strcpy(a_type, tokenizer);
+                        int check_type = get_attribute_type(a_type);
+                        if (check_type == 3 || check_type == 4) {
+                            printf("found char or varchar\n");
+                            tokenizer = strtok_r(NULL, " ()", token);
+                            a_size = malloc(sizeof(char) * (strlen(tokenizer) + 1));
+                            strcpy(a_size, tokenizer);
+                            printf("got size of %s\n", a_size);
+                        }
 
                         // read default (this is optional)
                         tokenizer = strtok_r(NULL, " ", token);
@@ -308,8 +318,21 @@ int parseAlter(char *tokenizer, char **token) {
                                 printf("name is now %s\n", new_attr->name);
                                 new_attr->name_size = strlen(a_name);
                                 new_attr->type = get_attribute_type(a_type);
-                                new_attr->size = 0;
-                                // TODO handle char/varchar
+                                if (new_attr->type == 3 || new_attr->type == 4) {
+                                    // TODO handle char/varchar
+                                    int size = strtol(a_size, NULL, 10);
+                                    if (size >= 0) {
+                                        new_attr->size = size;
+                                    } else {
+                                        fprintf(stderr, "Error: invalid size parameter for char or varchar\n");
+                                        free(a_type);
+                                        free(a_name);
+                                        free(a_size);
+                                    }
+                                } else {
+                                    // zero out size field
+                                    new_attr->size = 0;
+                                }
 
                                 new_attr->foreignKey = NULL;
 
@@ -376,6 +399,7 @@ int parseAlter(char *tokenizer, char **token) {
                                 free(_default);
                                 free(a_type);
                                 free(a_name);
+                                free(a_size);
                                 return 0; // proper command structure.
                             }
 
@@ -401,8 +425,16 @@ int parseAlter(char *tokenizer, char **token) {
                         printf("got type %d\n", new_attr->type);
 
                         if (new_attr->type == 3 || new_attr->type == 4) {
-                            printf("parsing char or varchar\n");
                             // TODO handle char/varchar
+                            int size = strtol(a_size, NULL, 10);
+                            if (size >= 0) {
+                                new_attr->size = size;
+                            } else {
+                                fprintf(stderr, "Error: invalid size parameter for char or varchar\n");
+                                free(a_type);
+                                free(a_name);
+                                free(a_size);
+                            }
                         } else {
                             // zero out size field
                             new_attr->size = 0;
@@ -442,6 +474,7 @@ int parseAlter(char *tokenizer, char **token) {
 
                         free(a_type); // since no type specified.
                         free(a_name);
+                        free(a_size);
                         return 0; // proper structure.
                     }
                     free(a_name); // error since no name specified.
@@ -575,11 +608,17 @@ int parseUniqueKey(Table table, char *names) {
 
 // TODO
 int parseAttributes(Table table, char *tokenizer) {
+
+    // Change in parsing means leading paren needs to be sliced off
+    while (tokenizer[0] == ' ' || tokenizer[0] == '(') {
+        tokenizer++;
+    }
     printf("Attributes: %s\n", tokenizer);
 
     char *temp_token;
     tokenizer = strtok_r(tokenizer, " ", &temp_token); // split the string via spaces
     Attribute attribute = malloc(sizeof(struct Attribute));
+    printf("tokenizer now: %s\n", tokenizer);
 
     // read in attribute/ column name
     if (tokenizer != NULL) {
@@ -592,8 +631,9 @@ int parseAttributes(Table table, char *tokenizer) {
         constraints->primary_key = false;
         constraints->notnull = false;
         constraints->unique = false;
+
         strcpy(attribute->name, tokenizer);
-        //("name: %s\n", attribute->name);
+        printf("name: %s\n", attribute->name);
         //printf("name_size: %d\n", attribute->name_size);
 
         // read in attribute type
@@ -602,7 +642,7 @@ int parseAttributes(Table table, char *tokenizer) {
         if (tokenizer != NULL) {
             // read in column type, function returns 0-4 based on string name (integer-varchar)
             attribute->type = get_attribute_type(tokenizer);
-            //printf("type: %d\n", attribute->type);
+            printf("type: %d\n", attribute->type);
             // check for correct attribute
             if (attribute->type == -1) {
                 free(attribute);
