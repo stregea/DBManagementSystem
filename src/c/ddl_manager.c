@@ -711,6 +711,7 @@ int parseAttributes(Table table, char *tokenizer) {
         attribute->foreignKey = NULL;
         attribute->constraints = malloc(sizeof(struct Constraints));
         struct Constraints *constraints = attribute->constraints;
+        attribute->default_value = NULL; //todo:free
         constraints->primary_key = false;
         constraints->notnull = false;
         constraints->unique = false;
@@ -775,7 +776,17 @@ int parseAttributes(Table table, char *tokenizer) {
                     } else if (strcasecmp(tokenizer, "notnull") == 0) {
                         printf("got nontnull\n");
                         constraints->notnull = true;
-                    } else {
+                    } else if (strcasecmp(tokenizer, "default") == 0){
+                        // read value of default
+                        tokenizer = strtok_r(NULL, " ,)", &temp_token);
+                        if(tokenizer != NULL){
+                            // todo: should we check if value matches attribute? It stores '0' if a string is read for int/double. May not be an issue.
+                            // store the value as a string, convert value later on when needed
+                            attribute->default_value = malloc(strlen(tokenizer) + 1);
+                            strcpy(attribute->default_value, tokenizer);
+                        }
+                   }
+                    else { // bad value
                         free(attribute->name);
                         free(attribute->constraints);
                         free(attribute);
@@ -811,6 +822,10 @@ void freeAttribute(Attribute attr) {
         free(attr->foreignKey->referenced_table_name);
         free(attr->foreignKey->referenced_column_name);
         free(attr->foreignKey);
+    }
+
+    if(attr->default_value != NULL){
+        free(attr->default_value);
     }
 
     free(attr);
@@ -1546,7 +1561,7 @@ int is_valid_name(char *name) {
     // First character is a lowercase or uppercase letter
 
     for (int i = 1; i < strlen(name); i++) {
-        if (name[i] < 48 || (name[i] > 57 && name[i] < 65) || (name[i] > 90 && name[i] < 97) || name[i] > 122) {\
+        if (name[i] < 48 || (name[i] > 57 && name[i] < 65) || (name[i] > 90 && name[i] < 97) || name[i] > 122) {
             fprintf(stderr, "Error: names must contain only alphanumeric characters\n");
             return -1;
         }

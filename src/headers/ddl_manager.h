@@ -45,6 +45,7 @@ struct Attribute {
     int name_size;
     int type; // the type of data within the column (0-4) / int-varchar
     int size; // used to determine the size of a char or varchar.
+    void* default_value;
     struct Constraints *constraints;
     struct ForeignKey *foreignKey;
 };
