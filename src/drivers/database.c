@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
 
     printf("db_loc: %s\npage_size: %d\nbuffer_size: %d\n", databasePath, pageSize, bufferSize);
     initialize_ddl_parser(databasePath, false);
+    create_database(databasePath, 4096, 3, false);
 
     // initialize with first token
     char token[MAX_TOKEN_SIZE];
