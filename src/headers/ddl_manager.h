@@ -417,4 +417,6 @@ void display_catalog();
  * @return a new string; null if not char/varchar
  */
 int char_or_varchar(char*tokenizer);
+
+int is_valid_name(char *name);
 #endif
