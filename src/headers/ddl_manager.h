@@ -10,7 +10,7 @@ struct Attribute;
 typedef struct Attribute *Attribute;
 
 struct PrimaryKey {
-    Attribute * attributes; // array with the attributes that make up the primary key
+    struct Attribute **attributes; // array with the attributes that make up the primary key
     int size; // count used to keep track of the # of attributes within a primary key.
 };
 typedef struct PrimaryKey *PrimaryKey;
@@ -19,6 +19,8 @@ typedef struct PrimaryKey *PrimaryKey;
  * Struct to contain foreign key information.
  */
 struct ForeignKey {
+    int referenced_table_name_size;
+    int referenced_column_name_size;
     char *referenced_table_name; // name of referenced table
     char *referenced_column_name; // name of referenced column
 };
@@ -42,8 +44,8 @@ struct Attribute {
     int name_size;
     int type; // the type of data within the column (0-4) / int-varchar
     int size; // used to determine the size of a char or varchar.
-    Constraints constraints;
-    ForeignKey foreignKey;
+    struct Constraints *constraints;
+    struct ForeignKey *foreignKey;
 };
 
 /**
@@ -55,9 +57,9 @@ struct Table {
     int tableId;
     char *name; // the name of the table
     int name_size;
-    Attribute *attributes; // Array to hold the attributes/columns of a table.
+    struct Attribute **attributes; // Array to hold the attributes/columns of a table.
     int *data_types; // array to contain the data types found within a table.
-    PrimaryKey primary_key;
+    struct PrimaryKey *primary_key;
     int primary_key_count; // count used to keep track of the # of primary keys that exist within a table. 1 Max.
     int attribute_count; // count used to keep track of the # of attributes/columns that exist within a table.
     int key_indices_count; // count used to keep track of the # of attributes/columns that exist within a table.
@@ -134,6 +136,20 @@ int write_primary_key_to_disk();
  * @return 0 on success; -1 on error.
  */
 int write_foreign_key_to_disk();
+
+/**
+ * Read a foreign key and all of its contents from disk.
+ * @param file - pointer to catalog file
+ * @return pointer to key struct
+ */
+struct ForeignKey * read_foreign_key_from_disk(FILE *file);
+
+/**
+ * Read an attribute and all of its contents from disk.
+ * @param file - pointer to catalog file
+ * @return pointer to key struct
+ */
+struct Attribute * read_attribute_from_disk(FILE *file);
 
 /**
  * Read a key and all of its contents from disk.

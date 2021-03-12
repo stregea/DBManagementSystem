@@ -58,131 +58,64 @@ int main(int argc, char *argv[]) {
     int bufferSize = (int) strtol(argv[3], NULL, 10);
 
     printf("db_loc: %s\npage_size: %d\nbuffer_size: %d\n", databasePath, pageSize, bufferSize);
-
-    FILE *databaseFile = fopen(databasePath, "r");
-//    create_database(databasePath, pageSize, bufferSize, databaseFile != NULL);
-    if (databaseFile) {
-        fclose(databaseFile);
-        //printf("restarting database ...\n");
-        //restart_database(databasePath);
-    } else {
-        //printf("restarting database ...\n");
-        new_database(databasePath, pageSize, bufferSize);
-    }
-
-
-//    parse_ddl_statement("DROP TABLE HELLO;THIS IS A TEST;drop table sam;");
-//    parse_ddl_statement("alter table foo drop bar;");
-//    parse_ddl_statement("alter table foo add gar double;");
-//    parse_ddl_statement("alter table foo add far double default 10.1");
-    parse_ddl_statement("CREATE TABLE BAZZLE( baz double PRIMARYKEY );");// -- this needs to have separate create key functionality. I don't think it's being added to table.
-    parse_ddl_statement("CREATE TABLE WAZZLE( baz integer,"
-                        "bar Double notnull,"
-                        "tab Double notnull,"
-                        "wap Double notnull,"
-                        "primarykey( bar baz ), "
-                        "foreignkey( bar baz) references bazzle( far faz ) );");
-
-    // bad statements
-    parse_ddl_statement("DROP TABLE");
-    parse_ddl_statement("alter table");
-    parse_ddl_statement("alter table foo");
-    parse_ddl_statement("alter table foo drop");
-    parse_ddl_statement("alter table foo drop gar");
-    parse_ddl_statement("alter table foo add");
-    parse_ddl_statement("alter table foo add gar");
-    parse_ddl_statement("alter table foo add far double default");
-    parse_ddl_statement("alter table foo add far double blah"); // should we error if 'default' not read?
-
-    freeCatalog();
-//    shutdown_database();
+    initialize_ddl_parser(databasePath, false);
 
     // initialize with first token
-//    char token[MAX_TOKEN_SIZE];
-//    scanf("%s", token);
-//    int tokenLength = strlen(token);
-//
-//    int statementCount = 0;
-//
-//    while(strcmp(token, "quit;") != 0) {
-//
-//        // read in next token for next statement
-//        if(statementCount > 0) {
-//            scanf("%s", token);
-//            //printf("%s", token);
-//            tokenLength = (int)strlen(token);
-//        }
-//
-//        // initialize statement string
-//        int statementLength = tokenLength;
-//        char *statement = malloc(statementLength + 1);
-//        strncpy(statement, token, statementLength + 1);
-//
-//        // temp to hold statement contents when reading in statement
-//        char *temp = malloc(statementLength + 1);
-//
-//        // stop if the ';' character is within the token
-//        while(token[tokenLength - 1] != ';') { // builds the string from all the tokens.
-//
-//            // read next token
-//            scanf("%s", token);
-//            //printf("%s", token);
-//            tokenLength = strlen(token);
-//
-//            // copy statement string to temp string
-//            temp = realloc(temp, statementLength + 1);
-//            strncpy(temp, statement, statementLength + 1);
-//
-//            // resize the statement memory to hold the contains in new token
-//            // memblock = [Statement] + [sizeofchar] + [Token] + [NullTerminator]
-//            statement = realloc(statement, statementLength + sizeof(char) + tokenLength + 1);
-//            strncpy(statement, temp, statementLength + 1);
-//            statementLength = statementLength + sizeof(char) + tokenLength;
-//            strncat(statement, " ", statementLength + 1);
-//            strncat(statement, token, statementLength + 1);
-//
-//        }
-//
-//        //printf("\nStatement:\n%s\n", statement);
-//
-//        int result = parse_ddl_statement(statement);
-//
-//        if(result == -1){
-//            fprintf(stderr, "ERROR\n");
-//        }else{
-//            printf("SUCCESS");
-//        }
-//        free(statement);
-//        free(temp);
-//        statementCount++;
-//    }
+    char token[MAX_TOKEN_SIZE];
+    scanf("%s", token);
+    int tokenLength = strlen(token);
 
-    /**
-    // add table
-    int data_types_size = 3;
-    int data_types[] = {3, 0, 1};
-    int key_indices_size = 2;
-    int key_indices[] = {3, 0};
-    int table_id = add_table(data_types, key_indices, data_types_size, key_indices_size);
+    int statementCount = 0;
 
-    /// testing different commands.
-    // 'proper' statements
-//    parse_ddl_statement("DROP TABLE HELLO;THIS IS A TEST;drop table sam;");
-//    parse_ddl_statement("alter table foo drop bar;");
-//    parse_ddl_statement("alter table foo add gar double;");
-//    parse_ddl_statement("alter table foo add far double default 10.1");
-//
-//    // bad statements
-//    parse_ddl_statement("DROP TABLE");
-//    parse_ddl_statement("alter table");
-//    parse_ddl_statement("alter table foo");
-//    parse_ddl_statement("alter table foo drop");
-//    parse_ddl_statement("alter table foo add");
-//    parse_ddl_statement("alter table foo add gar");
-//    parse_ddl_statement("alter table foo add far double default");
-//    parse_ddl_statement("alter table foo add far double blah"); // should we error if 'default' not read?
+    while(strcmp(token, "quit;") != 0) {
 
-    //    terminate_database();
+        // read in next token for next statement
+        if(statementCount > 0) {
+            scanf("%s", token);
+            //printf("%s", token);
+            tokenLength = (int)strlen(token);
+        }
 
-    */
+        // initialize statement string
+        int statementLength = tokenLength;
+        char *statement = malloc(statementLength + 1);
+        strncpy(statement, token, statementLength + 1);
+
+        // temp to hold statement contents when reading in statement
+        char *temp = malloc(statementLength + 1);
+
+        // stop if the ';' character is within the token
+        while(token[tokenLength - 1] != ';') {  
+
+            // read next token
+            scanf("%s", token);
+            //printf("%s", token);
+            tokenLength = strlen(token);
+
+            // copy statement string to temp string
+            temp = realloc(temp, statementLength + 1);
+            strncpy(temp, statement, statementLength + 1);
+
+            // resize the statement memory to hold the contains in new token
+            // memblock = [Statement] + [sizeofchar] + [Token] + [NullTerminator]
+            statement = realloc(statement, statementLength + sizeof(char) + tokenLength + 1);
+            strncpy(statement, temp, statementLength + 1);
+            statementLength = statementLength + sizeof(char) + tokenLength;
+            strncat(statement, " ", statementLength + 1);
+            strncat(statement, token, statementLength + 1);
+
+        }
+
+        printf("\nStatement:\n%s\n\n", statement);
+
+        int result = parse_ddl_statement(statement);
+
+        if(result == -1){
+            fprintf(stderr, "ERROR\n");
+        }
+
+        free(statement);
+        free(temp);
+        statementCount++;
+    }
 }
