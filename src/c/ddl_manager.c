@@ -364,10 +364,10 @@ int parseAlter(char *tokenizer, char **token) {
                                 new_attr->constraints->unique = false;
 
                                 // Add to end of attributes list (realloc)
-                                realloc(table_to_alter->attributes, sizeof(Attribute) * (table_to_alter->attribute_count + 1));
+                                table_to_alter->attributes = realloc(table_to_alter->attributes, sizeof(Attribute) * (table_to_alter->attribute_count + 1));
                                 table_to_alter->attributes[table_to_alter->attribute_count++] = new_attr;
                                 // Add stuff to end of data_types (also realloc)
-                                realloc(table_to_alter->data_types, sizeof(int) * (table_to_alter->data_type_size + 1));
+                                table_to_alter->data_types = realloc(table_to_alter->data_types, sizeof(int) * (table_to_alter->data_type_size + 1));
                                 table_to_alter->data_types[table_to_alter->data_type_size++] = new_attr->type;
 
                                 // Get records from storagemanager
@@ -380,7 +380,7 @@ int parseAlter(char *tokenizer, char **token) {
 
                                 // For each record, realloc them to be one bigger and slap the default value on the end
                                 for (int i = 0; i < num_records; i++) {
-                                    realloc(records[i], sizeof(union record_item) * table_to_alter->data_type_size);
+                                    records[i] = realloc(records[i], sizeof(union record_item) * table_to_alter->data_type_size);
                                     switch(new_attr->type) {
                                         case 0:
                                             records[i][table_to_alter->data_type_size - 1].i = strtol(value, NULL, 10);
@@ -471,10 +471,10 @@ int parseAlter(char *tokenizer, char **token) {
                         new_attr->constraints->primary_key = false;
                         new_attr->constraints->unique = false;
                         // Add to end of attributes list (realloc)
-                        realloc(table_to_alter->attributes, sizeof(Attribute) * (table_to_alter->attribute_count + 1));
+                        table_to_alter->attributes = realloc(table_to_alter->attributes, sizeof(Attribute) * (table_to_alter->attribute_count + 1));
                         table_to_alter->attributes[table_to_alter->attribute_count++] = new_attr;
                         // Add stuff to end of data_types (also realloc)
-                        realloc(table_to_alter->data_types, sizeof(int) * (table_to_alter->data_type_size + 1));
+                        table_to_alter->data_types = realloc(table_to_alter->data_types, sizeof(int) * (table_to_alter->data_type_size + 1));
                         table_to_alter->data_types[table_to_alter->data_type_size++] = new_attr->type;
 
                         // Get records from storagemanager
@@ -488,7 +488,7 @@ int parseAlter(char *tokenizer, char **token) {
                         // For each record, realloc them to be one bigger and set the value to null
                         // TODO figure out null values
                         for (int i = 0; i < num_records; i++) {
-                            realloc(records[i], sizeof(union record_item) * table_to_alter->data_type_size);
+                            records[i] = realloc(records[i], sizeof(union record_item) * table_to_alter->data_type_size);
                             // When read as any of the data types, this should behave like a null value
                             // TODO actually set this to a null value instead of zero
                             switch(new_attr->type) {
