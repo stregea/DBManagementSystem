@@ -485,6 +485,8 @@ int parseCreate(char *tokenizer, char **token) {
 
                     // Cut off any leading spaces
                     char *filtered = malloc(strlen(tokenizer) + 1);
+                    // Because we're incrementing filtered, save where the block of memory starts
+                    char *save = filtered;
                     strcpy(filtered, tokenizer);
 
                     while (filtered[0] == ' ') {
@@ -542,12 +544,12 @@ int parseCreate(char *tokenizer, char **token) {
                         result = parseAttributes(table_data, tokenizer);
 
                         if (result == -1) {
-                            free(filtered);
+                            free(save);
                             freeTable(table_data);
                             return -1;
                         }
                     }
-                    free(filtered);
+                    free(save);
                 }
             }
             add_table(table_data->data_types, table_data->key_indices, table_data->data_type_size, table_data->key_indices_count);
