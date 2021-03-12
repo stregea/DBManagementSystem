@@ -146,6 +146,15 @@ int parseAlter(char *tokenizer, char **token) {
             // read in function type
             tokenizer = strtok_r(NULL, " ", token);
 
+            Table table_to_alter = get_table_from_catalog(table_name);
+
+            // Error if table is not in the catalog
+            if (table_to_alter == NULL) {
+                fprintf(stderr, "Error: Given table does not exist\n");
+                free(table_name);
+                return -1;
+            }
+
             //drop <name>
             if (tokenizer != NULL && strcasecmp(tokenizer, "drop") == 0) {
                 printf("alter operation: %s\n", tokenizer);
@@ -161,14 +170,6 @@ int parseAlter(char *tokenizer, char **token) {
 
                     // TODO
                     // read table from catalog
-                    Table table_to_alter = get_table_from_catalog(table_name);
-
-                    // Error if table is not in the catalog
-                    if (table_to_alter == NULL) {
-                        fprintf(stderr, "Error: Given table does not exist\n");
-                        free(table_name);
-                        return -1;
-                    }
 
                     printf("Found table in catalog, has %d attributes\n", table_to_alter->attribute_count);
 
@@ -218,6 +219,23 @@ int parseAlter(char *tokenizer, char **token) {
                             table_to_alter->data_type_size--;
 
                             // ===== storagemanager.c stuff =======
+                            // What needs to change:
+                            // tuples_per_page, num_attr, attr_types
+
+                            union record_item **records = NULL;
+                            int num_records = get_records(table_to_alter->tableId, &records);
+                            printf("got %d records\n", num_records);
+
+                            drop_table(table_to_alter->tableId);
+                            table_to_alter->tableId = add_table(table_to_alter->data_types, table_to_alter->key_indices, table_to_alter->data_type_size, table_to_alter->key_indices_count);
+
+                            for (int j = 0; j < num_records; j++) {
+                                for (int k = i; k < table_to_alter->data_type_size - 1; k++) {
+                                    records[j][k] = records[j][k+1];
+                                }
+                                insert_record(table_to_alter->tableId, records[j]);
+                            }
+
                             free(table_name);
                             return 0;
                         }
@@ -246,13 +264,14 @@ int parseAlter(char *tokenizer, char **token) {
                     char *value;
 
                     strcpy(a_name, tokenizer);
+                    printf("name should be %s\n", a_name);
 
                     // read <a_type>
                     tokenizer = strtok_r(NULL, " ", token);
 
                     if (tokenizer != NULL) {
-                        printf("%s\n", tokenizer);
-                        a_type = malloc(sizeof(char *) * strlen(tokenizer) + 1);
+                        printf("a_type: %s\n", tokenizer);
+                        a_type = malloc(sizeof(char *) * (strlen(tokenizer) + 1));
                         strcpy(a_type, tokenizer);
 
                         // read default (this is optional)
@@ -280,6 +299,79 @@ int parseAlter(char *tokenizer, char **token) {
                                  *  existing tuples in the database. The data type of the value must match that of the
                                  *  attribute, or its an error
                                  */
+
+                                // Malloc new attribute
+                                Attribute new_attr = malloc(sizeof(struct Attribute));
+                                // Fill out to match the type
+                                new_attr->name = malloc(sizeof(char) * (strlen(a_name) + 1));
+                                strcpy(new_attr->name, a_name);
+                                printf("name is now %s\n", new_attr->name);
+                                new_attr->name_size = strlen(a_name);
+                                new_attr->type = get_attribute_type(a_type);
+                                new_attr->size = 0;
+                                // TODO handle char/varchar
+
+                                new_attr->foreignKey = NULL;
+
+                                // Create constraints struct
+                                new_attr->constraints = malloc(sizeof(struct Constraints));
+                                new_attr->constraints->notnull = false;
+                                new_attr->constraints->primary_key = false;
+                                new_attr->constraints->unique = false;
+
+                                // Add to end of attributes list (realloc)
+                                realloc(table_to_alter->attributes, sizeof(Attribute) * (table_to_alter->attribute_count + 1));
+                                table_to_alter->attributes[table_to_alter->attribute_count++] = new_attr;
+                                // Add stuff to end of data_types (also realloc)
+                                realloc(table_to_alter->data_types, sizeof(int) * (table_to_alter->data_type_size + 1));
+                                table_to_alter->data_types[table_to_alter->data_type_size++] = new_attr->type;
+
+                                // Get records from storagemanager
+                                union record_item **records = NULL;
+                                int num_records = get_records(table_to_alter->tableId, &records);
+                                // drop old table
+                                drop_table(table_to_alter->tableId);
+                                // Create new table, set tableId
+                                table_to_alter->tableId = add_table(table_to_alter->data_types, table_to_alter->key_indices, table_to_alter->data_type_size, table_to_alter->key_indices_count);
+
+                                // For each record, realloc them to be one bigger and slap the default value on the end
+                                for (int i = 0; i < num_records; i++) {
+                                    realloc(records[i], sizeof(union record_item) * table_to_alter->data_type_size);
+                                    switch(new_attr->type) {
+                                        case 0:
+                                            records[i][table_to_alter->data_type_size - 1].i = strtol(value, NULL, 10);
+                                            break;
+                                        case 1:
+                                            records[i][table_to_alter->data_type_size - 1].d = strtod(value, NULL);
+                                            break;
+                                        case 2:
+                                            if (strcasecmp(value, "true") == 0) {
+                                                records[i][table_to_alter->data_type_size - 1].b = true;
+                                            } else if (strcasecmp(value, "false") == 0) {
+                                                records[i][table_to_alter->data_type_size - 1].b = false;
+                                            } else {
+                                                free(table_name);
+                                                free(_default);
+                                                fprintf(stderr, "Error: invalid value for boolean attribute\n");
+                                                return -1;
+                                            }
+                                            break;
+                                        case 3:
+                                            strcpy(records[i][table_to_alter->data_type_size - 1].c, value);
+                                            break;
+                                        case 4:
+                                            strcpy(records[i][table_to_alter->data_type_size - 1].v, value);
+                                            break;
+                                        default:
+                                            free(table_name);
+                                            free(_default);
+                                            fprintf(stderr, "Error: invalid attribute type\n");
+                                            return -1;
+                                    }
+                                    // then insert them into the new table
+                                    insert_record(table_to_alter->tableId, records[i]);
+                                }
+
                                 free(value);
                                 free(_default);
                                 free(a_type);
@@ -298,6 +390,56 @@ int parseAlter(char *tokenizer, char **token) {
                          *  already. It will then will add a null value for that attribute to all existing tuples in the
                          *  database
                          */
+                        // Malloc new attribute
+                        Attribute new_attr = malloc(sizeof(struct Attribute));
+
+                        // Fill out to match the type
+                        new_attr->name = malloc(sizeof(char) * (strlen(a_name) + 1));
+                        strcpy(new_attr->name, a_name);
+                        new_attr->name_size = strlen(a_name);
+                        new_attr->type = get_attribute_type(a_type);
+                        printf("got type %d\n", new_attr->type);
+
+                        if (new_attr->type == 3 || new_attr->type == 4) {
+                            printf("parsing char or varchar\n");
+                            // TODO handle char/varchar
+                        } else {
+                            // zero out size field
+                            new_attr->size = 0;
+                        }
+                        new_attr->foreignKey = NULL;
+
+                        // Create constraints struct
+                        new_attr->constraints = malloc(sizeof(struct Constraints));
+                        new_attr->constraints->notnull = false;
+                        new_attr->constraints->primary_key = false;
+                        new_attr->constraints->unique = false;
+                        // Add to end of attributes list (realloc)
+                        realloc(table_to_alter->attributes, sizeof(Attribute) * (table_to_alter->attribute_count + 1));
+                        table_to_alter->attributes[table_to_alter->attribute_count++] = new_attr;
+                        // Add stuff to end of data_types (also realloc)
+                        realloc(table_to_alter->data_types, sizeof(int) * (table_to_alter->data_type_size + 1));
+                        table_to_alter->data_types[table_to_alter->data_type_size++] = new_attr->type;
+
+                        // Get records from storagemanager
+                        union record_item **records = NULL;
+                        int num_records = get_records(table_to_alter->tableId, &records);
+                        // drop old table
+                        drop_table(table_to_alter->tableId);
+                        // Create new table, set tableId
+                        table_to_alter->tableId = add_table(table_to_alter->data_types, table_to_alter->key_indices, table_to_alter->data_type_size, table_to_alter->key_indices_count);
+
+                        // For each record, realloc them to be one bigger and set the value to null
+                        // TODO figure out null values
+                        for (int i = 0; i < num_records; i++) {
+                            realloc(records[i], sizeof(union record_item) * table_to_alter->data_type_size);
+                            // When read as any of the data types, this should behave like a null value
+                            // TODO actually set this to a null value instead of zero
+                            records[i][table_to_alter->data_type_size - 1].d = 0;
+                            // then insert them into the new table
+                            insert_record(table_to_alter->tableId, records[i]);
+                        }
+
                         free(a_type); // since no type specified.
                         free(a_name);
                         return 0; // proper structure.
@@ -343,6 +485,8 @@ int parseCreate(char *tokenizer, char **token) {
 
                     // Cut off any leading spaces
                     char *filtered = malloc(strlen(tokenizer) + 1);
+                    // Because we're incrementing filtered, save where the block of memory starts
+                    char *save = filtered;
                     strcpy(filtered, tokenizer);
 
                     while (filtered[0] == ' ') {
@@ -400,14 +544,15 @@ int parseCreate(char *tokenizer, char **token) {
                         result = parseAttributes(table_data, tokenizer);
 
                         if (result == -1) {
-                            free(filtered);
+                            free(save);
                             freeTable(table_data);
                             return -1;
                         }
                     }
-                    free(filtered);
+                    free(save);
                 }
             }
+            add_table(table_data->data_types, table_data->key_indices, table_data->data_type_size, table_data->key_indices_count);
             add_table_to_catalog(table_data);
             return 0;
         }
@@ -493,7 +638,7 @@ int parseAttributes(Table table, char *tokenizer) {
                         }
                         constraints->primary_key = true;
                         // TODO fix this
-                        struct PrimaryKey *key = create_key_from_attr(attribute);
+                        struct PrimaryKey *key = create_key_from_attr(attribute, table);
                         add_primary_key_to_table(table, key);
                     } else if (strcasecmp(tokenizer, "unique") == 0) {
                         constraints->unique = true;
@@ -599,15 +744,23 @@ struct PrimaryKey *create_key(char *attribute_names, Table table) {
         tokenizer = strtok(NULL, " ");
     }
     printf("returning primary key with size: %d\n", key->size);
+    table->key_indices_count = key->size;
+    table->key_indices = malloc(sizeof(int) * key->size);
+    for (int i = 0; i < key->size; i++) {
+        table->key_indices[i] = key->attributes[i]->type;
+    }
     return key;
 }
 
-PrimaryKey create_key_from_attr(Attribute attr) {
+PrimaryKey create_key_from_attr(Attribute attr, Table table) {
     printf("parsing primary key in line\n");
     PrimaryKey key = malloc(sizeof(struct PrimaryKey));
     key->attributes = malloc(sizeof(PrimaryKey));
     key->attributes[0] = attr;
     key->size = 1;
+    table->key_indices_count = key->size;
+    table->key_indices = malloc(sizeof(int));
+    table->key_indices[0] = attr->type;
 
     return key;
 }
@@ -620,7 +773,7 @@ int parseForeignKey(Table table, char *tokenizer, char **token) {
 
     // parse through rest of statement
     if (tokenizer != NULL) {
-        attribute_names = malloc(strlen(tokenizer) + 1); // copy the attribute names to memory
+        attribute_names = malloc(sizeof(char) * strlen(tokenizer) + 1); // copy the attribute names to memory
         strcpy(attribute_names, tokenizer); // tokenize this string
 
         // parse references
@@ -890,6 +1043,7 @@ struct Table *createTable(char *name) {
     table_data->data_type_size = 0;
     table_data->attributes = malloc(sizeof(struct Attribute));
     table_data->data_types = malloc(sizeof(int));
+    table_data->key_indices = NULL;
     table_data->primary_key = NULL;
     table_data->name = malloc(strlen(name) + 1);
     table_data->name_size = strlen(name) + 1;

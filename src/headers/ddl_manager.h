@@ -59,6 +59,7 @@ struct Table {
     int name_size;
     struct Attribute **attributes; // Array to hold the attributes/columns of a table.
     int *data_types; // array to contain the data types found within a table.
+    int *key_indices;
     struct PrimaryKey *primary_key;
     int primary_key_count; // count used to keep track of the # of primary keys that exist within a table. 1 Max.
     int attribute_count; // count used to keep track of the # of attributes/columns that exist within a table.
@@ -242,7 +243,7 @@ PrimaryKey create_key(char *attribute_names, Table table);
  * @param table
  * @return
  */
-PrimaryKey create_key_from_attr(Attribute attr);
+PrimaryKey create_key_from_attr(Attribute attr, Table table);
 
 /**
  * TODO
