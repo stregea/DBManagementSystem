@@ -203,6 +203,12 @@ Table get_table_from_catalog(char *table_name);
 struct Table * createTable(char *name);
 
 /**
+ * Frees all memory referenced by an Attribute, then the struct itself
+ * @param attr
+ */
+void freeAttribute(Attribute attr);
+
+/**
  * Free a table struct from memory.
  * @param table - The table to free.
  */
