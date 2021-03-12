@@ -1117,10 +1117,12 @@ void display_catalog() {
             printf("        primary_key: %d\n", attribute->constraints->primary_key);
             printf("        unique: %d\n", attribute->constraints->unique);
             printf("    foreignKey:\n");
-            printf("        column_name: %s\n", attribute->foreignKey->referenced_column_name);
-            printf("        column_name_size: %d\n", attribute->foreignKey->referenced_column_name_size);
-            printf("        table_name: %s\n", attribute->foreignKey->referenced_table_name);
-            printf("        table_name_size: %d\n", attribute->foreignKey->referenced_table_name_size);
+            if(attribute->foreignKey != NULL) {
+                printf("        column_name: %s\n", attribute->foreignKey->referenced_column_name);
+                printf("        column_name_size: %d\n", attribute->foreignKey->referenced_column_name_size);
+                printf("        table_name: %s\n", attribute->foreignKey->referenced_table_name);
+                printf("        table_name_size: %d\n", attribute->foreignKey->referenced_table_name_size);
+            }
         }
 
         printf("primary_key_count: %d\n", table->primary_key_count);
