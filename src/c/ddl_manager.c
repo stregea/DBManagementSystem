@@ -170,17 +170,18 @@ int parseAlter(char *tokenizer, char **token) {
                         return -1;
                     }
 
-                    printf("Found table in catalog\n");
+                    printf("Found table in catalog, has %d attributes\n", table_to_alter->attribute_count);
 
                     for (int i = 0; i < table_to_alter->attribute_count; i++) {
                         if (strcasecmp(table_to_alter->attributes[i]->name, tokenizer) == 0) {
                             // Found correct attribute to drop
+                            Attribute dropping = table_to_alter->attributes[i];
                             printf("Found correct attribute to drop\n");
 
                             // Check if attribute is part of primary key
                             for (int j = 0; j < table_to_alter->primary_key->size; j++) {
-                                printf("comparing %s to %s\n", table_to_alter->attributes[i]->name, table_to_alter->primary_key->attributes[j]->name);
-                                if (strcmp(table_to_alter->primary_key->attributes[j]->name, table_to_alter->attributes[i]->name) == 0) {
+                                printf("comparing %s to %s in primarykey\n", dropping->name, table_to_alter->primary_key->attributes[j]->name);
+                                if (strcmp(table_to_alter->primary_key->attributes[j]->name, dropping->name) == 0) {
                                     fprintf(stderr, "Error: cannot drop attribute in primary key\n");
                                     free(table_name);
                                     return -1;
@@ -189,21 +190,33 @@ int parseAlter(char *tokenizer, char **token) {
 
                             // Search for references to the attribute in foreign keys of all other tables
                             for (int j = 0; j < catalog->table_count; j++) {
-                                // If the table has foreign keys
+                                // Go through attributes and check if they have a foreign key
+                                for (int k = 0; k < catalog->tables[j]->attribute_count; k++) {
+                                    Attribute checking = catalog->tables[j]->attributes[k];
+                                    if (checking->foreignKey != NULL
+                                    && strcasecmp(table_to_alter->name, checking->foreignKey->referenced_table_name) == 0
+                                    && strcasecmp(dropping->name, checking->foreignKey->referenced_column_name) == 0) {
+                                        // This attribute referenced the table and attribute we were given,
+                                        // so need to drop that foreign key as we're dropping the attribute
+                                        checking->foreignKey = NULL;
+                                        printf("Removed foreign key from attribute %s in table %s\n", checking->name, catalog->tables[j]->name);
+                                    }
+                                }
                             }
-                            // Remove foreign key constraint if present
 
-                            // Remove the attribute from the list of unique attributes, if present
                             // Remove the attribute from the list of attributes
 
                             // ===== storagemanager.c stuff =======
+                            free(table_name);
+                            return 0;
                         }
                     }
                     // update the table
                     // save the table to catalog
 
                     free(table_name);
-                    return 0; // correct structure
+                    fprintf(stderr, "Error: Attribute does not exist in table\n");
+                    return -1; // correct structure
                 }
                 return -1; // incorrect syntax/structure
             }
@@ -325,6 +338,12 @@ int parseCreate(char *tokenizer, char **token) {
                         filtered++;
                     }
 
+                    int last = strlen(filtered) - 1;
+                    while (filtered[last] == ' ') {
+                        filtered[last] = '\0';
+                        last--;
+                    }
+
                     // check for any keywords
                     if (strcasecmp(filtered, "primarykey") == 0) {
                         // TODO: test
@@ -373,7 +392,7 @@ int parseUniqueKey(Table table, char *names) {
 
 // TODO
 int parseAttributes(Table table, char *tokenizer) {
-    //printf("Attributes: %s\n", tokenizer);
+    printf("Attributes: %s\n", tokenizer);
 
     char *temp_token;
     tokenizer = strtok_r(tokenizer, " ", &temp_token); // split the string via spaces
@@ -613,6 +632,8 @@ int parseForeignKey(Table table, char *tokenizer, char **token) {
 
                 // search for the attribute in table
                 for (int i = 0; i < table->attribute_count; i++) {
+
+                    printf("comparing %s to %s\n", attribute_tokenizer, table->attributes[i]->name);
                     if (strcasecmp(attribute_tokenizer, table->attributes[i]->name) == 0) {
 
                         if (referenced_attribute_tokenizer != NULL) {
@@ -629,6 +650,7 @@ int parseForeignKey(Table table, char *tokenizer, char **token) {
 
                             if (!found_attr) {
                                 // Value given to reference was not found in the table
+                                fprintf(stderr, "Error: Cannot find value to reference\n");
                                 return -1;
                             }
 
@@ -699,6 +721,7 @@ int parseForeignKey(Table table, char *tokenizer, char **token) {
             free(referenced_table_attributes);
             return 0;
         }
+        fprintf(stderr, "Error: could not find referenced table\n");
         // error since table doesn't exist
         free(attribute_names);
         free(referenced_table_name);
@@ -743,6 +766,8 @@ char* get_catalog_file_path() {
 }
 
 int createCatalog(Table table) {
+
+    table->tableId = 0;
 
     catalog = malloc(sizeof(struct Catalog));
 
@@ -1108,20 +1133,20 @@ void display_catalog() {
         printf(" size: %d\n", table->primary_key->size);
 
         for(int j = 0; j < table->primary_key->size; j++){
-            attribute = table->primary_key->attributes[i];
-            printf("    name: %s\n", attribute->name);
-            printf("    name_size: %d\n", attribute->name_size);
-            printf("    size: %d\n", attribute->size);
-            printf("    contraints:\n");
-            printf("        notnull: %d\n", attribute->constraints->notnull);
-            printf("        primary_key: %d\n", attribute->constraints->primary_key);
-            printf("        unique: %d\n", attribute->constraints->unique);
-            printf("    foreignKey:\n");
-            if(attribute->foreignKey != NULL) {
-                printf("        column_name: %s\n", attribute->foreignKey->referenced_column_name);
-                printf("        column_name_size: %d\n", attribute->foreignKey->referenced_column_name_size);
-                printf("        table_name: %s\n", attribute->foreignKey->referenced_table_name);
-                printf("        table_name_size: %d\n", attribute->foreignKey->referenced_table_name_size);
+            attribute = table->primary_key->attributes[j];
+            printf("name: %s\n", attribute->name);
+            printf("name_size: %d\n", attribute->name_size);
+            printf("size: %d\n", attribute->size);
+            printf("contraints:\n");
+            printf("    notnull: %d\n", attribute->constraints->notnull);
+            printf("    primary_key: %d\n", attribute->constraints->primary_key);
+            printf("    unique: %d\n", attribute->constraints->unique);
+            if (attribute->foreignKey != NULL) {
+                printf("foreignKey:\n");
+                printf("    column_name: %s\n", attribute->foreignKey->referenced_column_name);
+                printf("    column_name_size: %d\n", attribute->foreignKey->referenced_column_name_size);
+                printf("    table_name: %s\n", attribute->foreignKey->referenced_table_name);
+                printf("    table_name_size: %d\n", attribute->foreignKey->referenced_table_name_size);
             }
         }
 
