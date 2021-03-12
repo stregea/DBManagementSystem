@@ -557,9 +557,11 @@ int parseCreate(char *tokenizer, char **token) {
                     } else if (strcasecmp(first_word, "unique") == 0) {
                         // TODO: test
                         // read in attribute names
-                        tokenizer = strtok_r(NULL, "(),", token);
-                        // set unique attributes
-                        parseUniqueKey(table_data, tokenizer);
+                        tokenizer = strtok(tokenizer, "()");
+
+                        // read in attribute names.
+                        tokenizer = strtok(NULL, "()");
+                        parseUnique(table_data, tokenizer);
                     } else { // parse through the attributes/column information
                         int result;
 
@@ -602,8 +604,21 @@ int parsePrimaryKey(Table table, char *names) {
 }
 
 //TODO: test
-int parseUniqueKey(Table table, char *names) {
-    return add_unique_key_to_table(table, create_key(names, table));
+int parseUnique(Table table, char *names_list) {
+    if(table == NULL){
+        return -1;
+    }
+    char *name = strtok(names_list, " ");
+    while (name != NULL) {
+        // read in name
+        for (int i = 0; i < table->attribute_count; i++) {
+            if (strcasecmp(table->attributes[i]->name, name) == 0) {
+                table->attributes[i]->constraints->unique = true;
+            }
+        }
+        name = strtok(NULL, " ");
+    }
+    return 0;
 }
 
 // TODO
