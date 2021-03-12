@@ -13,6 +13,7 @@
 
 #include "../headers/ddl_manager.h"
 #include "../headers/storagemanager.h"
+#include <float.h>
 
 static char *global_db_loc;
 static Catalog catalog = NULL;
@@ -279,10 +280,10 @@ int parseAlter(char *tokenizer, char **token) {
                 if (tokenizer != NULL) {
                     printf("%s\n", tokenizer);
                     char *a_name = malloc(sizeof(char *) * strlen(tokenizer) + 1);
-                    char *a_type;
-                    char *a_size;
-                    char *_default;
-                    char *value;
+                    char *a_type = NULL;
+                    char *a_size = NULL;
+                    char *_default = NULL;
+                    char *value = NULL;
 
                     strcpy(a_name, tokenizer);
                     printf("name should be %s\n", a_name);
@@ -347,6 +348,7 @@ int parseAlter(char *tokenizer, char **token) {
                                         free(a_type);
                                         free(a_name);
                                         free(a_size);
+                                        return -1;
                                     }
                                 } else {
                                     // zero out size field
@@ -388,9 +390,12 @@ int parseAlter(char *tokenizer, char **token) {
                                             break;
                                         case 2:
                                             if (strcasecmp(value, "true") == 0) {
-                                                records[i][table_to_alter->data_type_size - 1].b = true;
+                                                records[i][table_to_alter->data_type_size - 1].b[0] = true;
+                                                // Setting this byte to 1 means the value is not null
+                                                records[i][table_to_alter->data_type_size - 1].b[1] = 1;
                                             } else if (strcasecmp(value, "false") == 0) {
-                                                records[i][table_to_alter->data_type_size - 1].b = false;
+                                                records[i][table_to_alter->data_type_size - 1].b[0] = false;
+                                                records[i][table_to_alter->data_type_size - 1].b[1] = 1;
                                             } else {
                                                 free(table_name);
                                                 free(_default);
@@ -486,7 +491,32 @@ int parseAlter(char *tokenizer, char **token) {
                             realloc(records[i], sizeof(union record_item) * table_to_alter->data_type_size);
                             // When read as any of the data types, this should behave like a null value
                             // TODO actually set this to a null value instead of zero
-                            records[i][table_to_alter->data_type_size - 1].d = 0;
+                            switch(new_attr->type) {
+                                case 0:
+                                    records[i][table_to_alter->data_type_size - 1].i = INT_MIN;
+                                    break;
+                                case 1:
+                                    records[i][table_to_alter->data_type_size - 1].d = -DBL_MAX;
+                                    break;
+                                case 2:
+                                    records[i][table_to_alter->data_type_size - 1].b[0] = false; // zero
+                                    // If this bit is set to 0, value is null
+                                    records[i][table_to_alter->data_type_size - 1].b[1] = 0;
+                                    break;
+                                case 3:
+                                    // Make sure this is an empty string, everything after doesn't matter
+                                    strcpy(records[i][table_to_alter->data_type_size - 1].c, "\0\0");
+                                    break;
+                                case 4:
+                                    strcpy(records[i][table_to_alter->data_type_size - 1].v, "\0\0");
+                                    break;
+                                default:
+                                    free(a_type);
+                                    free(a_name);
+                                    free(a_size);
+                                    fprintf(stderr, "Error: invalid type given for new attribute\n");
+                                    return -1;
+                            }
                             // then insert them into the new table
                             insert_record(table_to_alter->tableId, records[i]);
                         }
