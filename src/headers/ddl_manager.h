@@ -374,7 +374,7 @@ int parseForeignKey(Table table, char *tokenizer, char **token);
  * @param tokenizer - The tokenizer containing the string to be parsed.
  * @return 0 on success; -1 on error.
  */
-int parseUniqueKey(Table table, char *names);
+int parseUnique(Table table, char *names);
 
 /**
  * TODO
