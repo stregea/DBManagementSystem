@@ -57,6 +57,8 @@ dkms.conf
 test
 database
 
+*.DS_store
+*test_input.txt
 # CLion/CMake files
 .idea
 cmake-build-debug
