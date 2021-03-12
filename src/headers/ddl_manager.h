@@ -391,7 +391,7 @@ int parseUniqueKey(Table table, char *names);
  * @param tokenizer - The tokenizer containing the string to be parsed.
  * @return 0 on success; -1 on error.
  */
-int parseAttributes(Table table, char *tokenizer);
+int parseAttributes(Table table, char *tokenizer, char **token);
 
 /**
  * get the catalog file path
@@ -402,4 +402,11 @@ char* get_catalog_file_path();
 
 void display_catalog();
 
+/**
+ * Determine if 'char' or 'varchar' exist in a string.
+ * @param tokenizer - The tokenizer containing the string to be parsed.
+ * @param token - The token used for string tokenizing.
+ * @return a new string; null if not char/varchar
+ */
+int char_or_varchar(char*tokenizer);
 #endif
