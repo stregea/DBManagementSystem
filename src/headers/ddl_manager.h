@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #ifndef DBMANAGEMENTSYSTEM_DDL_MANAGER_H
 #define DBMANAGEMENTSYSTEM_DDL_MANAGER_H
