@@ -565,6 +565,15 @@ int parseCreate(char *tokenizer, char **token) {
                 return -1;
             }
 
+            if (catalog != NULL) {
+                for (int i = 0; i < catalog->table_count; i++) {
+                    if (strcasecmp(catalog->tables[i]->name, tokenizer) == 0) {
+                        fprintf(stderr, "Error: table names must be unique\n");
+                        return -1;
+                    }
+                }
+            }
+
             // adding table to catalog will create its ID
             struct Table *table_data = createTable(tokenizer);
 
