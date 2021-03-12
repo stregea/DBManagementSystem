@@ -530,7 +530,7 @@ static int key_match(int * key_attr_types, union record_item * key,
                     return 0;
 				break;
             case 2:; //boolean
-                if(key[i].b != key_values[i].b)
+                if(key[i].b[0] != key_values[i].b[0] || key[i].b[1] != key_values[i].b[1])
                     return 0;
 				break;
             case 3:; // char
@@ -566,10 +566,16 @@ static int compare_record(struct table_data * t_data,
 					return 1;
 				break;
             case 2:; //boolean
-                if(r1[i].b < r2[i].b)
+                if(r1[i].b[1] < r2[i].b[1]) {
                     return -1;
-				else if(r1[i].b > r2[i].b)
-					return 1;
+                } else if(r1[i].b[1] > r2[i].b[1]) {
+                    return 1;
+                } else {
+                    if (r1[i].b[0] < r2[i].b[0])
+                        return -1;
+                    else if (r1[i].b[0] > r2[i].b[0])
+                        return 1;
+                }
 				break;
             case 3:; // char
                 int rs1 = strcmp(r1[i].c, r2[i].c);
