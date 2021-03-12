@@ -204,7 +204,17 @@ int parseAlter(char *tokenizer, char **token) {
                                 }
                             }
 
+                            freeAttribute(dropping);
+
                             // Remove the attribute from the list of attributes
+                            // Set all values in Table struct to no longer include that attribute
+                            for (int move = i; move < table_to_alter->attribute_count - 1; move++) {
+                                table_to_alter->attributes[move] = table_to_alter->attributes[move + 1];
+                                table_to_alter->data_types[move] = table_to_alter->data_types[move + 1];
+                            }
+
+                            table_to_alter->attribute_count--;
+                            table_to_alter->data_type_size--;
 
                             // ===== storagemanager.c stuff =======
                             free(table_name);
@@ -456,6 +466,7 @@ int parseAttributes(Table table, char *tokenizer) {
                         constraints->unique = true;
                     } 
                     else if (strcasecmp(tokenizer, "notnull") == 0) {
+                        printf("got nontnull\n");
                         constraints->notnull = true;
                     } 
                     else {
@@ -486,6 +497,19 @@ void freeKey(PrimaryKey key) {
     free(key);
 }
 
+void freeAttribute(Attribute attr) {
+    free(attr->name);
+    free(attr->constraints);
+
+    if (attr->foreignKey != NULL) {
+        free(attr->foreignKey->referenced_table_name);
+        free(attr->foreignKey->referenced_column_name);
+        free(attr->foreignKey);
+    }
+
+    free(attr);
+}
+
 void freeTable(Table table) {
     free(table->name);
     free(table->data_types);
@@ -497,16 +521,7 @@ void freeTable(Table table) {
 
     // free attributes
     for (int i = 0; i < table->attribute_count; i++) {
-        free(table->attributes[i]->name);
-        free(table->attributes[i]->constraints);
-
-        if (table->attributes[i]->foreignKey != NULL) {
-            free(table->attributes[i]->foreignKey->referenced_table_name);
-            free(table->attributes[i]->foreignKey->referenced_column_name);
-            free(table->attributes[i]->foreignKey);
-        }
-
-        free(table->attributes[i]);
+        freeAttribute(table->attributes[i]);
     }
     free(table->attributes);
     free(table);
