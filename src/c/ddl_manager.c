@@ -180,8 +180,8 @@ int parseAlter(char *tokenizer, char **token) {
 
                             // Check if attribute is part of primary key
                             for (int j = 0; j < table_to_alter->primary_key->size; j++) {
-                                printf("comparing %s to %s in primarykey\n", dropping->name,
-                                       table_to_alter->primary_key->attributes[j]->name);
+
+                                printf("comparing %s to %s in primarykey\n", dropping->name, table_to_alter->primary_key->attributes[j]->name);
                                 if (strcmp(table_to_alter->primary_key->attributes[j]->name, dropping->name) == 0) {
                                     fprintf(stderr, "Error: cannot drop attribute in primary key\n");
                                     free(table_name);
@@ -195,16 +195,12 @@ int parseAlter(char *tokenizer, char **token) {
                                 for (int k = 0; k < catalog->tables[j]->attribute_count; k++) {
                                     Attribute checking = catalog->tables[j]->attributes[k];
                                     if (checking->foreignKey != NULL
-                                        &&
-                                        strcasecmp(table_to_alter->name, checking->foreignKey->referenced_table_name) ==
-                                        0
-                                        &&
-                                        strcasecmp(dropping->name, checking->foreignKey->referenced_column_name) == 0) {
+                                    && strcasecmp(table_to_alter->name, checking->foreignKey->referenced_table_name) == 0
+                                    && strcasecmp(dropping->name, checking->foreignKey->referenced_column_name) == 0) {
                                         // This attribute referenced the table and attribute we were given,
                                         // so need to drop that foreign key as we're dropping the attribute
                                         checking->foreignKey = NULL;
-                                        printf("Removed foreign key from attribute %s in table %s\n", checking->name,
-                                               catalog->tables[j]->name);
+                                        printf("Removed foreign key from attribute %s in table %s\n", checking->name, catalog->tables[j]->name);
                                     }
                                 }
                             }
