@@ -409,4 +409,11 @@ char* get_catalog_file_path();
 
 void display_catalog();
 
+/**
+ * Determine if 'char' or 'varchar' exist in a string.
+ * @param tokenizer - The tokenizer containing the string to be parsed.
+ * @param token - The token used for string tokenizing.
+ * @return a new string; null if not char/varchar
+ */
+int char_or_varchar(char*tokenizer);
 #endif
