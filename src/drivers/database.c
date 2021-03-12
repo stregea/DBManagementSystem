@@ -118,4 +118,5 @@ int main(int argc, char *argv[]) {
         free(temp);
         statementCount++;
     }
+    display_catalog();
 }
