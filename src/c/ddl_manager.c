@@ -285,6 +285,12 @@ int parseAlter(char *tokenizer, char **token) {
                     char *_default = NULL;
                     char *value = NULL;
 
+                    if (is_valid_name(tokenizer) == -1) {
+                        free(a_name);
+                        free(table_name);
+                        return -1;
+                    }
+
                     strcpy(a_name, tokenizer);
                     printf("name should be %s\n", a_name);
 
@@ -555,6 +561,10 @@ int parseCreate(char *tokenizer, char **token) {
         tokenizer = strtok_r(NULL, " (", token);
         if (tokenizer != NULL) {
 
+            if (is_valid_name(tokenizer) == -1) {
+                return -1;
+            }
+
             // adding table to catalog will create its ID
             struct Table *table_data = createTable(tokenizer);
 
@@ -695,6 +705,13 @@ int parseAttributes(Table table, char *tokenizer) {
         constraints->primary_key = false;
         constraints->notnull = false;
         constraints->unique = false;
+
+        if (is_valid_name(tokenizer) == -1) {
+            free(attribute->name);
+            free(attribute->constraints);
+            free(attribute);
+            return -1;
+        }
 
         strcpy(attribute->name, tokenizer);
         printf("name: %s\n", attribute->name);
@@ -1500,4 +1517,28 @@ int char_or_varchar(char*word){
         return 0;
     }
     return -1;
+}
+
+int is_valid_name(char *name) {
+    if (name == NULL) {
+        return -1;
+    }
+
+    if (name[0] < 65 || name[0] > 90) {
+        if (name[0] < 97 || name[0] > 122) {
+            fprintf(stderr, "Error: names must start with a letter\n");
+            return -1;
+        }
+    }
+
+    // First character is a lowercase or uppercase letter
+
+    for (int i = 1; i < strlen(name); i++) {
+        if (name[i] < 48 || (name[i] > 57 && name[i] < 65) || (name[i] > 90 && name[i] < 97) || name[i] > 122) {\
+            fprintf(stderr, "Error: names must contain only alphanumeric characters\n");
+            return -1;
+        }
+    }
+
+    return 0;
 }
