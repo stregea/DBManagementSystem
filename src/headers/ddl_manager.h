@@ -231,6 +231,14 @@ int get_attribute_type(char *type);
 PrimaryKey create_key(char *attribute_names, Table table);
 
 /**
+ * Generates a primary key that was declared as part of an attribute and adds that attribute to the table
+ * @param attribute_name
+ * @param table
+ * @return
+ */
+PrimaryKey create_key_from_attr(Attribute attr);
+
+/**
  * TODO
  * Generate key_indices to be stored in an array that holds the inique keys found within the table..
  * @param attribute_names - A string of multiple attribute names '<a_1> ... <a_N>'. This is created while parsing.
