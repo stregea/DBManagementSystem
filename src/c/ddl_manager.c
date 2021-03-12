@@ -1,38 +1,31 @@
-//
-// Created by sdtre on 3/8/2021.
-//
+/**
+ * CSCI-421 Project: Phase1
+ * @file ddl_manager.c
+ * Description:
+ *      This file contains the function definitions defined in '../headers/ddl_manager.h'.
+ *      This file handles the core functionality of ddl parsing
+ *
+ * @author Kyle Collins  (kxc1981@rit.edu)
+ * @author Geoffrey Moss (gbm2613@rit.edu)
+ * @author Sam Tillinghast  (sft6463@rit.edu)
+ * @author Samuel Tregea  (sdt1093@rit.edu)
+ */
 
 #include "../headers/ddl_manager.h"
 #include "../headers/storagemanager.h"
 
-//static int num_tables;
 static char *global_db_loc;
-
-// TODO: allocate memory on startup and deallocate on shutdown
-//static struct Table **catalog = NULL;
 static Catalog catalog = NULL;
 
-// todo
 int initialize_ddl_parser(char *db_loc, bool restart) {
     global_db_loc = malloc(strlen(db_loc) + 1);
     strcpy(global_db_loc, db_loc);
 
     printf("Starting DDL parser: %s\n", global_db_loc);
 
-//    if(restart){
-//        return read_catalog_from_disk(); // this has yet to be defined
-//    }
-
-    // otherwise a new database
-//    catalog = malloc(sizeof(struct Catalog));
-//
-//    // set table count to 0.
-//    catalog->table_count = 0;
-//
-//    // init catalog to have 1 slot of memory
-//    // whenever a table is added, realloc must be called.
-//    catalog->tables = malloc(sizeof(Table) * 1); // initialize array of struct Table*
-//    catalog->tables[0] = NULL;
+    if(restart){
+        read_catalog_from_disk(); // this has yet to be defined
+    };
     return 0;
 }
 
@@ -65,12 +58,12 @@ int parseStatement(char *statement) {
         if (strcasecmp(command_parser, "drop") == 0) {
             result = parseDrop(command_parser, &command_token);
         }
-            // parse the ALTER TABLE command
+        // parse the ALTER TABLE command
         else if (strcasecmp(command_parser, "alter") == 0) {
             result = parseAlter(command_parser, &command_token);
         }
-            // parse the CREATE TABLE command.
-        else if (strcasecmp(command_parser, "create") == 0) {
+        // parse the CREATE TABLE command.
+        else if (strcasecmp(command_parser, "create") == 0) {    
             result = parseCreate(command_parser, &command_token);
         } else {
             fprintf(stderr, "Error: Invalid command.\n"); // remove this later
@@ -300,7 +293,6 @@ int parseAlter(char *tokenizer, char **token) {
     return -1;
 }
 
-// TODO
 int parseCreate(char *tokenizer, char **token) {
 
     tokenizer = strtok_r(NULL, " ", token);
@@ -313,32 +305,18 @@ int parseCreate(char *tokenizer, char **token) {
 
             // adding table to catalog will create its ID
             struct Table *table_data = createTable(tokenizer);
-
+            
             // perform loop to read in rest of attributes and populate Table struct
             while (tokenizer != NULL) {
-
-                /**
-                 * TODO: This is for referencing an example query for parsing
-                 * CREATE TABLE BAZZLE( baz double PRIMARYKEY ); // need to optimize parser for this later
-                 *
-                 *   create table foo( // working on parsing this
-                 *       baz integer,
-                 *       bar Double notnull,
-                 *       primarykey( bar baz ),
-                 *       foreignkey( bar baz ) references bazzle( far faz )
-                 *   );
-                 *
-                 *
-                 */
-                // read in table information
                 tokenizer = strtok_r(NULL, "(),", token);
 
                 // this can potentially be null or empty space -> prevent any potential segfaults for bad reads
                 if (tokenizer != NULL && strcmp(tokenizer, " ") != 0) {
 
                     // Cut off any leading spaces
-                    char * filtered = malloc(sizeof(char) * strlen(tokenizer));
+                    char * filtered = malloc(strlen(tokenizer) + 1);
                     strcpy(filtered, tokenizer);
+
                     while (filtered[0] == ' ') {
                         filtered++;
                     }
@@ -369,11 +347,7 @@ int parseCreate(char *tokenizer, char **token) {
                     }
                 }
             }
-            // TODO: write table to storage manager.
-//            table_data->tableId = add_table(table_data->data_types, table_data->primary_key->key_indices,
-//                                            table_data->data_type_size,
-//                                            table_data->primary_key->size);
-            add_table_to_catalog(table_data); // this doesn't work for whatever reason.
+            add_table_to_catalog(table_data);
             return 0;
         }
     }
@@ -395,57 +369,65 @@ int parseUniqueKey(Table table, char *names) {
 
 // TODO
 int parseAttributes(Table table, char *tokenizer) {
-    printf("attributes: %s\n", tokenizer);
+    printf("Attributes: %s\n", tokenizer);
 
     char *temp_token;
     tokenizer = strtok_r(tokenizer, " ", &temp_token); // split the string via spaces
-    Attribute attribute = malloc(
-            sizeof(struct Attribute)); // this may need to be a pointer since being saved onto the stack rather than heap
+    Attribute attribute = malloc(sizeof(struct Attribute));
 
     // read in attribute/ column name
     if (tokenizer != NULL) {
         attribute->name = malloc(strlen(tokenizer) + 1);
+        attribute->name_size = strlen(tokenizer) + 1;
+        attribute->type = 0;
         attribute->foreignKey = NULL;
         attribute->constraints = malloc(sizeof(struct Constraints));
-        attribute->constraints->primary_key = false;
-        attribute->constraints->notnull = false;
-        attribute->constraints->unique = false;
-        attribute->type = 0;
+        struct Constraints *constraints = attribute->constraints;
+        constraints->primary_key = false;
+        constraints->notnull = false;
+        constraints->unique = false;
         strcpy(attribute->name, tokenizer);
+        printf("name: %s\n", attribute->name);
+        printf("name_size: %d\n", attribute->name_size);
 
         // read in attribute type
         tokenizer = strtok_r(NULL, " ", &temp_token);
         if (tokenizer != NULL) {
-
             // read in column type, function returns 0-4 based on string name (integer-varchar)
             attribute->type = get_attribute_type(tokenizer);
-            // if type == -1 -> error
-            // if type == char || varchar
-            // TODO - set char/varchar attributes
-            if (attribute->type == 3 || attribute->type == 4) {
-                // read in tokenizer, parse size of char/varchar
-                // set size of attribute
+            printf("type: %d\n", attribute->type);
+            // check for correct attribute
+            if(attribute->type == -1)
+            {
+                return -1;
+            }            
+            else if (attribute->type == 3 || attribute->type == 4) {
+                attribute->size = 255;
             }
+            else{
+                attribute->size = 0;
+            }
+
+            printf("size: %d\n\n", attribute->size);
 
             // loop through constraints
             while (tokenizer != NULL) {
                 tokenizer = strtok_r(NULL, " )", &temp_token);
 
                 if (tokenizer != NULL) {
-                    // TODO
+
                     if (strcasecmp(tokenizer, "primarykey") == 0) {
-                        attribute->constraints->primary_key = true;
-                        // TODO: test - this doesn't work -- returns null since tries
-                        // to access spot in table that doesn't exist
-                        add_primary_key_to_table(table, create_key(attribute->name, table));
-                    } else if (strcasecmp(tokenizer, "unique") == 0) {
-                        // TODO: add unique contraint to table
-                        attribute->constraints->unique = true;
-                    } else if (strcasecmp(tokenizer, "notnull") == 0) {
-                        // flag attribute as notnull
-                        attribute->constraints->notnull = true;
-                    } else {
-                        // else error since invalid token?
+                        constraints->primary_key = true;
+                        struct PrimaryKey *key = create_key(attribute->name, table); 
+                        add_primary_key_to_table(table, key);
+                    } 
+                    else if (strcasecmp(tokenizer, "unique") == 0) {
+                        constraints->unique = true;
+                    } 
+                    else if (strcasecmp(tokenizer, "notnull") == 0) {
+                        constraints->notnull = true;
+                    } 
+                    else {
                         free(attribute->name);
                         free(attribute->constraints);
                         free(attribute);
@@ -505,7 +487,6 @@ int get_attribute_type(char *type) {
         return 0;
     } else if (strcasecmp(type, "double") == 0) {
         return 1;
-
     } else if (strcasecmp(type, "bool") == 0) {
         return 2;
 
@@ -519,16 +500,21 @@ int get_attribute_type(char *type) {
 }
 
 // TODO: this hasn't been tested.
-PrimaryKey create_key(char *attribute_names, Table table) {
-    PrimaryKey key = malloc(sizeof(struct PrimaryKey));
+struct PrimaryKey* create_key(char *attribute_names, Table table) {
+    struct PrimaryKey* key = malloc(sizeof(struct PrimaryKey));
     key->attributes = NULL;
     key->size = 0;
-    char *tokenizer = strtok(attribute_names, " "); // split the attributes on space
+
+    // split the attributes on space
+    char *tokenizer = strtok(attribute_names, " "); 
+    struct Attribute **attributes = table->attributes;
+
     while (tokenizer != NULL) {
         for (int i = 0; i < table->attribute_count; i++) {
-            if (strcasecmp(tokenizer, table->attributes[i]->name) == 0) {
+
+            if (strcasecmp(tokenizer, attributes[i]->name) == 0) {
                 key->attributes = realloc(key->attributes, sizeof(struct Attribute *) * (key->size + 1));
-                key->attributes[key->size] = table->attributes[i];
+                key->attributes[key->size] = attributes[i];
                 key->size++;
             }
         }
@@ -623,12 +609,14 @@ int parseForeignKey(Table table, char *tokenizer, char **token) {
                             }
 
                             ForeignKey fkey = malloc(sizeof(struct ForeignKey));
-                            char *ref_col = malloc(sizeof(char) * strlen(referenced_attribute_tokenizer));
-                            char *ref_table = malloc(sizeof(char) * strlen(referenced_table_name));
-                            memcpy(ref_col, referenced_attribute_tokenizer, strlen(referenced_attribute_tokenizer));
-                            memcpy(ref_table, referenced_table_name, strlen(referenced_table_name));
+                            char *ref_col = malloc(strlen(referenced_attribute_tokenizer) + 1);
+                            char *ref_table = malloc(strlen(referenced_table_name) + 1);
+                            memcpy(ref_col, referenced_attribute_tokenizer, strlen(referenced_attribute_tokenizer) + 1);
+                            memcpy(ref_table, referenced_table_name, strlen(referenced_table_name) + 1);
                             fkey->referenced_column_name = ref_col;
+                            fkey->referenced_column_name_size = strlen(referenced_attribute_tokenizer) + 1;
                             fkey->referenced_table_name = ref_table;
+                            fkey->referenced_table_name_size = strlen(referenced_table_name) + 1;
                             table->attributes[i]->foreignKey = fkey;
 
                             printf("ref_col: %s, ref_table: %s\n", ref_col, ref_table);
@@ -758,9 +746,16 @@ int add_table_to_catalog(Table table) {
     if (catalog == NULL) {
         return createCatalog(table);
     }
-    catalog->tables = realloc(catalog->tables, sizeof(Table) * (catalog->table_count + 1));
-    catalog->tables[catalog->table_count] = table;
-    catalog->table_count++;
+    else {
+        // assign table id might want different method
+        int table_id = catalog->table_count;
+        int table_count = catalog->table_count;
+        table->tableId = table_id;
+        catalog->tables = realloc(catalog->tables, sizeof(struct Table *) * (table_count + 1));
+        catalog->tables[table_count] = table;
+        catalog->table_count++;
+    }
+
     return 0;
 }
 
@@ -834,21 +829,22 @@ int write_primary_key_to_disk(FILE *file, struct PrimaryKey *primaryKey) {
 
 int write_foreign_key_to_disk(FILE *file, struct ForeignKey *foreignKey) {
     // write the corresponding table and column name
-    fwrite(foreignKey->referenced_table_name, sizeof(foreignKey->referenced_table_name), 1, file);
-    fwrite(foreignKey->referenced_table_name, sizeof(foreignKey->referenced_column_name), 1, file);
-    
+    fwrite(&foreignKey->referenced_table_name_size, sizeof(int), 1, file);
+    fwrite(&foreignKey->referenced_column_name_size, sizeof(int), 1, file);
+    fwrite(foreignKey->referenced_table_name, foreignKey->referenced_table_name_size, 1, file);
+    fwrite(foreignKey->referenced_column_name, foreignKey->referenced_column_name_size, 1, file);
+
     return 0;
 }
 
 int write_attribute_to_disk(FILE *file, struct Attribute *attribute) {
     fwrite(&attribute->name_size, sizeof(int), 1, file);
-    fwrite(attribute->name, sizeof(attribute->name), 1, file);
+    fwrite(attribute->name, attribute->name_size, 1, file);
     
     // read size of arrays
     fwrite(&attribute->type, sizeof(int), 1, file);
     fwrite(&attribute->size, sizeof(int), 1, file);
-    fwrite(&attribute->name_size, sizeof(int), 1, file);
-    
+
     // write constaints
     fwrite(attribute->constraints, sizeof(struct Constraints), 1, file);
     // write foreign key
@@ -859,23 +855,16 @@ int write_attribute_to_disk(FILE *file, struct Attribute *attribute) {
 
 int write_table_to_disk(FILE *file, struct Table *table) {
     // write id
-    printf("table_id: %d\n", table->tableId);
     fwrite(&table->tableId, sizeof(int), 1, file);
     
     // write name
-    printf("name_size: %d\n", table->name_size);
     fwrite(&table->name_size, sizeof(int), 1, file);
-    printf("name: %s\n", table->name);
-    fwrite(table->name, sizeof(table->name), 1, file);
+    fwrite(table->name, table->name_size, 1, file);
     
     // write array sizes
-    printf("primary_key_count: %d\n", table->primary_key_count);
     fwrite(&table->primary_key_count, sizeof(int), 1, file);
-    printf("attribute_count: %d\n", table->attribute_count);
     fwrite(&table->attribute_count, sizeof(int), 1, file);
-    printf("key_indices_count: %d\n", table->attribute_count);
     fwrite(&table->key_indices_count, sizeof(int), 1, file);
-    printf("data_type_size: %d\n", table->data_type_size);
     fwrite(&table->data_type_size, sizeof(int), 1, file);
     
     // write each attribute
@@ -887,6 +876,14 @@ int write_table_to_disk(FILE *file, struct Table *table) {
     
     // write primary key
     write_primary_key_to_disk(file, table->primary_key);
+
+    printf("table_id: %d\n", table->tableId);
+    printf("name_size: %d\n", table->name_size);
+    printf("name: %s\n", table->name);
+    printf("primary_key_count: %d\n", table->primary_key_count);
+    printf("attribute_count: %d\n", table->attribute_count);
+    printf("key_indices_count: %d\n", table->attribute_count);
+    printf("data_type_size: %d\n\n", table->data_type_size);
 
     return 0;
 }
@@ -906,7 +903,6 @@ int write_catalog_to_disk() {
     printf("table_count: %d\n\n", table_count);
     fwrite(&table_count, sizeof(int), 1, catalog_file);
     
-
     // write each table struct and all its data
     for(int i = 0; i < catalog->table_count; i++){
         write_table_to_disk(catalog_file, tables[i]);
@@ -917,6 +913,37 @@ int write_catalog_to_disk() {
     return 0;
 }
 
+struct ForeignKey * read_foreign_key_from_disk(FILE *file) {
+    struct ForeignKey *foreignKey = malloc(sizeof(struct ForeignKey));
+
+    // read in the corresponding table and column name
+    fread(&foreignKey->referenced_table_name_size, sizeof(int), 1, file);
+    fread(&foreignKey->referenced_column_name_size, sizeof(int), 1, file);
+    fread(foreignKey->referenced_table_name, sizeof(foreignKey->referenced_table_name), 1, file);
+    fread(foreignKey->referenced_column_name, sizeof(foreignKey->referenced_column_name), 1, file);
+    
+    return foreignKey;
+}
+
+struct Attribute * read_attribute_from_disk(FILE *file) {
+
+    struct Attribute *attribute = malloc(sizeof(struct Attribute));
+
+    fread(&attribute->name_size, sizeof(int), 1, file);
+    fread(attribute->name, attribute->name_size, 1, file);
+    
+    // read size of arrays
+    fread(&attribute->type, sizeof(int), 1, file);
+    fread(&attribute->size, sizeof(int), 1, file);
+
+    // write constaints
+    fread(attribute->constraints, sizeof(struct Constraints), 1, file);
+    // write foreign key
+    attribute->foreignKey = read_foreign_key_from_disk(file);
+
+    return attribute;
+}
+
 struct PrimaryKey* read_primary_key_from_disk(FILE *file) {
     int key_size;
     fread(&key_size, sizeof(int), 1, file);
@@ -924,10 +951,15 @@ struct PrimaryKey* read_primary_key_from_disk(FILE *file) {
         return NULL;
     }
     else {
-        struct PrimaryKey *key = malloc(sizeof(int) + sizeof(int) * key_size);
-        //fread(&key->size, sizeof(int), 1, file);
-        //fread(key->key_indices, sizeof(int), key->size, file);
-        return key;
+        struct PrimaryKey *primaryKey = malloc(sizeof(int) + sizeof(int) * key_size);
+        fread(&primaryKey->size, sizeof(int), 1, file);
+        primaryKey->attributes = malloc(sizeof(struct Attribute) * primaryKey->size);
+
+        // read each attribute
+        for(int i = 0; i < primaryKey->size; i++) {
+            primaryKey->attributes[i] = read_attribute_from_disk(file);
+        }
+        return primaryKey;
     }
 }
 
@@ -950,28 +982,26 @@ struct Table* read_table_from_disk(FILE *file) {
     fread(&table->attribute_count, sizeof(int), 1, file);
     fread(&table->data_type_size, sizeof(int), 1, file);
 
+    // read each attribute
+    for(int i = 0; i < table->attribute_count; i++) {
+        table->attributes[i] = read_attribute_from_disk(file);
+    }
+
+    // write data types array
+    fread(table->data_types, sizeof(int), table->data_type_size, file);
+    
+    // read primary key
+    table->primary_key = read_primary_key_from_disk(file);
+
     printf("table_id: %d\n", table->tableId);
     printf("name_size: %d\n", table->name_size);
     printf("name: %s\n", table->name);
     printf("primary_key_count: %d\n", table->primary_key_count);
     printf("attribute_count: %d\n", table->attribute_count);
     printf("key_indices_count: %d\n", table->attribute_count);
-    printf("data_type_size: %d\n", table->data_type_size);
+    printf("data_type_size: %d\n\n", table->data_type_size);
 
-    // write primary key
-    table->primary_key = read_primary_key_from_disk(file);
-    // write each attribute
-    for(int i = 0; i < table->attribute_count; i++) {
-        //table->attributes[i] = read_attribute_to_disk(file);
-    }
-    // write each unique key
-    /*
-    for(int i = 0; i < table->unique_key_count; i++) {
-        //read_key_to_disk(file, table->unique_keys[i]);
-    }
-    */
-
-    return 0;
+    return table;
 }
 
 int read_catalog_from_disk() {
@@ -986,9 +1016,18 @@ int read_catalog_from_disk() {
     fread(&table_count, sizeof(int), 1, catalog_file);
     printf("table_count: %d\n\n", table_count);
 
+    struct Table* current_table;
+
     // read each table struct and all its data
     for(int i = 0; i < table_count; i++){
-        read_table_from_disk(catalog_file);
+        current_table = read_table_from_disk(catalog_file);
+
+        if(i == 0) {
+            createCatalog(current_table);
+        }
+        else {
+            add_table_to_catalog(current_table);
+        }
     }
 
     fclose(catalog_file);

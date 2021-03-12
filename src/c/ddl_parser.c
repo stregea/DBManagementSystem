@@ -11,8 +11,6 @@
  * @return 0 on success; -1 on failure.
  */
 int parse_ddl_statement(char *statement) {
-    printf("Parsing:\n  %s\n", statement);
-
     int result = 0;
     if (strcmp(statement, "") == 0) {
         fprintf(stderr, "No command entered.\n");
@@ -28,6 +26,7 @@ int parse_ddl_statement(char *statement) {
 
     // Read through all statements ending with ';'
     while (statement_parser != NULL) {
+        printf("Parsing:\n%s\n\n", statement_parser);
         result = parseStatement(statement_parser);
         statement_parser = strtok_r(NULL, ";", &statement_token);
     }
