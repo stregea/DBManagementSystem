@@ -401,9 +401,10 @@ int parseCreate(char *tokenizer, char **token) {
                                 }
                             }
                         }
-                        result = parseAttributes(table_data, tokenizer, token);
+                        result = parseAttributes(table_data, tokenizer);
 
                         if (result == -1) {
+                            free(filtered);
                             freeTable(table_data);
                             return -1;
                         }
@@ -623,7 +624,7 @@ int parseForeignKey(Table table, char *tokenizer, char **token) {
 
     // parse through rest of statement
     if (tokenizer != NULL) {
-        attribute_names = malloc(sizeof(char) * strlen(tokenizer)); // copy the attribute names to memory
+        attribute_names = malloc(strlen(tokenizer) + 1); // copy the attribute names to memory
         strcpy(attribute_names, tokenizer); // tokenize this string
 
         // parse references
