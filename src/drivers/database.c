@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define MAX_TOKEN_SIZE 20
 
@@ -58,8 +59,30 @@ int main(int argc, char *argv[]) {
     int bufferSize = (int) strtol(argv[3], NULL, 10);
 
     printf("db_loc: %s\npage_size: %d\nbuffer_size: %d\n", databasePath, pageSize, bufferSize);
-    initialize_ddl_parser(databasePath, false);
-    create_database(databasePath, 4096, 3, false);
+
+    char * catalog_file_name = "/catalog";
+    char * catalog_path;
+
+    // format the catalog file name and path
+    int database_path_length = strlen(databasePath);
+    char last_character = databasePath[database_path_length - 1];
+    if(last_character == '\'' || last_character == '/') {
+        databasePath[database_path_length - 1] = 0;
+    }
+
+    catalog_path = malloc(strlen(databasePath) + strlen(catalog_file_name) + 1);
+
+    strcpy(catalog_path, databasePath);
+    strcat(catalog_path, catalog_file_name);
+
+    bool restart = false;
+
+    if(access(catalog_path, F_OK) == 0){
+        restart = true;
+    }
+    initialize_ddl_parser(databasePath, restart);
+    create_database(databasePath, pageSize, bufferSize, restart);
+    free(catalog_path);
 
     // initialize with first token
     char token[MAX_TOKEN_SIZE];
@@ -125,5 +148,5 @@ int main(int argc, char *argv[]) {
     write_catalog_to_disk();
     read_catalog_from_disk();
     display_catalog();
-    freeCatalog();
+    shutdown_database();
 }
