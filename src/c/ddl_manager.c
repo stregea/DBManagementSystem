@@ -1509,7 +1509,7 @@ void display_catalog() {
             printf("    name_size: %d\n", attribute->name_size);
             printf("    size: %d\n", attribute->size);
             printf("    default_size: %d\n", attribute->default_size);
-            printf("    default: %d\n", (int)attribute->default_value);
+            printf("    default: %s\n", attribute->default_value);
             printf("    contraints:\n");
             printf("        notnull: %d\n", attribute->constraints->notnull);
             printf("        primary_key: %d\n", attribute->constraints->primary_key);
