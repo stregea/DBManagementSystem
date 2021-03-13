@@ -22,7 +22,7 @@ int initialize_ddl_parser(char *db_loc, bool restart) {
     global_db_loc = malloc(strlen(db_loc) + 1);
     strcpy(global_db_loc, db_loc);
 
-    printf("Starting DDL parser: %s\n", global_db_loc);
+//    printf("Starting DDL parser: %s\n", global_db_loc);
 
     if (restart) {
         read_catalog_from_disk(); // this has yet to be defined
@@ -152,7 +152,7 @@ int parseAlter(char *tokenizer, char **token) {
     tokenizer = strtok_r(NULL, " ", token);
 
     if (tokenizer != NULL && strcasecmp(tokenizer, "table") == 0) {
-        printf("%s\n", tokenizer);
+//        printf("%s\n", tokenizer);
 
         // read in the table name
         tokenizer = strtok_r(NULL, " ", token);
@@ -161,7 +161,7 @@ int parseAlter(char *tokenizer, char **token) {
         //printf("length right now: %zu\n", strlen(tokenizer));
 
         if (tokenizer != NULL && strcasecmp(tokenizer, "") != 0) {
-            printf("table name: %s\n", tokenizer);
+//            printf("table name: %s\n", tokenizer);
 
             // Set table name to be used later
             // TODO free this at every return point
@@ -181,13 +181,13 @@ int parseAlter(char *tokenizer, char **token) {
 
             //drop <name>
             if (tokenizer != NULL && strcasecmp(tokenizer, "drop") == 0) {
-                printf("alter operation: %s\n", tokenizer);
+//                printf("alter operation: %s\n", tokenizer);
 
                 // read attribute name
                 tokenizer = strtok_r(NULL, " ", token);
 
                 if (tokenizer != NULL && strcasecmp(tokenizer, "") != 0) {
-                    printf("attribute name: %s\n", tokenizer);
+//                    printf("attribute name: %s\n", tokenizer);
 
                     //char *table_name = malloc(sizeof(char *) * strlen(tokenizer) + 1);
                     //strcpy(table_name, tokenizer);
@@ -195,19 +195,19 @@ int parseAlter(char *tokenizer, char **token) {
                     // TODO
                     // read table from catalog
 
-                    printf("Found table in catalog, has %d attributes\n", table_to_alter->attribute_count);
+//                    printf("Found table in catalog, has %d attributes\n", table_to_alter->attribute_count);
 
                     for (int i = 0; i < table_to_alter->attribute_count; i++) {
-                        printf("looking for %s, have %s\n", tokenizer, table_to_alter->attributes[i]->name);
+//                        printf("looking for %s, have %s\n", tokenizer, table_to_alter->attributes[i]->name);
                         if (strcasecmp(table_to_alter->attributes[i]->name, tokenizer) == 0) {
                             // Found correct attribute to drop
                             Attribute dropping = table_to_alter->attributes[i];
-                            printf("Found correct attribute to drop\n");
+//                            printf("Found correct attribute to drop\n");
 
                             // Check if attribute is part of primary key
                             for (int j = 0; j < table_to_alter->primary_key->size; j++) {
 
-                                printf("comparing %s to %s in primarykey\n", dropping->name, table_to_alter->primary_key->attributes[j]->name);
+//                                printf("comparing %s to %s in primarykey\n", dropping->name, table_to_alter->primary_key->attributes[j]->name);
                                 if (strcmp(table_to_alter->primary_key->attributes[j]->name, dropping->name) == 0) {
                                     fprintf(stderr, "Error: cannot drop attribute in primary key\n");
                                     free(table_name);
@@ -226,7 +226,7 @@ int parseAlter(char *tokenizer, char **token) {
                                         // This attribute referenced the table and attribute we were given,
                                         // so need to drop that foreign key as we're dropping the attribute
                                         checking->foreignKey = NULL;
-                                        printf("Removed foreign key from attribute %s in table %s\n", checking->name, catalog->tables[j]->name);
+//                                        printf("Removed foreign key from attribute %s in table %s\n", checking->name, catalog->tables[j]->name);
                                     }
                                 }
                             }
@@ -249,7 +249,7 @@ int parseAlter(char *tokenizer, char **token) {
 
                             union record_item **records = NULL;
                             int num_records = get_records(table_to_alter->tableId, &records);
-                            printf("got %d records\n", num_records);
+//                            printf("got %d records\n", num_records);
 
                             drop_table(table_to_alter->tableId);
                             table_to_alter->tableId = add_table(table_to_alter->data_types, table_to_alter->key_indices, table_to_alter->data_type_size, table_to_alter->key_indices_count);
@@ -278,11 +278,11 @@ int parseAlter(char *tokenizer, char **token) {
                 // add <a_name> <a_type>
                 // add <a_name> <a_type> default <value>
             else if (tokenizer != NULL && strcasecmp(tokenizer, "add") == 0) {
-                printf("%s\n", tokenizer);
+//                printf("%s\n", tokenizer);
                 // read <a_name>
                 tokenizer = strtok_r(NULL, " ", token);
                 if (tokenizer != NULL) {
-                    printf("%s\n", tokenizer);
+//                    printf("%s\n", tokenizer);
                     char *a_name = malloc(sizeof(char *) * strlen(tokenizer) + 1);
                     char *a_type = NULL;
                     char *a_size = NULL;
@@ -296,29 +296,29 @@ int parseAlter(char *tokenizer, char **token) {
                     }
 
                     strcpy(a_name, tokenizer);
-                    printf("name should be %s\n", a_name);
+//                    printf("name should be %s\n", a_name);
 
                     // read <a_type>
                     tokenizer = strtok_r(NULL, " (", token);
 
                     if (tokenizer != NULL) {
-                        printf("a_type: %s\n", tokenizer);
+//                        printf("a_type: %s\n", tokenizer);
                         a_type = malloc(sizeof(char) * (strlen(tokenizer) + 1));
                         strcpy(a_type, tokenizer);
                         int check_type = get_attribute_type(a_type);
                         if (check_type == 3 || check_type == 4) {
-                            printf("found char or varchar\n");
+//                            printf("found char or varchar\n");
                             tokenizer = strtok_r(NULL, " ()", token);
                             a_size = malloc(sizeof(char) * (strlen(tokenizer) + 1));
                             strcpy(a_size, tokenizer);
-                            printf("got size of %s\n", a_size);
+//                            printf("got size of %s\n", a_size);
                         }
 
                         // read default (this is optional)
                         tokenizer = strtok_r(NULL, " ", token);
 
                         if (tokenizer != NULL && strcasecmp(tokenizer, "default") == 0) {
-                            printf("%s\n", tokenizer);
+//                            printf("%s\n", tokenizer);
                             _default = malloc(sizeof(char *) * strlen(tokenizer) + 1);
                             strcpy(_default, tokenizer);
 
@@ -326,7 +326,7 @@ int parseAlter(char *tokenizer, char **token) {
                             tokenizer = strtok_r(NULL, " ", token);
 
                             if (tokenizer != NULL) {
-                                printf("%s\n", tokenizer);
+//                                printf("%s\n", tokenizer);
                                 value = malloc(sizeof(char *) * strlen(tokenizer) + 1);
                                 strcpy(value, tokenizer);
 
@@ -345,7 +345,7 @@ int parseAlter(char *tokenizer, char **token) {
                                 // Fill out to match the type
                                 new_attr->name = malloc(sizeof(char) * (strlen(a_name) + 1));
                                 strcpy(new_attr->name, a_name);
-                                printf("name is now %s\n", new_attr->name);
+//                                printf("name is now %s\n", new_attr->name);
                                 new_attr->name_size = strlen(a_name);
                                 new_attr->type = get_attribute_type(a_type);
                                 if (new_attr->type == 3 || new_attr->type == 4) {
@@ -456,7 +456,7 @@ int parseAlter(char *tokenizer, char **token) {
                         strcpy(new_attr->name, a_name);
                         new_attr->name_size = strlen(a_name);
                         new_attr->type = get_attribute_type(a_type);
-                        printf("got type %d\n", new_attr->type);
+//                        printf("got type %d\n", new_attr->type);
 
                         if (new_attr->type == 3 || new_attr->type == 4) {
                             // TODO handle char/varchar
@@ -670,7 +670,7 @@ int parseCreate(char *tokenizer, char **token) {
 
 // todo: finalize testing -- need to make sure created primary key is correct.
 int parsePrimaryKey(Table table, char *names) {
-    printf("parsing primary key: %s\n", names);
+//    printf("parsing primary key: %s\n", names);
     // set and create table primary key
     return add_primary_key_to_table(table, create_key(names, table));
 }
@@ -705,12 +705,12 @@ int parseAttributes(Table table, char *tokenizer) {
         tokenizer[last] = '\0';
         last--;
     }
-    printf("Attributes: %s\n", tokenizer);
+//    printf("Attributes: %s\n", tokenizer);
 
     char *temp_token;
     tokenizer = strtok_r(tokenizer, " ", &temp_token); // split the string via spaces
     Attribute attribute = malloc(sizeof(struct Attribute));
-    printf("tokenizer now: %s\n", tokenizer);
+//    printf("tokenizer now: %s\n", tokenizer);
 
     // read in attribute/ column name
     if (tokenizer != NULL) {
@@ -734,7 +734,7 @@ int parseAttributes(Table table, char *tokenizer) {
         }
 
         strcpy(attribute->name, tokenizer);
-        printf("name: %s\n", attribute->name);
+//        printf("name: %s\n", attribute->name);
         //printf("name_size: %d\n", attribute->name_size);
 
         // read in attribute type
@@ -743,7 +743,7 @@ int parseAttributes(Table table, char *tokenizer) {
         if (tokenizer != NULL) {
             // read in column type, function returns 0-4 based on string name (integer-varchar)
             attribute->type = get_attribute_type(tokenizer);
-            printf("type: %d\n", attribute->type);
+//            printf("type: %d\n", attribute->type);
             // check for correct attribute
             if (attribute->type == -1) {
                 free(attribute);
@@ -752,7 +752,7 @@ int parseAttributes(Table table, char *tokenizer) {
                 // parse size of string in base token.
 
                 tokenizer = strtok_r(NULL, " ", &temp_token);
-                printf("%s\n\n", attribute->name);
+//                printf("%s\n\n", attribute->name);
                 attribute->size = atoi(tokenizer);
 //                temp_token = *token;
 //                tokenizer = strtok_r(NULL, " ,)", token);
@@ -784,7 +784,7 @@ int parseAttributes(Table table, char *tokenizer) {
                     } else if (strcasecmp(tokenizer, "unique") == 0) {
                         constraints->unique = true;
                     } else if (strcasecmp(tokenizer, "notnull") == 0) {
-                        printf("got nontnull\n");
+//                        printf("got nontnull\n");
                         constraints->notnull = true;
                     } else if (strcasecmp(tokenizer, "default") == 0){
                         // read value of default
@@ -890,7 +890,7 @@ int get_attribute_type(char *type) {
 
 // TODO: this hasn't been tested.
 struct PrimaryKey *create_key(char *attribute_names, Table table) {
-    printf("parsing primary key\n");
+//    printf("parsing primary key\n");
     struct PrimaryKey *key = malloc(sizeof(struct PrimaryKey));
     key->attributes = NULL;
     key->size = 0;
@@ -910,7 +910,7 @@ struct PrimaryKey *create_key(char *attribute_names, Table table) {
         }
         tokenizer = strtok(NULL, " ");
     }
-    printf("returning primary key with size: %d\n", key->size);
+//    printf("returning primary key with size: %d\n", key->size);
     table->key_indices_count = key->size;
     table->key_indices = malloc(sizeof(int) * key->size);
     for (int i = 0; i < key->size; i++) {
@@ -920,7 +920,7 @@ struct PrimaryKey *create_key(char *attribute_names, Table table) {
 }
 
 PrimaryKey create_key_from_attr(Attribute attr, Table table) {
-    printf("parsing primary key in line\n");
+//    printf("parsing primary key in line\n");
     PrimaryKey key = malloc(sizeof(struct PrimaryKey));
     key->attributes = malloc(sizeof(struct Attribute *));
     key->attributes[0] = attr;
@@ -933,7 +933,7 @@ PrimaryKey create_key_from_attr(Attribute attr, Table table) {
 }
 
 int parseForeignKey(Table table, char *tokenizer, char **token) {
-    printf("parsing foreign key: %s\n", tokenizer);
+//    printf("parsing foreign key: %s\n", tokenizer);
     char *attribute_names = NULL;
     char *referenced_table_name = NULL;
     char *referenced_table_attributes = NULL;
@@ -982,7 +982,7 @@ int parseForeignKey(Table table, char *tokenizer, char **token) {
     ///
     // since we were able to parse the information we needed, assign the foreign keys.
     if (attribute_names != NULL && referenced_table_name != NULL && referenced_table_attributes != NULL) {
-        printf("attr names: %s, referenced table: %s, referenced attrs: %s\n", attribute_names, referenced_table_name, referenced_table_attributes);
+//        printf("attr names: %s, referenced table: %s, referenced attrs: %s\n", attribute_names, referenced_table_name, referenced_table_attributes);
 
         Table referenced_table = get_table_from_catalog(referenced_table_name);
 
@@ -999,11 +999,11 @@ int parseForeignKey(Table table, char *tokenizer, char **token) {
                 // search for the attribute in table
                 for (int i = 0; i < table->attribute_count; i++) {
 
-                    printf("comparing %s to %s\n", attribute_tokenizer, table->attributes[i]->name);
+//                    printf("comparing %s to %s\n", attribute_tokenizer, table->attributes[i]->name);
                     if (strcasecmp(attribute_tokenizer, table->attributes[i]->name) == 0) {
 
                         if (referenced_attribute_tokenizer != NULL) {
-                            printf("referenced attribute: %s\n", referenced_attribute_tokenizer);
+//                            printf("referenced attribute: %s\n", referenced_attribute_tokenizer);
 
                             bool found_attr = false;
 
@@ -1031,7 +1031,7 @@ int parseForeignKey(Table table, char *tokenizer, char **token) {
                             fkey->referenced_table_name_size = strlen(referenced_table_name) + 1;
                             table->attributes[i]->foreignKey = fkey;
 
-                            printf("ref_col: %s, ref_table: %s\n", ref_col, ref_table);
+//                            printf("ref_col: %s, ref_table: %s\n", ref_col, ref_table);
                             referenced_attribute_tokenizer = strtok_r(NULL, " ", &referenced_attr_token);
                             // search through second table
                             /*
@@ -1313,8 +1313,8 @@ int write_table_to_disk(FILE *file, struct Table *table) {
     // write primary key
     write_primary_key_to_disk(file, table->primary_key);
 
-    printf("table_id: %d\n", table->tableId);
-    printf("name: %s\n\n", table->name);
+//    printf("table_id: %d\n", table->tableId);
+//    printf("name: %s\n\n", table->name);
 
     return 0;
 }
@@ -1327,7 +1327,7 @@ int write_catalog_to_disk() {
     struct Table **tables = catalog->tables;
 
     // open file and write the catalog data
-    printf("\nWriting catalog to disk: %s\n", catalog_path);
+//    printf("\nWriting catalog to disk: %s\n", catalog_path);
     FILE *catalog_file = fopen(catalog_path, "wb");
 
     // write table count
@@ -1397,12 +1397,13 @@ struct Attribute *read_attribute_from_disk(FILE *file) {
 struct PrimaryKey *read_primary_key_from_disk(FILE *file) {
     int key_size;
     fread(&key_size, sizeof(int), 1, file);
-    struct PrimaryKey *primaryKey = malloc(sizeof(struct PrimaryKey));
+    struct PrimaryKey *primaryKey;
 
     if (key_size == 0) {
         primaryKey = NULL;
     } 
     else {
+        primaryKey = malloc(sizeof(struct PrimaryKey));
         primaryKey->size = key_size;
         primaryKey->attributes = malloc(sizeof(struct Attribute *) * primaryKey->size);
         
@@ -1464,13 +1465,13 @@ int read_catalog_from_disk() {
     char *catalog_path = get_catalog_file_path();
 
     // open file and read the catalog data
-    printf("\nReading catalog from disk: %s\n", catalog_path);
+//    printf("\nReading catalog from disk: %s\n", catalog_path);
     FILE *catalog_file = fopen(catalog_path, "rb");
 
     // read table count
     int table_count;
     fread(&table_count, sizeof(int), 1, catalog_file);
-    printf("table_count: %d\n\n", table_count);
+//    printf("table_count: %d\n\n", table_count);
 
     struct Table *current_table;
 
