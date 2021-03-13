@@ -1522,24 +1522,26 @@ void display_catalog() {
         }
         printf(")\n");
 
-        printf("primary_key:\n");
-        printf(" size: %d\n", table->primary_key->size);
+        if(table->primary_key != NULL){
+            printf("primary_key:\n");
+            printf(" size: %d\n", table->primary_key->size);
 
-        for(int j = 0; j < table->primary_key->size; j++){
-            attribute = table->primary_key->attributes[j];
-            printf("name: %s\n", attribute->name);
-            printf("name_size: %d\n", attribute->name_size);
-            printf("size: %d\n", attribute->size);
-            printf("contraints:\n");
-            printf("    notnull: %d\n", attribute->constraints->notnull);
-            printf("    primary_key: %d\n", attribute->constraints->primary_key);
-            printf("    unique: %d\n", attribute->constraints->unique);
-            if (attribute->foreignKey != NULL) {
-                printf("foreignKey:\n");
-                printf("    column_name: %s\n", attribute->foreignKey->referenced_column_name);
-                printf("    column_name_size: %d\n", attribute->foreignKey->referenced_column_name_size);
-                printf("    table_name: %s\n", attribute->foreignKey->referenced_table_name);
-                printf("    table_name_size: %d\n", attribute->foreignKey->referenced_table_name_size);
+            for(int j = 0; j < table->primary_key->size; j++){
+                attribute = table->primary_key->attributes[j];
+                printf("name: %s\n", attribute->name);
+                printf("name_size: %d\n", attribute->name_size);
+                printf("size: %d\n", attribute->size);
+                printf("contraints:\n");
+                printf("    notnull: %d\n", attribute->constraints->notnull);
+                printf("    primary_key: %d\n", attribute->constraints->primary_key);
+                printf("    unique: %d\n", attribute->constraints->unique);
+                if (attribute->foreignKey != NULL) {
+                    printf("foreignKey:\n");
+                    printf("    column_name: %s\n", attribute->foreignKey->referenced_column_name);
+                    printf("    column_name_size: %d\n", attribute->foreignKey->referenced_column_name_size);
+                    printf("    table_name: %s\n", attribute->foreignKey->referenced_table_name);
+                    printf("    table_name_size: %d\n", attribute->foreignKey->referenced_table_name_size);
+                }
             }
         }
 
