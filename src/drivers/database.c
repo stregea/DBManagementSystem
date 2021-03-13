@@ -42,7 +42,8 @@ int execute_query(char *query, union record_item ***result) {
  * @return 0 on success; -1 on failure.
  */
 int shutdown_database() {
-    terminate_ddl_parser();
+    freeCatalog();
+    terminate_database();
     return 0;
 }
 
@@ -53,7 +54,6 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    // check to see if the catalog file already exists and decide whether to use restart db logic
     char *databasePath = argv[1];
     int pageSize = (int) strtol(argv[2], NULL, 10);
     int bufferSize = (int) strtol(argv[3], NULL, 10);
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
         restart = true;
     }
     initialize_ddl_parser(databasePath, restart);
-    create_database(databasePath, 4096, 3, restart);
+    create_database(databasePath, pageSize, bufferSize, restart);
     free(catalog_path);
 
     // initialize with first token
@@ -144,9 +144,9 @@ int main(int argc, char *argv[]) {
         free(temp);
         statementCount++;
     }
-    display_catalog();
+//    display_catalog();
     write_catalog_to_disk();
-    read_catalog_from_disk();
-    display_catalog();
+//    read_catalog_from_disk();
+//    display_catalog();
     shutdown_database();
 }
