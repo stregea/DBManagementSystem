@@ -833,20 +833,22 @@ void freeKey(PrimaryKey key) {
 }
 
 void freeAttribute(Attribute attr) {
-    free(attr->name);
-    free(attr->constraints);
+    if(attr != NULL){
+        free(attr->name);
+        free(attr->constraints);
 
-    if (attr->foreignKey != NULL) {
-        free(attr->foreignKey->referenced_table_name);
-        free(attr->foreignKey->referenced_column_name);
-        free(attr->foreignKey);
+        if (attr->foreignKey != NULL) {
+            free(attr->foreignKey->referenced_table_name);
+            free(attr->foreignKey->referenced_column_name);
+            free(attr->foreignKey);
+        }
+
+        if(attr->default_value != NULL){
+            free(attr->default_value);
+        }
+
+        free(attr);
     }
-
-    if(attr->default_value != NULL){
-        free(attr->default_value);
-    }
-
-    free(attr);
 }
 
 void freeTable(Table table) {
