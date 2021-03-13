@@ -5,7 +5,7 @@
  */
  
 #ifndef DATABASE_H
-#define DATABABE_H
+#define DATABASE_H
 
 #include "storagemanager.h"
 
