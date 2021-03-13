@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #define MAX_TOKEN_SIZE 20
 
@@ -42,7 +41,8 @@ int execute_query(char *query, union record_item ***result) {
  * @return 0 on success; -1 on failure.
  */
 int shutdown_database() {
-    terminate_ddl_parser();
+    freeCatalog();
+    terminate_database();
     return 0;
 }
 
@@ -53,36 +53,13 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    // check to see if the catalog file already exists and decide whether to use restart db logic
     char *databasePath = argv[1];
     int pageSize = (int) strtol(argv[2], NULL, 10);
     int bufferSize = (int) strtol(argv[3], NULL, 10);
 
     printf("db_loc: %s\npage_size: %d\nbuffer_size: %d\n", databasePath, pageSize, bufferSize);
-
-    char * catalog_file_name = "/catalog";
-    char * catalog_path;
-
-    // format the catalog file name and path
-    int database_path_length = strlen(databasePath);
-    char last_character = databasePath[database_path_length - 1];
-    if(last_character == '\'' || last_character == '/') {
-        databasePath[database_path_length - 1] = 0;
-    }
-
-    catalog_path = malloc(strlen(databasePath) + strlen(catalog_file_name) + 1);
-
-    strcpy(catalog_path, databasePath);
-    strcat(catalog_path, catalog_file_name);
-
-    bool restart = false;
-
-    if(access(catalog_path, F_OK) == 0){
-        restart = true;
-    }
-    initialize_ddl_parser(databasePath, restart);
-    create_database(databasePath, 4096, 3, restart);
-    free(catalog_path);
+    initialize_ddl_parser(databasePath, false);
+    create_database(databasePath, 4096, 3, false);
 
     // initialize with first token
     char token[MAX_TOKEN_SIZE];
@@ -148,5 +125,4 @@ int main(int argc, char *argv[]) {
     write_catalog_to_disk();
     read_catalog_from_disk();
     display_catalog();
-    shutdown_database();
 }
