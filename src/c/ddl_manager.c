@@ -30,11 +30,12 @@ int initialize_ddl_parser(char *db_loc, bool restart) {
     return 0;
 }
 
-// todo
 int terminate_ddl_parser() {
     int result = 0;
-//    result = write_catalog_to_disk(); // not yet defined
-    freeCatalog(); // not yet defined
+    result = write_catalog_to_disk();
+    freeCatalog();
+    free(global_db_loc);
+    terminate_database();
     return result;
 }
 
@@ -699,6 +700,11 @@ int parseAttributes(Table table, char *tokenizer) {
     while (tokenizer[0] == ' ' || tokenizer[0] == '(') {
         tokenizer++;
     }
+    int last = strlen(tokenizer) -1;
+    while(tokenizer[last] == ' ' || tokenizer[last] == ')'){
+        tokenizer[last] = '\0';
+        last--;
+    }
     printf("Attributes: %s\n", tokenizer);
 
     char *temp_token;
@@ -731,7 +737,7 @@ int parseAttributes(Table table, char *tokenizer) {
         //printf("name_size: %d\n", attribute->name_size);
 
         // read in attribute type
-        tokenizer = strtok_r(NULL, " ", &temp_token);
+        tokenizer = strtok_r(NULL, " ()", &temp_token);
 
         if (tokenizer != NULL) {
             // read in column type, function returns 0-4 based on string name (integer-varchar)
@@ -1110,7 +1116,6 @@ char* get_catalog_file_path() {
     char last_character = global_db_loc[database_path_length - 1];
     if(last_character == '\'' || last_character == '/') {
         global_db_loc[database_path_length - 1] = 0;
-        catalog_path = malloc(strlen(global_db_loc) + strlen(catalog_file_name) + 1);
     }
 
     catalog_path = malloc(strlen(global_db_loc) + strlen(catalog_file_name) + 1);
@@ -1212,7 +1217,9 @@ struct Table *createTable(char *name) {
 
 void freeCatalog() {
     for (int i = 0; i < catalog->table_count; i++) {
-        freeTable(catalog->tables[i]);
+        if(catalog->tables[i] != NULL){
+            freeTable(catalog->tables[i]);
+        }
     }
     free(catalog->tables);
     free(catalog);
