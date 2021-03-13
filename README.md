@@ -3,7 +3,8 @@ This project is the semester-long project required for CSCI-421 @ Rochester Inst
 The primary objective of this project is to implement a Database Management System.
 
 # Compilation
-To create the executable move to the DBManagementSystem directory and enter on commandline: gcc -o name_of_exe src/drivers/phase1.c src/c/*c
+To create the executable move to the DBManagementSystem directory and enter on commandline: 
+gcc -std=gnu99 src/drivers/database.c src/c/*.c -o database
 
 # Run Program
 Once the executable is created enter: ./name_of_exe  /<DatabasePath> 
