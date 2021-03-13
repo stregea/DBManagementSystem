@@ -144,9 +144,9 @@ int main(int argc, char *argv[]) {
         free(temp);
         statementCount++;
     }
-    display_catalog();
+//    display_catalog();
     write_catalog_to_disk();
-    read_catalog_from_disk();
-    display_catalog();
+//    read_catalog_from_disk();
+//    display_catalog();
     shutdown_database();
 }
