@@ -852,20 +852,22 @@ void freeAttribute(Attribute attr) {
 }
 
 void freeTable(Table table) {
-    free(table->name);
-    free(table->data_types);
+    if(table != NULL){
+        free(table->name);
+        free(table->data_types);
 
-    // free primary key
-    if (table->primary_key != NULL) {
-        freeKey(table->primary_key);
-    }
+        // free primary key
+        if (table->primary_key != NULL) {
+            freeKey(table->primary_key);
+        }
 
-    // free attributes
-    for (int i = 0; i < table->attribute_count; i++) {
-        freeAttribute(table->attributes[i]);
+        // free attributes
+        for (int i = 0; i < table->attribute_count; i++) {
+            freeAttribute(table->attributes[i]);
+        }
+        free(table->attributes);
+        free(table);
     }
-    free(table->attributes);
-    free(table);
 }
 
 int get_attribute_type(char *type) {
