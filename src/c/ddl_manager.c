@@ -821,13 +821,15 @@ int parseAttributes(Table table, char *tokenizer) {
 }
 
 void freeKey(PrimaryKey key) {
-    if(key->attributes != NULL){
-        for (int i = 0; i < key->size; i++) {
-            freeAttribute(key->attributes[i]);
+    if(key != NULL){
+        if(key->attributes != NULL){
+            for (int i = 0; i < key->size; i++) {
+                freeAttribute(key->attributes[i]);
+            }
         }
+        free(key->attributes);
+        free(key);
     }
-    free(key->attributes);
-    free(key);
 }
 
 void freeAttribute(Attribute attr) {
