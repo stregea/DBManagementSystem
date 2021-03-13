@@ -45,6 +45,9 @@ int terminate_ddl_parser() {
  * @return 0 upon success, -1 upon error.
  */
 int parseStatement(char *statement) {
+    if(strcasecmp(statement, "quit;") == 0){
+        return 0;
+    }
     int result = 0;
     char *command = malloc(strlen(statement) + 1);
     strcpy(command, statement);
