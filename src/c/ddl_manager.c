@@ -700,6 +700,11 @@ int parseAttributes(Table table, char *tokenizer) {
     while (tokenizer[0] == ' ' || tokenizer[0] == '(') {
         tokenizer++;
     }
+    int last = strlen(tokenizer) -1;
+    while(tokenizer[last] == ' ' || tokenizer[last] == ')'){
+        tokenizer[last] = '\0';
+        last--;
+    }
     printf("Attributes: %s\n", tokenizer);
 
     char *temp_token;
