@@ -1116,7 +1116,6 @@ char* get_catalog_file_path() {
     char last_character = global_db_loc[database_path_length - 1];
     if(last_character == '\'' || last_character == '/') {
         global_db_loc[database_path_length - 1] = 0;
-        catalog_path = malloc(strlen(global_db_loc) + strlen(catalog_file_name) + 1);
     }
 
     catalog_path = malloc(strlen(global_db_loc) + strlen(catalog_file_name) + 1);
@@ -1218,7 +1217,9 @@ struct Table *createTable(char *name) {
 
 void freeCatalog() {
     for (int i = 0; i < catalog->table_count; i++) {
-        freeTable(catalog->tables[i]);
+        if(catalog->tables[i] != NULL){
+            freeTable(catalog->tables[i]);
+        }
     }
     free(catalog->tables);
     free(catalog);

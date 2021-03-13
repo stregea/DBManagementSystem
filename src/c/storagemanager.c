@@ -512,6 +512,9 @@ int terminate_database(){
 		        "Storage Manager: terminate database failed to write metadata\n");
 		return -1;
 	}
+	free(db_db_loc);
+	// free tables.
+	// free buffer here??
 	return 0;
 }
 
