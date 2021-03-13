@@ -714,6 +714,7 @@ int parseAttributes(Table table, char *tokenizer) {
         attribute->foreignKey = NULL;
         attribute->constraints = malloc(sizeof(struct Constraints));
         struct Constraints *constraints = attribute->constraints;
+        attribute->default_size = 0;
         attribute->default_value = NULL; //todo:free
         constraints->primary_key = false;
         constraints->notnull = false;
@@ -787,6 +788,7 @@ int parseAttributes(Table table, char *tokenizer) {
                             // store the value as a string, convert value later on when needed
                             attribute->default_value = malloc(strlen(tokenizer) + 1);
                             strcpy(attribute->default_value, tokenizer);
+                            attribute->default_size = strlen(tokenizer) + 1;
                         }
                    }
                     else { // bad value
@@ -1257,6 +1259,8 @@ int write_attribute_to_disk(FILE *file, struct Attribute *attribute) {
     // read size of arrays
     fwrite(&attribute->type, sizeof(int), 1, file);
     fwrite(&attribute->size, sizeof(int), 1, file);
+    fwrite(&attribute->default_size, sizeof(int), 1, file);
+    fwrite(attribute->default_value, attribute->default_size, 1, file);
 
     // write constaints
     fwrite(attribute->constraints, sizeof(struct Constraints), 1, file);
@@ -1358,6 +1362,9 @@ struct Attribute *read_attribute_from_disk(FILE *file) {
     // read size of arrays
     fread(&attribute->type, sizeof(int), 1, file);
     fread(&attribute->size, sizeof(int), 1, file);
+
+    fread(&attribute->default_size, sizeof(int), 1, file);
+    fread(attribute->default_value, attribute->default_size, 1, file);
 
     // write constaints
     attribute->constraints = malloc(sizeof(struct Constraints));
@@ -1487,6 +1494,8 @@ void display_catalog() {
             printf("    name: %s\n", attribute->name);
             printf("    name_size: %d\n", attribute->name_size);
             printf("    size: %d\n", attribute->size);
+            printf("    default_size: %d\n", attribute->default_size);
+            printf("    default: %d\n", (int)attribute->default_value);
             printf("    contraints:\n");
             printf("        notnull: %d\n", attribute->constraints->notnull);
             printf("        primary_key: %d\n", attribute->constraints->primary_key);
