@@ -11,6 +11,11 @@
  * @return 0 on success; -1 on failure.
  */
 int parse_ddl_statement(char *statement) {
+
+    if(strcasecmp(statement, "quit;") == 0){
+        return 0;
+    }
+
     int result = 0;
     if (strcmp(statement, "") == 0) {
         fprintf(stderr, "No command entered.\n");
