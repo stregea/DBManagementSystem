@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
         restart = true;
     }
     initialize_ddl_parser(databasePath, restart);
-    create_database(databasePath, 4096, 4096, restart);
+    create_database(databasePath, pageSize, bufferSize, restart);
     free(catalog_path);
 
     // initialize with first token
