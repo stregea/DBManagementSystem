@@ -30,11 +30,12 @@ int initialize_ddl_parser(char *db_loc, bool restart) {
     return 0;
 }
 
-// todo
 int terminate_ddl_parser() {
     int result = 0;
-//    result = write_catalog_to_disk(); // not yet defined
-    freeCatalog(); // not yet defined
+    result = write_catalog_to_disk();
+    freeCatalog();
+    free(global_db_loc);
+    terminate_database();
     return result;
 }
 
@@ -731,7 +732,7 @@ int parseAttributes(Table table, char *tokenizer) {
         //printf("name_size: %d\n", attribute->name_size);
 
         // read in attribute type
-        tokenizer = strtok_r(NULL, " ", &temp_token);
+        tokenizer = strtok_r(NULL, " ()", &temp_token);
 
         if (tokenizer != NULL) {
             // read in column type, function returns 0-4 based on string name (integer-varchar)
