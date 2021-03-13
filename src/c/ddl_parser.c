@@ -31,7 +31,7 @@ int parse_ddl_statement(char *statement) {
 
     // Read through all statements ending with ';'
     while (statement_parser != NULL) {
-        printf("Parsing:\n%s\n\n", statement_parser);
+//        printf("Parsing:\n%s\n\n", statement_parser);
         result = parseStatement(statement_parser);
         statement_parser = strtok_r(NULL, ";", &statement_token);
     }
