@@ -42,8 +42,9 @@ int execute_query(char *query, union record_item ***result) {
  * @return 0 on success; -1 on failure.
  */
 int shutdown_database() {
-    freeCatalog();
-    terminate_database();
+//    freeCatalog();
+//    terminate_database();
+    terminate_ddl_parser();
     return 0;
 }
 
