@@ -971,7 +971,7 @@ static int write_metadata(){
 			write_table_metadata(table_data[i], meta_file);
 	}
 
-	fclose(meta_file)
+	fclose(meta_file);
 	return 0;
 }
 
