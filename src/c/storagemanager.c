@@ -971,6 +971,7 @@ static int write_metadata(){
 			write_table_metadata(table_data[i], meta_file);
 	}
 
+	free(meta_loc);
 	fclose(meta_file);
 	return 0;
 }
