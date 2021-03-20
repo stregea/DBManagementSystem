@@ -866,6 +866,10 @@ void freeTable(Table table) {
             freeAttribute(table->attributes[i]);
         }
         free(table->attributes);
+
+        // free key_indices
+        free(table->key_indices);
+
         free(table);
     }
 }
