@@ -528,6 +528,7 @@ int terminate_database(){
 	for(int i = 0; i < num_tables; i ++){
 	    free_table(table_data[i]);
 	}
+    free(table_data);
 
 	for(int i = 0; i < next_page; i++){
 	    free(page_buffer[i]);
@@ -969,6 +970,8 @@ static int write_metadata(){
 		if(table_data[i] != NULL)
 			write_table_metadata(table_data[i], meta_file);
 	}
+
+	fclose(meta_file)
 	return 0;
 }
 
@@ -1020,6 +1023,8 @@ static int read_metadata(){
 		table_data[i] = NULL;
 		read_table_metadata(meta_file);
 	}
+
+	fclose(meta_file);
 	return 0; 
  }	
 	
