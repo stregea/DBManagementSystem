@@ -407,6 +407,17 @@ int remove_record( int table_id, union record_item * key_values ){
     return -1;
 }
 
+int free_table(struct table_data * table){
+    if(table != NULL){
+        free(table->attr_types);
+        free(table->key_indices);
+        free(table->pages);
+        free(table);
+        return 0;
+    }
+    return -1;
+}
+
 int add_table( int * data_types, int * key_indices, 
                int data_types_size, int key_indices_size ){
     int table_num = get_table_num();
@@ -513,8 +524,15 @@ int terminate_database(){
 		return -1;
 	}
 	free(db_db_loc);
-	// free tables.
-	// free buffer here??
+
+	for(int i = 0; i < num_tables; i ++){
+	    free_table(table_data[i]);
+	}
+
+	for(int i = 0; i < next_page; i++){
+	    free(page_buffer[i]);
+	}
+	free(page_buffer);
 	return 0;
 }
 
