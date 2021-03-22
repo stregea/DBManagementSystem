@@ -826,20 +826,29 @@ void freeKey(PrimaryKey key) {
             for (int i = 0; i < key->size; i++) {
                 freeAttribute(key->attributes[i]);
             }
+            free(key->attributes);
         }
-        free(key->attributes);
         free(key);
     }
 }
 
 void freeAttribute(Attribute attr) {
     if(attr != NULL){
-        free(attr->name);
-        free(attr->constraints);
+        if(attr->name != NULL){
+            free(attr->name);
+        }
+
+        if(attr->constraints != NULL){
+            free(attr->constraints);
+        }
 
         if (attr->foreignKey != NULL) {
-            free(attr->foreignKey->referenced_table_name);
-            free(attr->foreignKey->referenced_column_name);
+            if(attr->foreignKey->referenced_table_name != NULL){
+                free(attr->foreignKey->referenced_table_name);
+            }
+            if(attr->foreignKey->referenced_column_name != NULL){
+                free(attr->foreignKey->referenced_column_name);
+            }
             free(attr->foreignKey);
         }
 
@@ -853,8 +862,12 @@ void freeAttribute(Attribute attr) {
 
 void freeTable(Table table) {
     if(table != NULL){
-        free(table->name);
-        free(table->data_types);
+        if(table->name != NULL){
+            free(table->name);
+        }
+        if(table->data_types != NULL){
+            free(table->data_types);
+        }
 
         // free primary key
         if (table->primary_key != NULL) {
@@ -862,13 +875,20 @@ void freeTable(Table table) {
         }
 
         // free attributes
-        for (int i = 0; i < table->attribute_count; i++) {
-            freeAttribute(table->attributes[i]);
+        if(table->attributes != NULL){
+            for (int i = 0; i < table->attribute_count; i++) {
+                if(table->attributes[i] != NULL){
+                    freeAttribute(table->attributes[i]);
+                }
+            }
+            free(table->attributes);
         }
-        free(table->attributes);
+
 
         // free key_indices
-        free(table->key_indices);
+        if(table->key_indices){
+            free(table->key_indices);
+        }
 
         free(table);
     }
