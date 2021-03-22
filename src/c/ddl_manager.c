@@ -822,9 +822,9 @@ int parseAttributes(Table table, char *tokenizer) {
 void freeKey(PrimaryKey key) {
     if(key != NULL){
         if(key->attributes != NULL){
-            for (int i = 0; i < key->size; i++) {
-                freeAttribute(key->attributes[i]);
-            }
+            // there is no need to handle the freeing
+            // of the attributes here since they are removed in
+            // freeTable, thus we only need to free this pointer:
             free(key->attributes);
         }
         free(key);
