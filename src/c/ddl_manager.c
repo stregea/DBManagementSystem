@@ -659,7 +659,7 @@ int parseCreate(char *tokenizer, char **token) {
                     free(save);
                 }
             }
-            add_table(table_data->data_types, table_data->key_indices, table_data->data_type_size, table_data->key_indices_count);
+            table_data->tableId = add_table(table_data->data_types, table_data->key_indices, table_data->data_type_size, table_data->key_indices_count);
             add_table_to_catalog(table_data);
             return 0;
         }
@@ -1233,13 +1233,17 @@ struct Table *createTable(char *name) {
 }
 
 void freeCatalog() {
-    for (int i = 0; i < catalog->table_count; i++) {
-        if(catalog->tables[i] != NULL){
-            freeTable(catalog->tables[i]);
+    if(catalog != NULL){
+        if(catalog->tables != NULL){
+            for (int i = 0; i < catalog->table_count; i++) {
+                if(catalog->tables[i] != NULL){
+                    freeTable(catalog->tables[i]);
+                }
+            }
+            free(catalog->tables);
         }
+        free(catalog);
     }
-    free(catalog->tables);
-    free(catalog);
 }
 
 int write_primary_key_to_disk(FILE *file, struct PrimaryKey *primaryKey) {
