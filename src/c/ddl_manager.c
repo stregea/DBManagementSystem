@@ -33,7 +33,6 @@ int initialize_ddl_parser(char *db_loc, bool restart) {
 int terminate_ddl_parser() {
     int result = 0;
     result = write_catalog_to_disk();
-    freeCatalog();
     free(global_db_loc);
     terminate_database();
     return result;
