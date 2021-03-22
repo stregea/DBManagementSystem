@@ -952,9 +952,9 @@ static void write_table_metadata(struct table_data * t_data, FILE * meta_file){
 
 	
 static int write_metadata(){ 
-	int length = snprintf(NULL, 0, "%smetadata.dat", db_db_loc);
+	int length = snprintf(NULL, 0, "%s/metadata.dat", db_db_loc);
 	char * meta_loc = malloc(length+1);
-	snprintf(meta_loc, length+1, "%smetadata.data", db_db_loc);
+	snprintf(meta_loc, length+1, "%s/metadata.data", db_db_loc);
 	
 	//write page size and buffer size
 	FILE * meta_file = fopen(meta_loc, "wb");
@@ -1005,9 +1005,9 @@ static void read_table_metadata(FILE * meta_file){
 }
 
 static int read_metadata(){ 
-	int length = snprintf(NULL, 0, "%smetadata.dat", db_db_loc);
+	int length = snprintf(NULL, 0, "%s/metadata.dat", db_db_loc);
 	char * meta_loc = malloc(length+1);
-	snprintf(meta_loc, length+1, "%smetadata.data", db_db_loc);
+	snprintf(meta_loc, length+1, "%s/metadata.data", db_db_loc);
 	
 	//read page size and buffer size
 	FILE * meta_file = fopen(meta_loc, "rb");
@@ -1025,6 +1025,7 @@ static int read_metadata(){
 		read_table_metadata(meta_file);
 	}
 
+	free(meta_loc);
 	fclose(meta_file);
 	return 0; 
  }	
