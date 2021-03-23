@@ -351,7 +351,7 @@ int parseAlter(char *tokenizer, char **token) {
                                 new_attr->name = malloc(sizeof(char) * (strlen(a_name) + 1));
                                 strcpy(new_attr->name, a_name);
 //                                printf("name is now %s\n", new_attr->name);
-                                new_attr->name_size = strlen(a_name);
+                                new_attr->name_size = strlen(a_name) + 1;
                                 new_attr->type = get_attribute_type(a_type);
                                 if (new_attr->type == 3 || new_attr->type == 4) {
                                     // TODO handle char/varchar
@@ -467,7 +467,7 @@ int parseAlter(char *tokenizer, char **token) {
                         // Fill out to match the type
                         new_attr->name = malloc(sizeof(char) * (strlen(a_name) + 1));
                         strcpy(new_attr->name, a_name);
-                        new_attr->name_size = strlen(a_name);
+                        new_attr->name_size = strlen(a_name) + 1;
                         new_attr->type = get_attribute_type(a_type);
 //                        printf("got type %d\n", new_attr->type);
 
@@ -961,6 +961,36 @@ struct PrimaryKey *create_key(char *attribute_names, Table table) {
     return key;
 }
 
+struct PrimaryKey *create_key_from_disk(char *attribute_names, Table table, int key_size) {
+    struct PrimaryKey *key = malloc(sizeof(struct PrimaryKey));
+    key->attributes = malloc(sizeof(struct Attribute *) * key_size);
+    key->size = key_size;
+    int key_attribute_index = 0;
+
+    // split the attributes on space
+    char *tokenizer = strtok(attribute_names, " ");
+    struct Attribute **attributes = table->attributes;
+
+    while (tokenizer != NULL) {
+        for (int i = 0; i < table->attribute_count; i++) {
+            // check if token equal attribute name
+            if (strcasecmp(tokenizer, attributes[i]->name) == 0) {
+                key->attributes[key_attribute_index] = attributes[i];
+                key_attribute_index++;
+            }
+        }
+        tokenizer = strtok(NULL, " ");
+    }
+    // printf("returning primary key with size: %d\n", key->size);
+    table->key_indices_count = key->size;
+    table->key_indices = malloc(sizeof(int) * key->size);
+    for (int i = 0; i < key->size; i++) {
+
+        table->key_indices[i] = key->attributes[i]->type;
+    }
+    return key;
+}
+
 PrimaryKey create_key_from_attr(Attribute attr, Table table) {
 //    printf("parsing primary key in line\n");
     PrimaryKey key = malloc(sizeof(struct PrimaryKey));
@@ -1143,12 +1173,6 @@ int parseForeignKey(Table table, char *tokenizer, char **token) {
 // todo: test
 int add_primary_key_to_table(Table table, PrimaryKey key) {
     if (table->primary_key_count == 0) {
-//        table->key_indices = realloc(table->key_indices, (key->key_indices_count + 1) * sizeof(int *));
-//        memcpy(table->key_indices, key->key_indices, key->key_indices_count * sizeof(int *));
-//        table->primary_key_count++;
-//        table->key_indices_count = key->key_indices_count;
-//        free(key->key_indices);
-//        free(key);
         table->primary_key = key;
         table->primary_key_count++;
         return 0;
@@ -1282,46 +1306,48 @@ void freeCatalog() {
 
 int write_primary_key_to_disk(FILE *file, struct PrimaryKey *primaryKey) {
     int null_value = 0;
+    
     // might not be needed if size 0 and null are treated the same
     if (primaryKey == NULL) {
         fwrite(&null_value, sizeof(int), 1, file);
     } else {
         fwrite(&primaryKey->size, sizeof(int), 1, file);
-        // write each attribute
-        for (int i = 0; i < primaryKey->size; i++) {
-            write_attribute_to_disk(file, primaryKey->attributes[i]);
+
+        if(primaryKey->size > 0) {
+            // write each attribute name to a string
+            char* attributes = malloc(sizeof(char));
+            // null terminator
+            size_t attributes_string_size = 1;
+            struct Attribute *current_attribute;
+
+            // append the name of each attribute to the string
+            for (int i = 0; i < primaryKey->size; i++) {
+                current_attribute = primaryKey->attributes[i];
+                attributes_string_size += current_attribute->name_size;
+                attributes = realloc(attributes, attributes_string_size);
+                
+                if(i == 0){
+                    strcpy(attributes, current_attribute->name);
+                }
+                else{
+                    strcat(attributes, current_attribute->name);
+                }
+
+                strcat(attributes, " ");
+            }
+
+            // write contents to disk
+            fwrite(&attributes_string_size, sizeof(int), 1, file);
+            fwrite(attributes, attributes_string_size, 1, file);
+
+            free(attributes);
         }
+
     }
 
     return 0;
 }
-//int write_primary_key_to_disk(FILE *file, struct PrimaryKey *primaryKey) {
-//    int null_value = 0;
-//    // might not be needed if size 0 and null are treated the same
-//    if (primaryKey == NULL) {
-//        fwrite(&null_value, sizeof(int), 1, file);
-//    } else {
-////        fwrite(&primaryKey->size, sizeof(int), 1, file);
-//        // write each attribute name to a string
-//        char* attributes = malloc(sizeof(char*));
-//        size_t num_attributes = 0;
-//
-//        // append the name of each attribute to the string
-//        for (int i = 0; i < primaryKey->size; i++) {
-//            num_attributes += strlen(attributes)+primaryKey->attributes[i]->name_size+2;
-//            attributes = realloc(attributes, num_attributes); // 1 char for space, another for null char
-//            strcat(attributes, primaryKey->attributes[i]->name);
-//            strcat(attributes, " ");
-//        }
-//
-//        // write contents to disk
-//        fwrite(&num_attributes, sizeof(int), 1, file);
-//        fwrite(&attributes, num_attributes, 1, file);
-//        free(attributes);
-//    }
-//
-//    return 0;
-//}
+
 int write_foreign_key_to_disk(FILE *file, struct ForeignKey *foreignKey) {
     int null_value = 0;
     if (foreignKey == NULL) {
@@ -1380,9 +1406,6 @@ int write_table_to_disk(FILE *file, struct Table *table) {
     // write primary key
     write_primary_key_to_disk(file, table->primary_key);
 
-//    printf("table_id: %d\n", table->tableId);
-//    printf("name: %s\n\n", table->name);
-
     return 0;
 }
 
@@ -1394,11 +1417,9 @@ int write_catalog_to_disk() {
     struct Table **tables = catalog->tables;
 
     // open file and write the catalog data
-//    printf("\nWriting catalog to disk: %s\n", catalog_path);
     FILE *catalog_file = fopen(catalog_path, "wb");
 
     // write table count
-    //printf("table_count: %d\n\n", table_count);
     fwrite(&table_count, sizeof(int), 1, catalog_file);
 
     // write each table struct and all its data
@@ -1461,43 +1482,34 @@ struct Attribute *read_attribute_from_disk(FILE *file) {
     return attribute;
 }
 
-struct PrimaryKey *read_primary_key_from_disk(FILE *file) {
+struct PrimaryKey *read_primary_key_from_disk(FILE *file, struct Table *table) {
     int key_size;
-    fread(&key_size, sizeof(int), 1, file);
     struct PrimaryKey *primaryKey;
+    int attributes_string_size;
+    char* names;
+    fread(&key_size, sizeof(int), 1, file);
 
     if (key_size == 0) {
         primaryKey = NULL;
     } else {
-        primaryKey = malloc(sizeof(struct PrimaryKey));
-        primaryKey->size = key_size;
-        primaryKey->attributes = malloc(sizeof(struct Attribute *) * primaryKey->size);
 
-        // read each attribute
-        // this creates attributes in memory and they are never freed.
-        // need a way to reference the already created attributes from the table.
-        for (int i = 0; i < primaryKey->size; i++) {
-            primaryKey->attributes[i] = read_attribute_from_disk(file);
+        fread(&attributes_string_size, sizeof(int), 1, file);
+
+        if(attributes_string_size == 0){
+            return NULL;
         }
+
+        names = malloc(attributes_string_size);
+
+        fread(names, attributes_string_size, 1, file);
+
+        primaryKey = create_key_from_disk(names, table, key_size);
+        free(names);
     }
 
     return primaryKey;
 }
-//struct PrimaryKey *read_primary_key_from_disk(FILE *file, Table table) {
-//    int num_attributes;
-//    fread(&num_attributes, sizeof(int), 1, file);
-//
-//    if(num_attributes == 0){
-//        return NULL;
-//    }
-//
-//    char* names = malloc(num_attributes);
-//    fread(names, num_attributes, 1, file);
-//    struct PrimaryKey *primaryKey = create_key(names, table);
-//    free(names);
-//
-//    return primaryKey;
-//}
+
 struct Table *read_table_from_disk(FILE *file) {
     int tableID;
     int name_size;
@@ -1528,8 +1540,8 @@ struct Table *read_table_from_disk(FILE *file) {
     fread(table->data_types, sizeof(int), table->data_type_size, file);
 
     // read primary key
-    table->primary_key = read_primary_key_from_disk(file);
-//    table->primary_key = read_primary_key_from_disk(file, table);
+    //table->primary_key = read_primary_key_from_disk(file);
+    table->primary_key = read_primary_key_from_disk(file, table);
 
     /*
     printf("table_id: %d\n", table->tableId);
