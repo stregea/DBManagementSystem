@@ -160,7 +160,7 @@ struct Attribute * read_attribute_from_disk(FILE *file);
  * @param file - pointer to catalog file
  * @return pointer to key struct
  */
-struct PrimaryKey* read_primary_key_from_disk(FILE *file);
+struct PrimaryKey* read_primary_key_from_disk(FILE *file, struct Table *table);
 //struct PrimaryKey* read_primary_key_from_disk(FILE *file, Table table);
 
 /**
@@ -422,4 +422,6 @@ void display_catalog();
 int char_or_varchar(char*tokenizer);
 
 int is_valid_name(char *name);
+
+struct PrimaryKey *create_key_from_disk(char *attribute_names, Table table, int key_size);
 #endif
