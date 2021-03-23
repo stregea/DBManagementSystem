@@ -1280,22 +1280,46 @@ void freeCatalog() {
     }
 }
 
+//int write_primary_key_to_disk(FILE *file, struct PrimaryKey *primaryKey) {
+//    int null_value = 0;
+//    // might not be needed if size 0 and null are treated the same
+//    if (primaryKey == NULL) {
+//        fwrite(&null_value, sizeof(int), 1, file);
+//    } else {
+//        fwrite(&primaryKey->size, sizeof(int), 1, file);
+//        // write each attribute
+//        for (int i = 0; i < primaryKey->size; i++) {
+//            write_attribute_to_disk(file, primaryKey->attributes[i]);
+//        }
+//    }
+//
+//    return 0;
+//}
 int write_primary_key_to_disk(FILE *file, struct PrimaryKey *primaryKey) {
     int null_value = 0;
     // might not be needed if size 0 and null are treated the same
     if (primaryKey == NULL) {
         fwrite(&null_value, sizeof(int), 1, file);
     } else {
-        fwrite(&primaryKey->size, sizeof(int), 1, file);
-        // write each attribute
+//        fwrite(&primaryKey->size, sizeof(int), 1, file);
+        // write each attribute name to a string
+        char* attributes = malloc(sizeof(char*));
+        size_t num_attributes = 0;
         for (int i = 0; i < primaryKey->size; i++) {
-            write_attribute_to_disk(file, primaryKey->attributes[i]);
+            attributes = realloc(attributes, primaryKey->attributes[i]->name_size + 2); // 1 char for space, another for null char
+            strcat(attributes, primaryKey->attributes[i]->name);
+            strcat(attributes, " ");
+//            write_attribute_to_disk(file, primaryKey->attributes[i]);
         }
+        num_attributes = strlen(attributes);
+
+        // write contents to disk
+        fwrite(&num_attributes, sizeof(int), 1, file);
+        fwrite(&attributes, num_attributes, 1, file);
     }
 
     return 0;
 }
-
 int write_foreign_key_to_disk(FILE *file, struct ForeignKey *foreignKey) {
     int null_value = 0;
     if (foreignKey == NULL) {
@@ -1435,27 +1459,43 @@ struct Attribute *read_attribute_from_disk(FILE *file) {
     return attribute;
 }
 
-struct PrimaryKey *read_primary_key_from_disk(FILE *file) {
-    int key_size;
-    fread(&key_size, sizeof(int), 1, file);
-    struct PrimaryKey *primaryKey;
+//struct PrimaryKey *read_primary_key_from_disk(FILE *file) {
+//    int key_size;
+//    fread(&key_size, sizeof(int), 1, file);
+//    struct PrimaryKey *primaryKey;
+//
+//    if (key_size == 0) {
+//        primaryKey = NULL;
+//    } else {
+//        primaryKey = malloc(sizeof(struct PrimaryKey));
+//        primaryKey->size = key_size;
+//        primaryKey->attributes = malloc(sizeof(struct Attribute *) * primaryKey->size);
+//
+//        // read each attribute
+//        // this creates attributes in memory and they are never freed.
+//        // need a way to reference the already created attributes from the table.
+//        for (int i = 0; i < primaryKey->size; i++) {
+//            primaryKey->attributes[i] = read_attribute_from_disk(file);
+//        }
+//    }
+//
+//    return primaryKey;
+//}
+struct PrimaryKey *read_primary_key_from_disk(FILE *file, Table table) {
+    int num_attributes;
+    fread(&num_attributes, sizeof(int), 1, file);
 
-    if (key_size == 0) {
-        primaryKey = NULL;
-    } else {
-        primaryKey = malloc(sizeof(struct PrimaryKey));
-        primaryKey->size = key_size;
-        primaryKey->attributes = malloc(sizeof(struct Attribute *) * primaryKey->size);
-
-        // read each attribute
-        for (int i = 0; i < primaryKey->size; i++) {
-            primaryKey->attributes[i] = read_attribute_from_disk(file);
-        }
+    if(num_attributes == 0){
+        return NULL;
     }
+
+    char* names = malloc(num_attributes);
+    fread(names, num_attributes, 1, file);
+    struct PrimaryKey *primaryKey = create_key(names, table);
+    free(names);
 
     return primaryKey;
 }
-
 struct Table *read_table_from_disk(FILE *file) {
     int tableID;
     int name_size;
@@ -1486,7 +1526,7 @@ struct Table *read_table_from_disk(FILE *file) {
     fread(table->data_types, sizeof(int), table->data_type_size, file);
 
     // read primary key
-    table->primary_key = read_primary_key_from_disk(file);
+    table->primary_key = read_primary_key_from_disk(file, table);
 
     /*
     printf("table_id: %d\n", table->tableId);
