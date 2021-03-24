@@ -6,12 +6,12 @@ The primary objective of this project is to implement a Database Management Syst
 To create the executable move to the DBManagementSystem directory and enter on commandline: 
 gcc -std=gnu99 src/drivers/database.c src/c/*.c -o database
 
-
 # Run Program
 Once the executable is created enter:
 usage: ./database <db_loc> <page_size> <buffer_size>
-On initial start catalog and database must deleted.
-to run the program.
+
+## Example Run:
+./database ~/Desktop/db/ 4096 10
 
 # Project Details 
 The project will be broken into 4 phases, and a group evaluation. Each phase will build
