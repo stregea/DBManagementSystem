@@ -160,7 +160,8 @@ struct Attribute * read_attribute_from_disk(FILE *file);
  * @param file - pointer to catalog file
  * @return pointer to key struct
  */
-struct PrimaryKey* read_primary_key_from_disk(FILE *file);
+struct PrimaryKey* read_primary_key_from_disk(FILE *file, struct Table *table);
+//struct PrimaryKey* read_primary_key_from_disk(FILE *file, Table table);
 
 /**
  * Read a table and all of its contents from disk.
@@ -421,4 +422,13 @@ void display_catalog();
 int char_or_varchar(char*tokenizer);
 
 int is_valid_name(char *name);
+
+/**
+ * Generate key_indices to be stored in a table to be used to generate a primary key.
+ * @param attribute_names - A string of multiple attribute names '<a_1> ... <a_N>'. This is created while parsing.
+ * @param table - table that contains all of the current columns/attributes existing within a table.
+ * @param key_size - number of attributes to make up key
+ * @return key_indices[] on success; null otherwise.
+ */
+struct PrimaryKey *create_key_from_disk(char *attribute_names, Table table, int key_size);
 #endif
