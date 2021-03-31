@@ -1,4 +1,4 @@
-#include "table.h"
+#include "../headers/table.h"
 #include <string.h>
 #include <stdlib.h>
 

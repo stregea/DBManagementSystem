@@ -1,6 +1,6 @@
-#include "catalog.h"
-#include "stdlib.h"
-#include "string.h"
+#include "../headers/catalog.h"
+#include <stdlib.h>
+#include <string.h>
 
 int createCatalog(Table table) {
 
@@ -154,15 +154,15 @@ char *get_catalog_file_path() {
     char *catalog_path;
 
     // format the catalog file name and path
-    int database_path_length = strlen(global_db_loc);
-    char last_character = global_db_loc[database_path_length - 1];
+    int database_path_length = strlen(GLOBAL_DB_LOCATION);
+    char last_character = GLOBAL_DB_LOCATION[database_path_length - 1];
     if (last_character == '\'' || last_character == '/') {
-        global_db_loc[database_path_length - 1] = 0;
+        GLOBAL_DB_LOCATION[database_path_length - 1] = 0;
     }
 
-    catalog_path = malloc(strlen(global_db_loc) + strlen(catalog_file_name) + 1);
+    catalog_path = malloc(strlen(GLOBAL_DB_LOCATION) + strlen(catalog_file_name) + 1);
 
-    strcpy(catalog_path, global_db_loc);
+    strcpy(catalog_path, GLOBAL_DB_LOCATION);
     strcat(catalog_path, catalog_file_name);
 
     return catalog_path;

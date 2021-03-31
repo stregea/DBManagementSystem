@@ -13,7 +13,7 @@ struct Catalog {
     struct Table **tables;
 };typedef struct Catalog *Catalog;
 
-static char *global_db_loc;
+static char *GLOBAL_DB_LOCATION;
 static Catalog catalog = NULL;
 
 /**

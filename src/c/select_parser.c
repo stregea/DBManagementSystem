@@ -1,4 +1,4 @@
-#include "select_parser.h"
+#include "../headers/select_parser.h"
 
 int parse_select(char *statement) { return 0; }
 
