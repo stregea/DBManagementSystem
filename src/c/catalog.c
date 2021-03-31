@@ -36,26 +36,28 @@ void freeCatalog() {
 }
 
 int write_catalog_to_disk() {
-    char *catalog_path = get_catalog_file_path();
+    if(catalog != NULL){
+        char *catalog_path = get_catalog_file_path();
 
-    // catalog data
-    int table_count = catalog->table_count;
-    struct Table **tables = catalog->tables;
+        // catalog data
+        int table_count = catalog->table_count;
+        struct Table **tables = catalog->tables;
 
-    // open file and write the catalog data
-    FILE *catalog_file = fopen(catalog_path, "wb");
+        // open file and write the catalog data
+        FILE *catalog_file = fopen(catalog_path, "wb");
 
-    // write table count
-    fwrite(&table_count, sizeof(int), 1, catalog_file);
+        // write table count
+        fwrite(&table_count, sizeof(int), 1, catalog_file);
 
-    // write each table struct and all its data
-    for (int i = 0; i < catalog->table_count; i++) {
-        write_table_to_disk(catalog_file, tables[i]);
+        // write each table struct and all its data
+        for (int i = 0; i < catalog->table_count; i++) {
+            write_table_to_disk(catalog_file, tables[i]);
+        }
+
+        fclose(catalog_file);
+        free(catalog_path);
+        freeCatalog();
     }
-
-    fclose(catalog_file);
-    free(catalog_path);
-    freeCatalog();
     return 0;
 }
 
