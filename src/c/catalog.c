@@ -2,6 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+int set_up_db_location(char* db_loc){
+    GLOBAL_DB_LOCATION = malloc(strlen(db_loc) + 1);
+    strcpy(GLOBAL_DB_LOCATION, db_loc);
+    return 0;
+}
+
 int createCatalog(Table table) {
 
     catalog = malloc(sizeof(struct Catalog));
@@ -154,7 +160,7 @@ char *get_catalog_file_path() {
     char *catalog_path;
 
     // format the catalog file name and path
-    int database_path_length = strlen(GLOBAL_DB_LOCATION);
+    size_t database_path_length = strlen(GLOBAL_DB_LOCATION);
     char last_character = GLOBAL_DB_LOCATION[database_path_length - 1];
     if (last_character == '\'' || last_character == '/') {
         GLOBAL_DB_LOCATION[database_path_length - 1] = 0;
@@ -218,4 +224,10 @@ Table get_table_from_catalog(char *table_name) {
         }
     }
     return NULL;
+}
+
+int shutdown_catalog(){
+    int result = write_catalog_to_disk();
+    free(GLOBAL_DB_LOCATION);
+    return result;
 }

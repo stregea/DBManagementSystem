@@ -16,6 +16,8 @@ struct Catalog {
 static char *GLOBAL_DB_LOCATION;
 static Catalog catalog = NULL;
 
+int set_up_db_location(char* db_loc);
+
 /**
  * Create catalog for first table
  * @param table - pointer to initial table
@@ -72,4 +74,6 @@ int remove_table_from_catalog(char *table_name);
 * @return 0 on success; -1 on error.
 */
 Table get_table_from_catalog(char *table_name);
+
+int shutdown_catalog();
 #endif //DBMANAGEMENTSYSTEM_CATALOG_H

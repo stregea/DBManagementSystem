@@ -17,22 +17,19 @@
 #include <float.h>
 
 int initialize_ddl_parser(char *db_loc, bool restart) {
-    GLOBAL_DB_LOCATION = malloc(strlen(db_loc) + 1);
-    strcpy(GLOBAL_DB_LOCATION, db_loc);
-
-//    printf("Starting DDL parser: %s\n", global_db_loc);
+    set_up_db_location(db_loc);
 
     if (restart) {
         read_catalog_from_disk(); // this has yet to be defined
     };
+
     return 0;
 }
 
 int terminate_ddl_parser() {
-    int result = 0;
-    result = write_catalog_to_disk();
-    free(GLOBAL_DB_LOCATION);
-    terminate_database();
+    int result;
+    result = shutdown_catalog();
+    result = terminate_database();
     return result;
 }
 
