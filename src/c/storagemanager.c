@@ -455,6 +455,8 @@ int drop_table( int table_id ){
 		return -1;
 	}
 	table_data[table_id] = NULL;
+	// not too sure if this breaks anything...
+	num_tables--;
 	return 0;
 }
 
