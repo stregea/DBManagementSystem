@@ -454,7 +454,7 @@ int drop_table( int table_id ){
 		fprintf(stderr, "Failed to drop table\n");
 		return -1;
 	}
-	table_data[table_id] = NULL;
+//	table_data[table_id] = NULL; this is now handled in clear table
 	return 0;
 }
 
@@ -489,6 +489,13 @@ int clear_table( int table_id ){
 //	t_data->pages = NULL;
 	t_data->num_pages = 0;
 	t_data->table_size = 0;
+    free_table(t_data);
+
+    // shift tables past current table id left in array.
+    for(int i = table_id; i < num_tables-1; i++){
+        table_data[i] = table_data[i+1];
+    }
+    table_data[num_tables-1] = NULL;
 
     num_tables--;
     free_table(t_data);
