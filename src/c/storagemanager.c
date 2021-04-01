@@ -458,6 +458,7 @@ int drop_table( int table_id ){
 
 	// not too sure if this breaks anything...
 	num_tables--;
+	free_table(t_data);
 	return 0;
 }
 
