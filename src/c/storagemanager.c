@@ -455,10 +455,6 @@ int drop_table( int table_id ){
 		return -1;
 	}
 	table_data[table_id] = NULL;
-
-	// not too sure if this breaks anything...
-	num_tables--;
-	free_table(t_data);
 	return 0;
 }
 
@@ -488,11 +484,14 @@ int clear_table( int table_id ){
 			return -1;
 		}
 	}
-	
-	t_data->pages = NULL;
+
+    // not too sure if this breaks anything...
+//	t_data->pages = NULL;
 	t_data->num_pages = 0;
 	t_data->table_size = 0;
-	
+
+    num_tables--;
+    free_table(t_data);
 	return 0;
 }
 
