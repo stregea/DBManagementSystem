@@ -497,7 +497,7 @@ int clear_table( int table_id ){
     }
     table_data[num_tables-1] = NULL;
 
-    num_tables--;
+//    num_tables--;
 	return 0;
 }
 
