@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int set_up_db_location(char* db_loc){
+int set_up_db_location(char *db_loc) {
     GLOBAL_DB_LOCATION = malloc(strlen(db_loc) + 1);
     strcpy(GLOBAL_DB_LOCATION, db_loc);
     return 0;
@@ -36,7 +36,7 @@ void freeCatalog() {
 }
 
 int write_catalog_to_disk() {
-    if(catalog != NULL){
+    if (catalog != NULL) {
         char *catalog_path = get_catalog_file_path();
 
         // catalog data
@@ -209,6 +209,26 @@ int remove_table_from_catalog(char *table_name) {
             catalog->tables[i] = catalog->tables[i + 1];
         }
 
+        // iterate through tables
+        for (int i = 0; i < catalog->table_count; i++) {
+
+            if (catalog->tables[i] != NULL) {
+                // iterate though all attributes
+                for (int j = 0; j < catalog->tables[i]->attribute_count; j++) {
+                    if (catalog->tables[i]->attributes[j]->foreignKey != NULL) {
+                        // free foreign key
+                        if (strcasecmp(catalog->tables[i]->attributes[j]->foreignKey->referenced_table_name,
+                                       table_name) == 0) {
+                            free(catalog->tables[i]->attributes[j]->foreignKey->referenced_table_name);
+                            free(catalog->tables[i]->attributes[j]->foreignKey->referenced_column_name);
+                            free(catalog->tables[i]->attributes[j]->foreignKey);
+                            catalog->tables[i]->attributes[j]->foreignKey = NULL;
+                        }
+                    }
+                }
+            }
+        }
+        catalog->table_count--;
         // Success
         return 0;
     } else {
@@ -228,8 +248,43 @@ Table get_table_from_catalog(char *table_name) {
     return NULL;
 }
 
-int shutdown_catalog(){
+int shutdown_catalog() {
     int result = write_catalog_to_disk();
     free(GLOBAL_DB_LOCATION);
     return result;
+}
+
+int drop_attribute_from_table(Table table_to_alter, Attribute attribute_to_drop) {
+
+    // Search for references to the attribute in foreign keys of all other tables
+    for (int j = 0; j < catalog->table_count; j++) {
+        // Go through attributes and check if they have a foreign key
+        for (int k = 0; k < catalog->tables[j]->attribute_count; k++) {
+            Attribute checking = catalog->tables[j]->attributes[k];
+            if (checking->foreignKey != NULL
+                &&
+                strcasecmp(table_to_alter->name, checking->foreignKey->referenced_table_name) ==
+                0
+                &&
+                strcasecmp(attribute_to_drop->name, checking->foreignKey->referenced_column_name) == 0) {
+                // This attribute referenced the table and attribute we were given,
+                // so need to drop that foreign key as we're dropping the attribute
+                checking->foreignKey = NULL;
+//              printf("Removed foreign key from attribute %s in table %s\n", checking->name, catalog->tables[j]->name);
+            }
+        }
+    }
+    freeAttribute(attribute_to_drop);
+    return 0;
+}
+
+int table_name_is_unique(char *table_name) {
+    if (catalog != NULL) {
+        for (int i = 0; i < catalog->table_count; i++) {
+            if (strcasecmp(catalog->tables[i]->name, table_name) == 0) {
+                return -1;
+            }
+        }
+    }
+    return 0;
 }

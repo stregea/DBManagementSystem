@@ -11,12 +11,13 @@
 struct Catalog {
     int table_count;
     struct Table **tables;
-};typedef struct Catalog *Catalog;
+};
+typedef struct Catalog *Catalog;
 
 static char *GLOBAL_DB_LOCATION;
 static Catalog catalog = NULL;
 
-int set_up_db_location(char* db_loc);
+int set_up_db_location(char *db_loc);
 
 /**
  * Create catalog for first table
@@ -51,7 +52,7 @@ void display_catalog();
  *
  * @return catalog file path
  */
-char* get_catalog_file_path();
+char *get_catalog_file_path();
 
 /**
  * Add a Table to the catalog.
@@ -76,4 +77,9 @@ int remove_table_from_catalog(char *table_name);
 Table get_table_from_catalog(char *table_name);
 
 int shutdown_catalog();
+
+int drop_attribute_from_table(Table table_to_alter, Attribute attribute_to_drop);
+
+int table_name_is_unique(char *table_name);
+
 #endif //DBMANAGEMENTSYSTEM_CATALOG_H

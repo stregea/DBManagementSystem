@@ -89,31 +89,8 @@ int parseDrop(char *tokenizer, char **token) {
                 // update the catalog to remove reference of table
                 remove_table_from_catalog(table->name);
 
-                // iterate through tables
-                for (int i = 0; i < catalog->table_count; i++) {
-
-                    if (catalog->tables[i] != NULL) {
-
-                        // iterate though all attributes
-                        for (int j = 0; j < catalog->tables[i]->attribute_count; j++) {
-                            if (catalog->tables[i]->attributes[j]->foreignKey != NULL) {
-                                // free foreign key
-                                if (strcasecmp(catalog->tables[i]->attributes[j]->foreignKey->referenced_table_name,
-                                               table->name) == 0) {
-                                    free(catalog->tables[i]->attributes[j]->foreignKey->referenced_table_name);
-                                    free(catalog->tables[i]->attributes[j]->foreignKey->referenced_column_name);
-                                    free(catalog->tables[i]->attributes[j]->foreignKey);
-                                    catalog->tables[i]->attributes[j]->foreignKey = NULL;
-                                }
-                            }
-                        }
-
-                    }
-                }
-
                 // free the memory within the heap
                 freeTable(table);
-                catalog->table_count--;
                 return 0;
             }
             return -1;
@@ -192,25 +169,7 @@ int parseAlter(char *tokenizer, char **token) {
                             }
 
                             // Search for references to the attribute in foreign keys of all other tables
-                            for (int j = 0; j < catalog->table_count; j++) {
-                                // Go through attributes and check if they have a foreign key
-                                for (int k = 0; k < catalog->tables[j]->attribute_count; k++) {
-                                    Attribute checking = catalog->tables[j]->attributes[k];
-                                    if (checking->foreignKey != NULL
-                                        &&
-                                        strcasecmp(table_to_alter->name, checking->foreignKey->referenced_table_name) ==
-                                        0
-                                        &&
-                                        strcasecmp(dropping->name, checking->foreignKey->referenced_column_name) == 0) {
-                                        // This attribute referenced the table and attribute we were given,
-                                        // so need to drop that foreign key as we're dropping the attribute
-                                        checking->foreignKey = NULL;
-//                                        printf("Removed foreign key from attribute %s in table %s\n", checking->name, catalog->tables[j]->name);
-                                    }
-                                }
-                            }
-
-                            freeAttribute(dropping);
+                            drop_attribute_from_table(table_to_alter, dropping);
 
                             // Remove the attribute from the list of attributes
                             // Set all values in Table struct to no longer include that attribute
@@ -545,13 +504,9 @@ int parseCreate(char *tokenizer, char **token) {
                 return -1;
             }
 
-            if (catalog != NULL) {
-                for (int i = 0; i < catalog->table_count; i++) {
-                    if (strcasecmp(catalog->tables[i]->name, tokenizer) == 0) {
-                        fprintf(stderr, "Error: table names must be unique\n");
-                        return -1;
-                    }
-                }
+            if (table_name_is_unique(tokenizer) == -1) {
+                fprintf(stderr, "Error: table names must be unique\n");
+                return -1;
             }
 
             // adding table to catalog will create its ID
@@ -913,7 +868,7 @@ int char_or_varchar(char *word) {
         && (word[3] == 'r' || word[3] == 'R')) {
         return 0;
     }
-    // varchar
+        // varchar
     else if ((word[0] == 'v' || word[0] == 'V') && (word[1] == 'a' || word[1] == 'A') &&
              (word[2] == 'r' || word[1] == 'R')
              && (word[3] == 'c' || word[3] == 'C') && (word[4] == 'h' || word[4] == 'H') &&
