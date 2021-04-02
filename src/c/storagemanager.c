@@ -449,12 +449,13 @@ int drop_table( int table_id ){
         fprintf(stderr, "Invalid table number: %d\n", table_id);
         return -1;
     }
-	int rs = clear_table(table_id);
-	if(rs != 0){
-		fprintf(stderr, "Failed to drop table\n");
-		return -1;
-	}
-	table_data[table_id] = NULL;
+//	int rs = clear_table(table_id);
+//	if(rs != 0){
+//		fprintf(stderr, "Failed to drop table\n");
+//		return -1;
+//	}
+    free_table(t_data);
+    table_data[table_id] = NULL;
 
     // shift tables past current table id left in array.
 //    for(int i = table_id; i < num_tables-1; i++){
@@ -493,11 +494,9 @@ int clear_table( int table_id ){
 		}
 	}
 
-    // not too sure if this breaks anything...
-//	t_data->pages = NULL;
+	t_data->pages = NULL;
 	t_data->num_pages = 0;
 	t_data->table_size = 0;
-    free_table(t_data);
 
 	return 0;
 }
@@ -962,9 +961,9 @@ static void write_table_metadata(struct table_data * t_data, FILE * meta_file){
 
 	
 static int write_metadata(){ 
-	int length = snprintf(NULL, 0, "%s/metadata.dat", db_db_loc);
+	int length = snprintf(NULL, 0, "%s/metadata", db_db_loc);
 	char * meta_loc = malloc(length+1);
-	snprintf(meta_loc, length+1, "%s/metadata.data", db_db_loc);
+	snprintf(meta_loc, length+1, "%s/metadata", db_db_loc);
 	
 	//write page size and buffer size
 	FILE * meta_file = fopen(meta_loc, "wb");
@@ -1015,9 +1014,9 @@ static void read_table_metadata(FILE * meta_file){
 }
 
 static int read_metadata(){ 
-	int length = snprintf(NULL, 0, "%s/metadata.dat", db_db_loc);
+	int length = snprintf(NULL, 0, "%s/metadata", db_db_loc);
 	char * meta_loc = malloc(length+1);
-	snprintf(meta_loc, length+1, "%s/metadata.data", db_db_loc);
+	snprintf(meta_loc, length+1, "%s/metadata", db_db_loc);
 	
 	//read page size and buffer size
 	FILE * meta_file = fopen(meta_loc, "rb");
