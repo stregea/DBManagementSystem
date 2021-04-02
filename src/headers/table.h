@@ -92,18 +92,6 @@ void freeTable(struct Table *table);
 void freeKey(PrimaryKey key);
 
 /**
- * Return an integer associated with an attribute type.
- *      0 - Integer
- *      1 - Double
- *      2 - Bool
- *      3 - Char
- *      4 - Varchar
- * @param type - The attribute type to parse.
- * @return a number between 0-4; -1 if an invalid type.
- */
-int get_attribute_type(char *type);
-
-/**
  * Generate key_indices to be stored in a table to be used to generate a primary key.
  * @param attribute_names - A string of multiple attribute names '<a_1> ... <a_N>'. This is created while parsing.
  * @param table - table that contains all of the current columns/attributes existing within a table.

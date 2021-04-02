@@ -95,24 +95,6 @@ void freeTable(Table table) {
     }
 }
 
-int get_attribute_type(char *type) {
-
-    if (strcasecmp(type, "integer") == 0) {
-        return 0;
-    } else if (strcasecmp(type, "double") == 0) {
-        return 1;
-    } else if (strcasecmp(type, "bool") == 0) {
-        return 2;
-
-    } else if (strcasecmp(type, "char") == 0) {
-        return 3;
-
-    } else if (strcasecmp(type, "varchar") == 0) {
-        return 4;
-    }
-    return -1;
-}
-
 struct PrimaryKey *create_key(char *attribute_names, Table table) {
 //    printf("parsing primary key\n");
     struct PrimaryKey *key = malloc(sizeof(struct PrimaryKey));
