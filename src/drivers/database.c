@@ -1,5 +1,6 @@
 #include "../headers/database.h"
-#include "../headers/ddl_manager.h"
+#include "../headers/catalog.h"
+#include "../headers/dml_parser.h"
 #include "../headers/ddl_parser.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,10 +19,22 @@
            -1 otherwise
  */
 int execute_non_query(char *statement) {
-    return 0;
+    char *tmp_statement = malloc(strlen(statement) + 1);
+    strcpy(tmp_statement, statement);
+
+    char *first_word = strtok(tmp_statement, " ");
+
+    if (strcasecmp(first_word, "create") == 0 || strcasecmp(first_word, "alter") == 0 ||
+        strcasecmp(first_word, "drop") == 0) {
+        free(tmp_statement);
+        return parse_ddl_statement(statement);
+    }
+    free(tmp_statement);
+    return parse_dml_statement(statement);
 }
 
-/*
+/**
+ * TODO
  * This function will be used to execute SQL statement that
  * return data. For instance, SQL select queries.
  *
@@ -36,6 +49,26 @@ int execute_query(char *query, union record_item ***result) {
     return 0;
 }
 
+/**
+ * Parse a statement and execute the query based on the first word of the command.
+ * @param statement - The statement to parse.
+ * @return 0 on success, -1 on error.
+ */
+int parse_statement(char *statement) {
+    char *tmp_statement = malloc(strlen(statement) + 1);
+    strcpy(tmp_statement, statement);
+
+    char *first_word = strtok(tmp_statement, " ");
+
+    if (strcasecmp(first_word, "select") == 0) {
+        free(tmp_statement);
+        return execute_query(statement, NULL); // TODO
+    }
+
+    free(tmp_statement);
+    return execute_non_query(statement);
+}
+
 /*
  * This function is responsible for safely shutdown the database.
  * It will store to hardware any data needed to restart the database.
@@ -43,11 +76,11 @@ int execute_query(char *query, union record_item ***result) {
  */
 int shutdown_database() {
     int result = 0;
-    if(shutdown_catalog() == -1){
+    if (shutdown_catalog() == -1) {
         fprintf(stderr, "%s", "Error shutting down the catalog.\n");
         result = -1;
     }
-    if(terminate_database() == -1){
+    if (terminate_database() == -1) {
         fprintf(stderr, "%s", "Error shutting down the storage manager.\n");
         result = -1;
     }
@@ -67,13 +100,13 @@ int main(int argc, char *argv[]) {
 
     printf("db_loc: %s\npage_size: %d\nbuffer_size: %d\n", databasePath, pageSize, bufferSize);
 
-    char * catalog_file_name = "/catalog";
-    char * catalog_path;
+    char *catalog_file_name = "/catalog";
+    char *catalog_path;
 
     // format the catalog file name and path
     int database_path_length = strlen(databasePath);
     char last_character = databasePath[database_path_length - 1];
-    if(last_character == '\'' || last_character == '/') {
+    if (last_character == '\'' || last_character == '/') {
         databasePath[database_path_length - 1] = 0;
     }
 
@@ -84,7 +117,7 @@ int main(int argc, char *argv[]) {
 
     bool restart = false;
 
-    if(access(catalog_path, F_OK) == 0){
+    if (access(catalog_path, F_OK) == 0) {
         restart = true;
     }
 
@@ -99,13 +132,13 @@ int main(int argc, char *argv[]) {
 
     int statementCount = 0;
 
-    while(strcmp(token, "quit;") != 0) {
+    while (strcmp(token, "quit;") != 0) {
 
         // read in next token for next statement
-        if(statementCount > 0) {
+        if (statementCount > 0) {
             scanf("%s", token);
             //printf("%s", token);
-            tokenLength = (int)strlen(token);
+            tokenLength = (int) strlen(token);
         }
 
         // initialize statement string
@@ -117,7 +150,7 @@ int main(int argc, char *argv[]) {
         char *temp = malloc(statementLength + 1);
 
         // stop if the ';' character is within the token
-        while(token[tokenLength - 1] != ';') {  
+        while (token[tokenLength - 1] != ';') {
 
             // read next token
             scanf("%s", token);
@@ -140,11 +173,11 @@ int main(int argc, char *argv[]) {
 
         printf("\nStatement:\n%s\n\n", statement);
 
-        int result = parse_ddl_statement(statement);
+        int result = parse_statement(statement);
 
-        if(result == -1){
+        if (result == -1) {
             fprintf(stderr, "ERROR\n");
-        }else{
+        } else {
             fprintf(stdout, "SUCCESS\n");
         }
 

@@ -261,7 +261,7 @@ int parseAlter(char *tokenizer, char **token) {
                                 strcpy(new_attr->name, a_name);
 //                                printf("name is now %s\n", new_attr->name);
                                 new_attr->name_size = strlen(a_name) + 1;
-                                new_attr->type = get_attribute_type(a_type);
+                                new_attr->type = get_type(a_type);
                                 if (new_attr->type == 3 || new_attr->type == 4) {
                                     // TODO handle char/varchar
                                     int size = strtol(a_size, NULL, 10);
@@ -369,7 +369,7 @@ int parseAlter(char *tokenizer, char **token) {
                         new_attr->name = malloc(sizeof(char) * (strlen(a_name) + 1));
                         strcpy(new_attr->name, a_name);
                         new_attr->name_size = strlen(a_name) + 1;
-                        new_attr->type = get_attribute_type(a_type);
+                        new_attr->type = get_type(a_type);
 //                        printf("got type %d\n", new_attr->type);
 
                         if (new_attr->type == 3 || new_attr->type == 4) {
@@ -650,7 +650,7 @@ int parseAttributes(Table table, char *tokenizer) {
 
         if (tokenizer != NULL) {
             // read in column type, function returns 0-4 based on string name (integer-varchar)
-            attribute->type = get_attribute_type(tokenizer);
+            attribute->type = get_type(tokenizer);
 //            printf("type: %d\n", attribute->type);
             // check for correct attribute
             if (attribute->type == -1) {
