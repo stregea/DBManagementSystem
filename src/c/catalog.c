@@ -2,10 +2,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+int initialize_catalog(char *db_loc, bool restart) {
+    set_up_db_location(db_loc);
+
+    if (restart) {
+        read_catalog_from_disk(); // this has yet to be defined
+    };
+
+    return 0;
+}
+
 int set_up_db_location(char *db_loc) {
     GLOBAL_DB_LOCATION = malloc(strlen(db_loc) + 1);
     strcpy(GLOBAL_DB_LOCATION, db_loc);
     return 0;
+}
+
+int shutdown_catalog() {
+    int result = write_catalog_to_disk();
+    free(GLOBAL_DB_LOCATION);
+    return result;
 }
 
 int createCatalog(Table table) {
@@ -246,12 +262,6 @@ Table get_table_from_catalog(char *table_name) {
         }
     }
     return NULL;
-}
-
-int shutdown_catalog() {
-    int result = write_catalog_to_disk();
-    free(GLOBAL_DB_LOCATION);
-    return result;
 }
 
 int drop_attribute_from_table(Table table_to_alter, Attribute attribute_to_drop) {

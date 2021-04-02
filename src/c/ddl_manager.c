@@ -16,23 +16,6 @@
 #include "../headers/catalog.h"
 #include <float.h>
 
-int initialize_ddl_parser(char *db_loc, bool restart) {
-    set_up_db_location(db_loc);
-
-    if (restart) {
-        read_catalog_from_disk(); // this has yet to be defined
-    };
-
-    return 0;
-}
-
-int terminate_ddl_parser() {
-    int result;
-    result = shutdown_catalog();
-    result = terminate_database();
-    return result;
-}
-
 int parseStatement(char *statement) {
     int result = 0;
     char *command = malloc(strlen(statement) + 1);

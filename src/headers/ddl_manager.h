@@ -9,19 +9,6 @@
 #define DBMANAGEMENTSYSTEM_DDL_MANAGER_H
 
 /**
- * This will allocate memory in the catalog to allow for the storage of Tables.
- * 
- * @return 0 on success; -1 on error.
- */
-int initialize_ddl_parser(char *db_loc, bool restart);
-
-/**
- * This will terminate the parser, write the catalog to disk, and then free memory.
- * @return 0 on success; -1 on error.
- */
-int terminate_ddl_parser();
-
-/**
  * Parse through the SQL statement the user entered.
  * @param statement - the statement to parse.
  * @return 0 upon success, -1 upon error.
