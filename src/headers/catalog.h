@@ -17,6 +17,24 @@ typedef struct Catalog *Catalog;
 static char *GLOBAL_DB_LOCATION;
 static Catalog catalog = NULL;
 
+/**
+ * This will allocate memory in the catalog to allow for the storage of Tables.
+ *
+ * @return 0 on success; -1 on error.
+ */
+int initialize_catalog(char *db_loc, bool restart);
+
+/**
+ * This will terminate the parser, write the catalog to disk, and then free memory.
+ * @return 0 on success; -1 on error.
+ */
+int shutdown_catalog();
+
+/**
+ * Set up the database location string
+ * @param db_loc - The location to set.
+ * @return 0 on success; -1 on error.
+ */
 int set_up_db_location(char *db_loc);
 
 /**
@@ -75,8 +93,6 @@ int remove_table_from_catalog(char *table_name);
 * @return 0 on success; -1 on error.
 */
 Table get_table_from_catalog(char *table_name);
-
-int shutdown_catalog();
 
 int drop_attribute_from_table(Table table_to_alter, Attribute attribute_to_drop);
 

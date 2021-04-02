@@ -42,8 +42,10 @@ int execute_query(char *query, union record_item ***result) {
  * @return 0 on success; -1 on failure.
  */
 int shutdown_database() {
-    terminate_ddl_parser();
-    return 0;
+    int result;
+    result = shutdown_catalog();
+    result = terminate_ddl_parser();
+    return result;
 }
 
 int main(int argc, char *argv[]) {
@@ -79,7 +81,8 @@ int main(int argc, char *argv[]) {
     if(access(catalog_path, F_OK) == 0){
         restart = true;
     }
-    initialize_ddl_parser(databasePath, restart);
+
+    initialize_catalog(databasePath, restart);
     create_database(databasePath, pageSize, bufferSize, restart);
     free(catalog_path);
 
