@@ -449,12 +449,21 @@ int drop_table( int table_id ){
         fprintf(stderr, "Invalid table number: %d\n", table_id);
         return -1;
     }
+
+    // no need to clear the table when we can just perform a drop.
 	int rs = clear_table(table_id);
 	if(rs != 0){
 		fprintf(stderr, "Failed to drop table\n");
 		return -1;
 	}
-	table_data[table_id] = NULL;
+
+    free_table(t_data);
+    table_data[table_id] = NULL;
+
+    // TODO
+    // There is an issue with how tables are handled once they are dropped.
+    // This storage manager will read/write null tables that have been dropped but won't free them.
+    // It's a weird bug.
 	return 0;
 }
 
@@ -484,11 +493,12 @@ int clear_table( int table_id ){
 			return -1;
 		}
 	}
-	
-	t_data->pages = NULL;
+
+    free(t_data->pages);
+    t_data->pages = NULL;
 	t_data->num_pages = 0;
 	t_data->table_size = 0;
-	
+
 	return 0;
 }
 
@@ -952,9 +962,9 @@ static void write_table_metadata(struct table_data * t_data, FILE * meta_file){
 
 	
 static int write_metadata(){ 
-	int length = snprintf(NULL, 0, "%s/metadata.dat", db_db_loc);
+	int length = snprintf(NULL, 0, "%s/metadata", db_db_loc);
 	char * meta_loc = malloc(length+1);
-	snprintf(meta_loc, length+1, "%s/metadata.data", db_db_loc);
+	snprintf(meta_loc, length+1, "%s/metadata", db_db_loc);
 	
 	//write page size and buffer size
 	FILE * meta_file = fopen(meta_loc, "wb");
@@ -1005,9 +1015,9 @@ static void read_table_metadata(FILE * meta_file){
 }
 
 static int read_metadata(){ 
-	int length = snprintf(NULL, 0, "%s/metadata.dat", db_db_loc);
+	int length = snprintf(NULL, 0, "%s/metadata", db_db_loc);
 	char * meta_loc = malloc(length+1);
-	snprintf(meta_loc, length+1, "%s/metadata.data", db_db_loc);
+	snprintf(meta_loc, length+1, "%s/metadata", db_db_loc);
 	
 	//read page size and buffer size
 	FILE * meta_file = fopen(meta_loc, "rb");

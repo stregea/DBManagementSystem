@@ -37,13 +37,11 @@ int execute_query(char *query, union record_item ***result) {
 }
 
 /*
- * This function is resposible for safely shutdown the database.
+ * This function is responsible for safely shutdown the database.
  * It will store to hardware any data needed to restart the database.
  * @return 0 on success; -1 on failure.
  */
 int shutdown_database() {
-//    freeCatalog();
-//    terminate_database();
     terminate_ddl_parser();
     return 0;
 }
