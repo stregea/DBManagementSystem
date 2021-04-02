@@ -14,6 +14,7 @@
 #include "../headers/ddl_manager.h"
 #include "../headers/storagemanager.h"
 #include "../headers/catalog.h"
+#include "../headers/Enums.h"
 #include <float.h>
 
 int parseStatement(char *statement) {
@@ -228,7 +229,7 @@ int parseAlter(char *tokenizer, char **token) {
 //                        printf("a_type: %s\n", tokenizer);
                         a_type = malloc(sizeof(char) * (strlen(tokenizer) + 1));
                         strcpy(a_type, tokenizer);
-                        int check_type = get_attribute_type(a_type);
+                        int check_type = get_type(a_type);
                         if (check_type == 3 || check_type == 4) {
 //                            printf("found char or varchar\n");
                             tokenizer = strtok_r(NULL, " ()", token);
