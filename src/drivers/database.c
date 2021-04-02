@@ -42,9 +42,15 @@ int execute_query(char *query, union record_item ***result) {
  * @return 0 on success; -1 on failure.
  */
 int shutdown_database() {
-    int result;
-    result = shutdown_catalog();
-    result = terminate_ddl_parser();
+    int result = 0;
+    if(shutdown_catalog() == -1){
+        fprintf(stderr, "%s", "Error shutting down the catalog.\n");
+        result = -1;
+    }
+    if(terminate_database() == -1){
+        fprintf(stderr, "%s", "Error shutting down the storage manager.\n");
+        result = -1;
+    }
     return result;
 }
 
