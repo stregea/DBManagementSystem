@@ -7,20 +7,26 @@
 #include <string.h>
 
 void freeRecord(Table table, union record_item *record) {
-    if (record != NULL) {
-        for(int i = 0; i < table->attribute_count; i++){
-            switch (table->attributes[i]->type) {
-                case BOOL:
-                    free(record[i].b); // not to sure by bool is an array
-                    break;
-                case CHAR:
-                    free(record[i].c);
-                    break;
-                case VARCHAR:
-                    free(record[i].v);
-                    break;
-            }
+    for (int i = 0; i < table->attribute_count; i++) {
+        switch (table->attributes[i]->type) {
+            case INTEGER:
+                free((void *) record[i].i);
+                break;
+//            case DOUBLE:
+//                free((void *)record[i].d);
+//                break;
+            case BOOL:
+                free(record[i].b);
+                break;
+            case CHAR:
+                free(record[i].c);
+                break;
+            case VARCHAR:
+                free(record[i].v);
+                break;
         }
+    }
+    if (record != NULL) {
         free(record);
     }
 }
@@ -33,7 +39,7 @@ void freeRecord(Table table, union record_item *record) {
 void print_record(Table table, union record_item *record) {
     printf("(");
     for (int i = 0; i < table->attribute_count; i++) {
-        char * extra_space = " ";
+        char *extra_space = " ";
 
         if (i == table->attribute_count - 1) {
             extra_space = ")\n"; // close the tuple, create new line
@@ -58,45 +64,42 @@ void print_record(Table table, union record_item *record) {
     }
 }
 
-union record_item *create_record_item(Attribute attribute, char *value) {
-    union record_item *recordItem = malloc(sizeof(union record_item));
+int create_record_item(union record_item recordItem, Attribute attribute, char *value) {
     switch (attribute->type) {
         case INTEGER:
-            recordItem->i = atoi(value);
+            recordItem.i = atoi(value);
             break;
         case DOUBLE:
-            recordItem->d = atof(value);
+            recordItem.d = atof(value);
             break;
         case BOOL:
             if (strcasecmp(value, "true") == 0) { // i'm not too sure about this one.
-                recordItem->b[0] = true;
-                recordItem->b[1] = true;
+                recordItem.b[0] = true;
+                recordItem.b[1] = true;
             } else {
-                recordItem->b[0] = false;
-                recordItem->b[1] = false;
+                recordItem.b[0] = false;
+                recordItem.b[1] = false;
             }
             break;
         case CHAR:
             if (strlen(value) != attribute->size) {
                 fprintf(stderr, "Error: %s size must be equal to %d.\n", value, attribute->size);
-                free(recordItem);
-                return NULL;
+                return INVALID;
             }
-            strcpy(recordItem->c, value);
+            strcpy(recordItem.c, value);
             break;
         case VARCHAR:
             if (strlen(value) > attribute->size) {
                 fprintf(stderr, "Error: %s size must be <= to %d.\n", value, attribute->size);
-                free(recordItem);
-                return NULL;
+                return INVALID;
+
             }
-            strcpy(recordItem->v, value);
+            strcpy(recordItem.v, value);
             break;
         default:
-            free(recordItem);
-            return NULL;
+            return INVALID;
     }
-    return recordItem;
+    return VALID;
 }
 
 // TODO: test
@@ -107,16 +110,24 @@ union record_item *create_record_item(Attribute attribute, char *value) {
 //                 (2 "bar" false 5.2)
 union record_item *create_record_from_statement(Table table, char *tuple) {
 
-    union record_item * record = malloc(sizeof(union record_item) * table->attribute_count);
+    union record_item *record = malloc(sizeof(union record_item) * table->attribute_count);
 
     char *temp = malloc(strlen(tuple) + 1);
     strcpy(temp, tuple);
     char *next_value = strtok(temp, " ()");
 
     int attribute_counter = 0;
-    while(next_value != NULL || attribute_counter < table->attribute_count){ // TODO: have it be &&?
+    while (next_value != NULL || attribute_counter < table->attribute_count) { // TODO: have it be &&?
 
-        record[attribute_counter] = *create_record_item(table->attributes[attribute_counter], next_value);
+        union record_item record_item;
+        if (create_record_item(record_item, table->attributes[attribute_counter], next_value) == VALID) {
+            record[attribute_counter] = record_item;
+        } else { // There was an error.
+
+            freeRecord(table, record);
+            free(temp);
+            return NULL;
+        }
 
         attribute_counter++;
         next_value = strtok(NULL, " ()");
@@ -137,36 +148,36 @@ int parse_insert_statement(char *statement) {
      */
 
     //TODO: come up with a better parsing way than this.
-    char* tokenizer = strtok(statement, " "); // "insert"
+    char *tokenizer = strtok(statement, " "); // "insert"
 
     tokenizer = strtok(NULL, " ");
-    if(tokenizer != NULL && strcasecmp(tokenizer, "into") == 0){
+    if (tokenizer != NULL && strcasecmp(tokenizer, "into") == 0) {
 
-        char* table_name = strtok(NULL, " "); // table name
-        if(table_name != NULL){
+        char *table_name = strtok(NULL, " "); // table name
+        if (table_name != NULL) {
 
             // Note: No need to free this table since it will
             // be free'd upon termination of application.
             Table table = get_table_from_catalog(table_name);
 
-            if(table == NULL){ // table doesn't exist
+            if (table == NULL) { // table doesn't exist
                 fprintf(stderr, "Error: Table %s does not exist.\n", table_name);
                 return -1;
             }
 
             tokenizer = strtok(NULL, " ");
-            if(tokenizer != NULL && strcasecmp(tokenizer, "values") == 0){
+            if (tokenizer != NULL && strcasecmp(tokenizer, "values") == 0) {
 
                 tokenizer = strtok(NULL, ";");
-                char* tuples = malloc(strlen(tokenizer)+1);
+                char *tuples = malloc(strlen(tokenizer) + 1);
                 strcpy(tuples, tokenizer);
 
-                char* tuple_token;
-                char * tuple = strtok_r(tuples, ",", &tuple_token);
-                while(tuple != NULL){
+                char *tuple_token;
+                char *tuple = strtok_r(tuples, ",", &tuple_token);
+                while (tuple != NULL) {
 
-                    union record_item* record = create_record_from_statement(table, tuple);
-                    if(record != NULL){
+                    union record_item *record = create_record_from_statement(table, tuple);
+                    if (record != NULL) {
                         //NOTE: THIS IS FOR TESTING ONLY
                         print_record(table, record);
                         // insert the tuple into the storage manager
