@@ -4,14 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-int parse_insert_statement(char *statement) { return 0; }
-
-int parse_update_statement(char *statement) { return 0; }
-
-int parse_delete_from_statement(char *statement) { return 0; }
-
-int parse_select_statement(char *statement) { return 0; }
-
 void freeRecord(union record_item *record) {
     if (record != NULL) {
         free(record);
@@ -121,3 +113,15 @@ union record_item *create_record_from_statement(Table table, char *tuple) {
     free(temp);
     return record;
 }
+
+// TODO
+int parse_insert_statement(char *statement) { return 0; }
+
+// TODO
+int parse_update_statement(char *statement) { return 0; }
+
+// TODO
+int parse_delete_from_statement(char *statement) { return 0; }
+
+// TODO
+int parse_select_statement(char *statement) { return 0; }
