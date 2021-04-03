@@ -50,7 +50,7 @@ int parse_select_statement(char *statement);
  * Free an array of unions.
  * @param record - The record to free.
  */
-void freeRecord(union record_item * record);
+void freeRecord(Table table, union record_item *record);
 
 /**
  * Create a record dynamically based on the statement sent in through

@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void freeRecord(union record_item *record) {
+void freeRecord(Table table, union record_item *record) {a
     if (record != NULL) {
         free(record);
     }
@@ -45,43 +45,42 @@ void print_record(Table table, union record_item *record) {
     }
 }
 
-union record_item *create_record_item(Attribute attribute, char *value) {
-    union record_item *recordItem = malloc(sizeof(union record_item));
+union record_item create_record_item(Attribute attribute, char *value) {
+    union record_item recordItem;
     switch (attribute->type) {
         case INTEGER:
-            recordItem->i = atoi(value);
+            recordItem.i = atoi(value);
             break;
         case DOUBLE:
-            recordItem->d = atof(value);
+            recordItem.d = atof(value);
             break;
         case BOOL:
             if (strcasecmp(value, "true") == 0) { // i'm not too sure about this one.
-                recordItem->b[0] = true;
-                recordItem->b[1] = true;
+                recordItem.b[0] = true;
+                recordItem.b[1] = true;
             } else {
-                recordItem->b[0] = false;
-                recordItem->b[1] = false;
+                recordItem.b[0] = false;
+                recordItem.b[1] = false;
             }
             break;
         case CHAR:
             if (strlen(value) != attribute->size) {
                 fprintf(stderr, "Error: %s size must be equal to %d.\n", value, attribute->size);
-                free(recordItem);
-                return NULL;
+                strcpy(recordItem.c, ""); // not sure if this is how we want to handle this?
+                return recordItem;
             }
-            strcpy(recordItem->c, value);
+            strcpy(recordItem.c, value);
             break;
         case VARCHAR:
             if (strlen(value) > attribute->size) {
                 fprintf(stderr, "Error: %s size must be <= to %d.\n", value, attribute->size);
-                free(recordItem);
-                return NULL;
+                strcpy(recordItem.v, ""); // not sure if this is how we want to handle this?
+                return recordItem;
             }
-            strcpy(recordItem->v, value);
+            strcpy(recordItem.v, value);
             break;
         default:
-            free(recordItem);
-            return NULL;
+            break;
     }
     return recordItem;
 }
@@ -103,8 +102,15 @@ union record_item *create_record_from_statement(Table table, char *tuple) {
     int attribute_counter = 0;
     while(next_value != NULL || attribute_counter < table->attribute_count){ // TODO: have it be &&?
 
-        record[attribute_counter] = *create_record_item(table->attributes[attribute_counter], next_value);
+        union record_item recordItem = create_record_item(table->attributes[attribute_counter], next_value);
 
+//        if(recordItem.i == INVALID){ // there was an error
+//            freeRecord(table, record);
+//            free(temp);
+//            return NULL;
+//        }
+
+        record[attribute_counter] = recordItem;
         attribute_counter++;
         next_value = strtok(NULL, " ()");
     }
@@ -132,7 +138,10 @@ int parse_insert_statement(char *statement) {
         char* table_name = strtok(NULL, " "); // table name
         if(table_name != NULL){
 
+            // Note: No need to free this table since it will
+            // be free'd upon termination of application.
             Table table = get_table_from_catalog(table_name);
+
             if(table == NULL){ // table doesn't exist
                 fprintf(stderr, "Error: Table %s does not exist.\n", table_name);
                 return -1;
@@ -155,17 +164,13 @@ int parse_insert_statement(char *statement) {
                         print_record(table, record);
                         // insert the tuple into the storage manager
 //                        insert_record(table->tableId, record);
-                        freeRecord(record);
+                        freeRecord(table, record);
                     }
                     tuple = strtok_r(NULL, ",", &tuple_token);
                 }
                 free(tuples);
-                free(table);
                 return 0;
             }
-
-            // bad keyword
-            freeTable(table);
         }
     }
     // bad keyword
