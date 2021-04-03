@@ -1,5 +1,7 @@
 #include "../headers/dml_manager.h"
 #include "../headers/Enums.h"
+#include "../headers/catalog.h"
+#include "../headers/storagemanager.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,9 +45,9 @@ void print_record(Table table, union record_item *record) {
     }
 }
 
-union record_item *create_record_item(Attribute attribute, int type, char *value) {
+union record_item *create_record_item(Attribute attribute, char *value) {
     union record_item *recordItem = malloc(sizeof(union record_item));
-    switch (type) {
+    switch (attribute->type) {
         case INTEGER:
             recordItem->i = atoi(value);
             break;
@@ -71,7 +73,7 @@ union record_item *create_record_item(Attribute attribute, int type, char *value
             break;
         case VARCHAR:
             if (strlen(value) > attribute->size) {
-                fprintf(stderr, "Error: %s size must be of <= to %d.\n", value, attribute->size);
+                fprintf(stderr, "Error: %s size must be <= to %d.\n", value, attribute->size);
                 free(recordItem);
                 return NULL;
             }
@@ -101,21 +103,74 @@ union record_item *create_record_from_statement(Table table, char *tuple) {
     int attribute_counter = 0;
     while(next_value != NULL || attribute_counter < table->attribute_count){ // TODO: have it be &&?
 
-        record[attribute_counter] = *create_record_item(table->attributes[attribute_counter], INTEGER, next_value);
-
-        //NOTE: THIS IS FOR TESTING ONLY
-        print_record(table, record);
+        record[attribute_counter] = *create_record_item(table->attributes[attribute_counter], next_value);
 
         attribute_counter++;
         next_value = strtok(NULL, " ()");
     }
-
     free(temp);
     return record;
 }
 
 // TODO
-int parse_insert_statement(char *statement) { return 0; }
+int parse_insert_statement(char *statement) {
+    /**
+     * Examples:
+     *   insert into foo values (1 "foo" true 2.1);
+     *
+     *   insert into foo values (1 "foo" true 2.1),
+     *                          (3 "baz" true 4.14),
+     *                          (2 "bar" false 5.2);
+     */
+
+    //TODO: come up with a better parsing way than this.
+    char* tokenizer = strtok(statement, " "); // "insert"
+
+    tokenizer = strtok(NULL, " ");
+    if(tokenizer != NULL && strcasecmp(tokenizer, "into") == 0){
+
+        char* table_name = strtok(NULL, " "); // table name
+        if(table_name != NULL){
+
+            Table table = get_table_from_catalog(table_name);
+            if(table == NULL){ // table doesn't exist
+                fprintf(stderr, "Error: Table %s does not exist.\n", table_name);
+                return -1;
+            }
+
+            tokenizer = strtok(NULL, " ");
+            if(tokenizer != NULL && strcasecmp(tokenizer, "values") == 0){
+
+                tokenizer = strtok(NULL, ";");
+                char* tuples = malloc(strlen(tokenizer)+1);
+                strcpy(tuples, tokenizer);
+
+                char* tuple_token;
+                char * tuple = strtok_r(tuples, ",", &tuple_token);
+                while(tuple != NULL){
+
+                    union record_item* record = create_record_from_statement(table, tuple);
+                    if(record != NULL){
+                        //NOTE: THIS IS FOR TESTING ONLY
+                        print_record(table, record);
+                        // insert the tuple into the storage manager
+//                        insert_record(table->tableId, record);
+                        freeRecord(record);
+                    }
+                    tuple = strtok_r(NULL, ",", &tuple_token);
+                }
+                free(tuples);
+                free(table);
+                return 0;
+            }
+
+            // bad keyword
+            freeTable(table);
+        }
+    }
+    // bad keyword
+    return -1;
+}
 
 // TODO
 int parse_update_statement(char *statement) { return 0; }
