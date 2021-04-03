@@ -6,16 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void freeRecord(Table table, union record_item *record) {
-    for(int i = 0; i < table->attribute_count; i++){
-        switch (table->attributes[i]->type) {
-            case CHAR:
-                free(record[i].c);
-            case VARCHAR:
-                free(record[i].v);
-                break;
-        }
-    }
+void freeRecord(Table table, union record_item *record) {a
     if (record != NULL) {
         free(record);
     }
@@ -75,8 +66,7 @@ union record_item create_record_item(Attribute attribute, char *value) {
         case CHAR:
             if (strlen(value) != attribute->size) {
                 fprintf(stderr, "Error: %s size must be equal to %d.\n", value, attribute->size);
-//                strcpy(recordItem.c, ""); // not sure if this is how we want to handle this?
-                recordItem.i = INVALID;
+                strcpy(recordItem.c, ""); // not sure if this is how we want to handle this?
                 return recordItem;
             }
             strcpy(recordItem.c, value);
@@ -84,15 +74,13 @@ union record_item create_record_item(Attribute attribute, char *value) {
         case VARCHAR:
             if (strlen(value) > attribute->size) {
                 fprintf(stderr, "Error: %s size must be <= to %d.\n", value, attribute->size);
-//                strcpy(recordItem.v, ""); // not sure if this is how we want to handle this?
-                recordItem.i = INVALID;
+                strcpy(recordItem.v, ""); // not sure if this is how we want to handle this?
                 return recordItem;
             }
             strcpy(recordItem.v, value);
             break;
         default:
-            recordItem.i = INVALID;
-            return recordItem;
+            break;
     }
     return recordItem;
 }
@@ -116,11 +104,11 @@ union record_item *create_record_from_statement(Table table, char *tuple) {
 
         union record_item recordItem = create_record_item(table->attributes[attribute_counter], next_value);
 
-        if(recordItem.i == INVALID){ // there was an error
-            freeRecord(table, record);
-            free(temp);
-            return NULL;
-        }
+//        if(recordItem.i == INVALID){ // there was an error
+//            freeRecord(table, record);
+//            free(temp);
+//            return NULL;
+//        }
 
         record[attribute_counter] = recordItem;
         attribute_counter++;
