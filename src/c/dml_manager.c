@@ -6,8 +6,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-void freeRecord(union record_item *record) {
+void freeRecord(Table table, union record_item *record) {
     if (record != NULL) {
+        for(int i = 0; i < table->attribute_count; i++){
+            switch (table->attributes[i]->type) {
+                case BOOL:
+                    free(record[i].b); // not to sure by bool is an array
+                    break;
+                case CHAR:
+                    free(record[i].c);
+                    break;
+                case VARCHAR:
+                    free(record[i].v);
+                    break;
+            }
+        }
         free(record);
     }
 }
@@ -132,7 +145,10 @@ int parse_insert_statement(char *statement) {
         char* table_name = strtok(NULL, " "); // table name
         if(table_name != NULL){
 
+            // Note: No need to free this table since it will
+            // be free'd upon termination of application.
             Table table = get_table_from_catalog(table_name);
+
             if(table == NULL){ // table doesn't exist
                 fprintf(stderr, "Error: Table %s does not exist.\n", table_name);
                 return -1;
@@ -155,17 +171,13 @@ int parse_insert_statement(char *statement) {
                         print_record(table, record);
                         // insert the tuple into the storage manager
 //                        insert_record(table->tableId, record);
-                        freeRecord(record);
+                        freeRecord(table, record);
                     }
                     tuple = strtok_r(NULL, ",", &tuple_token);
                 }
                 free(tuples);
-                free(table);
                 return 0;
             }
-
-            // bad keyword
-            freeTable(table);
         }
     }
     // bad keyword
