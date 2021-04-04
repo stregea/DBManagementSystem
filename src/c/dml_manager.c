@@ -1,6 +1,7 @@
 #include "../headers/dml_manager.h"
 #include "../headers/Enums.h"
 #include "../headers/catalog.h"
+#include "../headers/clause_parser.h"
 #include "../headers/storagemanager.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -223,62 +224,6 @@ int parse_insert_statement(char *statement) {
     return -1;
 }
 
-void free_clause(char **clause, int num_clauses) {
-    if (clause != NULL) {
-        for (int i = 0; i < num_clauses; i++) {
-            if (clause[i] != NULL) {
-                free(clause[i]);
-            }
-        }
-        free(clause);
-    }
-}
-
-char **parse_set_clause(char *clauses) {
-    size_t array_size = 1;
-    char **clause_list = malloc(sizeof(char*) * array_size);
-
-    char *temp_clauses = malloc(strlen(clauses) + 1);
-    strcpy(temp_clauses, clauses);
-
-    char *clause = strtok(temp_clauses, ",");
-
-    int clause_count = 0;
-    while (clause != NULL) {
-        // remove any misleading spaces
-        while(clause[0] == ' '){
-            clause++;
-        }
-        int last = strlen(clause) - 1;
-        while(clause[last] == ' '){
-            clause[last] = '\0';
-            last--;
-        }
-
-        // increase array size by 1
-        array_size++;
-        clause_list = realloc(clause_list, sizeof(char*) * array_size);
-
-        // copy clause to array
-        clause_list[clause_count] = malloc(strlen(clause) + 1);
-        strcpy(clause_list[clause_count++], clause);
-
-        clause = strtok(NULL, ",");
-    }
-
-    return clause_list;
-}
-
-// todo
-char **parse_where_clause(char *clauses) {
-    // accepted keywords: AND, OR, NOT
-
-    size_t array_size = 1;
-    char **clause_list = malloc(array_size);
-
-    return clause_list;
-}
-
 // TODO
 int parse_update_statement(char *statement) {
     char* temp_statement = malloc(strlen(statement) + 1);
@@ -291,8 +236,8 @@ int parse_update_statement(char *statement) {
         if (table_name != NULL) {
 
             Table table = get_table_from_catalog(table_name);
-            char **set_clause;
-            char **where_clause;
+            Clause set_clause;
+            Clause where_clause;
 
             // parse set
             tokenizer = strtok(NULL, " ");
@@ -306,6 +251,7 @@ int parse_update_statement(char *statement) {
                 if(tokenizer != NULL){
                     set_clause = parse_set_clause(tokenizer);
 
+                    // todo: parse where section of clause
 //                    tokenizer = strtok(NULL, " ");
 //                    if(tokenizer != NULL){
 //                        where_clause = parse_where_clause(tokenizer);
