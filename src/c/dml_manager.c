@@ -45,6 +45,19 @@ void print_record(Table table, union record_item *record) {
 
 union record_item create_record_item(Attribute attribute, char *value) {
     union record_item recordItem;
+
+    int string_size;
+
+    if(attribute->type == CHAR || attribute->type == VARCHAR){
+        string_size = attribute->size;
+
+        // If '"' is on both ends of the string, add 2 to the allowed size of the string
+        // since, they don't technically count towards the total size of the string.
+        if(value[0] == '"' && value[strlen(value)-1] == '"'){
+            string_size += 2;
+        }
+    }
+
     switch (attribute->type) {
         case INTEGER:
             recordItem.i = atoi(value);
@@ -62,7 +75,7 @@ union record_item create_record_item(Attribute attribute, char *value) {
             }
             break;
         case CHAR:
-            if (strlen(value) != attribute->size) {
+            if (strlen(value) != string_size) {
                 fprintf(stderr, "Error: %s size must be equal to %d.\n", value, attribute->size);
                 strcpy(recordItem.c, "ERROR"); // not sure if this is how we want to handle this?
                 return recordItem;
@@ -70,7 +83,7 @@ union record_item create_record_item(Attribute attribute, char *value) {
             strcpy(recordItem.c, value);
             break;
         case VARCHAR:
-            if (strlen(value) > attribute->size) {
+            if (strlen(value) > string_size) {
                 fprintf(stderr, "Error: %s size must be <= to %d.\n", value, attribute->size);
                 strcpy(recordItem.v, "ERROR"); // not sure if this is how we want to handle this?
                 return recordItem;
