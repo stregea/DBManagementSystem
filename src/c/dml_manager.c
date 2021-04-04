@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void freeRecord(Table table, union record_item *record) {a
+void freeRecord(Table table, union record_item *record) {
     if (record != NULL) {
         free(record);
     }
@@ -147,6 +147,7 @@ int parse_insert_statement(char *statement) {
                 return -1;
             }
 
+            int result = 0;
             tokenizer = strtok(NULL, " ");
             if(tokenizer != NULL && strcasecmp(tokenizer, "values") == 0){
 
@@ -162,14 +163,15 @@ int parse_insert_statement(char *statement) {
                     if(record != NULL){
                         //NOTE: THIS IS FOR TESTING ONLY
                         print_record(table, record);
+
                         // insert the tuple into the storage manager
-//                        insert_record(table->tableId, record);
+                        result = insert_record(table->tableId, record);
                         freeRecord(table, record);
                     }
                     tuple = strtok_r(NULL, ",", &tuple_token);
                 }
                 free(tuples);
-                return 0;
+                return result;
             }
         }
     }
