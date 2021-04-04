@@ -512,7 +512,12 @@ int purge_buffer(){
 				fprintf(stderr, "Failed to write page from buffer.\n");
 				return -1;
 			}
-			page_buffer[i] = NULL;
+			for(int j = 0; j < page->tuples_per_page; j++){
+			    free(page->data[j]);
+			}
+            free(page->data);
+            free(page);
+            page_buffer[i] = NULL;
 		}
 	}
 	return 0;
@@ -528,7 +533,9 @@ int terminate_database(){
 		        "Storage Manager: terminate database failed to purge buffer.\n");
 		return -1;
 	}
-	if(write_metadata() != 0){
+    free(page_buffer);
+
+    if(write_metadata() != 0){
 		fprintf(stderr, 
 		        "Storage Manager: terminate database failed to write metadata\n");
 		return -1;
@@ -540,10 +547,10 @@ int terminate_database(){
 	}
     free(table_data);
 
-	for(int i = 0; i < next_page; i++){
-	    free(page_buffer[i]);
-	}
-	free(page_buffer);
+//	for(int i = 0; i < next_page; i++){ // this is now handled in purge_buffer
+//	    free(page_buffer[i]);
+//	}
+//	free(page_buffer);
 	return 0;
 }
 
@@ -720,22 +727,24 @@ static int read_page( struct page_data ** p_out, int page_id,
 
 static int write_page( union record_item** page, int page_id, 
                        int num_records, int tuples_per_page, int record_size){
-	int length = snprintf(NULL, 0, "%s%d", db_db_loc, page_id);
+	int length = snprintf(NULL, 0, "%s/%d", db_db_loc, page_id);
 	char * page_loc = malloc(length+1);
-	snprintf(page_loc, length+1, "%s%d", db_db_loc, page_id);
+	snprintf(page_loc, length+1, "%s/%d", db_db_loc, page_id);
 	FILE * page_file = fopen(page_loc, "wb");
 
-	fwrite(&num_records, sizeof(int), 1, page_file);
-	
-	fwrite(&record_size, sizeof(int), 1, page_file);
-	
-	for(int i = 0; i < tuples_per_page; i++){
-		for(int j = 0; j < record_size; j++){
-			fwrite(&(page[i][j]), sizeof(union record_item), 1, page_file);
-		}
-	}
-	
-	fclose(page_file);
+    if(page_file != NULL){
+        fwrite(&num_records, sizeof(int), 1, page_file);
+
+        fwrite(&record_size, sizeof(int), 1, page_file);
+
+        for(int i = 0; i < tuples_per_page; i++){
+            for(int j = 0; j < record_size; j++){
+                fwrite(&(page[i][j]), sizeof(union record_item), 1, page_file);
+            }
+        }
+
+        fclose(page_file);
+    }
 	free(page_loc);
 	
 	return num_records;
