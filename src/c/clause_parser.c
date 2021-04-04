@@ -11,6 +11,12 @@ void free_clause(Clause clause) {
             }
             free(clause->clauses);
         }
+
+        if(clause->attributes != NULL){
+            // NOTE: no need to free the pointers here. freeTable will handle it.
+            free(clause->attributes);
+        }
+
         free(clause);
     }
 }
@@ -19,11 +25,14 @@ Clause create_clause(){
     Clause clause = malloc(sizeof(struct Clause));
     clause->clause_count = 0;
     clause->array_size = 1;
+    clause->attribute_count = 0;
+    clause->attributes = malloc(sizeof(struct Attribute));
     clause->clauses = malloc(sizeof(char*) * (clause->array_size));
 
     return clause;
 }
 
+// TODO - implement attributes from Clause??
 Clause parse_set_clause(char *clauses) {
     Clause set_clause = create_clause();
 

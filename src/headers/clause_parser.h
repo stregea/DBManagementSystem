@@ -1,9 +1,12 @@
 #ifndef DBMANAGEMENTSYSTEM_CLAUSE_PARSER_H
 #define DBMANAGEMENTSYSTEM_CLAUSE_PARSER_H
+#include "table.h"
 
 struct Clause {
     int array_size; // the size of the clause array.
     int clause_count; // the total count of clauses.
+    int attribute_count; // todo (may not need): counter to keep track of the total attributes specified.
+    Attribute * attributes; // todo (may not need): Array of attributes that point to a tables particular attribute.
     char **clauses; // 2-D array of strings that at each row will contain each specified clause
 };
 typedef struct Clause *Clause;
