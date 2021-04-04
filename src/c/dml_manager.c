@@ -76,7 +76,7 @@ union record_item create_record_item(Attribute attribute, char *value) {
             break;
         case CHAR:
             if (strlen(value) != string_size) {
-                fprintf(stderr, "Error: %s size must be equal to %d.\n", value, attribute->size);
+                fprintf(stderr, "Error: %s's length must be equal to %d.\n", value, attribute->size);
                 strcpy(recordItem.c, "ERROR"); // not sure if this is how we want to handle this?
                 return recordItem;
             }
@@ -84,7 +84,7 @@ union record_item create_record_item(Attribute attribute, char *value) {
             break;
         case VARCHAR:
             if (strlen(value) > string_size) {
-                fprintf(stderr, "Error: %s size must be <= to %d.\n", value, attribute->size);
+                fprintf(stderr, "Error: %s's length must be <= to %d.\n", value, attribute->size);
                 strcpy(recordItem.v, "ERROR"); // not sure if this is how we want to handle this?
                 return recordItem;
             }
