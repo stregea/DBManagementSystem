@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void freeRecord(Table table, union record_item *record) {
+void freeRecord(union record_item *record) {
     if (record != NULL) {
         free(record);
     }
@@ -14,13 +14,11 @@ void freeRecord(Table table, union record_item *record) {
 
 /**
  * Print out a record.
- *
- * Note: This is for testing purposes.
  */
 void print_record(Table table, union record_item *record) {
     printf("(");
     for (int i = 0; i < table->attribute_count; i++) {
-        char * extra_space = " ";
+        char *extra_space = " ";
 
         if (i == table->attribute_count - 1) {
             extra_space = ")\n"; // close the tuple, create new line
@@ -66,7 +64,7 @@ union record_item create_record_item(Attribute attribute, char *value) {
         case CHAR:
             if (strlen(value) != attribute->size) {
                 fprintf(stderr, "Error: %s size must be equal to %d.\n", value, attribute->size);
-                strcpy(recordItem.c, ""); // not sure if this is how we want to handle this?
+                strcpy(recordItem.c, "ERROR"); // not sure if this is how we want to handle this?
                 return recordItem;
             }
             strcpy(recordItem.c, value);
@@ -74,7 +72,7 @@ union record_item create_record_item(Attribute attribute, char *value) {
         case VARCHAR:
             if (strlen(value) > attribute->size) {
                 fprintf(stderr, "Error: %s size must be <= to %d.\n", value, attribute->size);
-                strcpy(recordItem.v, ""); // not sure if this is how we want to handle this?
+                strcpy(recordItem.v, "ERROR"); // not sure if this is how we want to handle this?
                 return recordItem;
             }
             strcpy(recordItem.v, value);
@@ -85,30 +83,26 @@ union record_item create_record_item(Attribute attribute, char *value) {
     return recordItem;
 }
 
-// TODO: test
-// TODO: if NULL, return -1 in function that this is called in or simply ignore null value?.
-// Note: each tuple will be sent in individually.
-// tuple examples: (1 "foo" true 2.1)
-//                 (3 "baz true 4.14)
-//                 (2 "bar" false 5.2)
 union record_item *create_record_from_statement(Table table, char *tuple) {
 
-    union record_item * record = malloc(sizeof(union record_item) * table->attribute_count);
+    union record_item *record = malloc(sizeof(union record_item) * table->attribute_count);
 
     char *temp = malloc(strlen(tuple) + 1);
     strcpy(temp, tuple);
     char *next_value = strtok(temp, " ()");
 
     int attribute_counter = 0;
-    while(next_value != NULL || attribute_counter < table->attribute_count){ // TODO: have it be &&?
+    while (next_value != NULL || attribute_counter < table->attribute_count) { // TODO: have it be &&?
 
         union record_item recordItem = create_record_item(table->attributes[attribute_counter], next_value);
 
-//        if(recordItem.i == INVALID){ // there was an error
-//            freeRecord(table, record);
-//            free(temp);
-//            return NULL;
-//        }
+        // Error with char creation or varchar creation.
+        if ((table->attributes[attribute_counter]->type == CHAR && strcasecmp(recordItem.c, "ERROR") == 0) ||
+            (table->attributes[attribute_counter]->type == VARCHAR && strcasecmp(recordItem.v, "ERROR") == 0)) {
+            free(temp);
+            freeRecord(record);
+            return NULL;
+        }
 
         record[attribute_counter] = recordItem;
         attribute_counter++;
@@ -118,60 +112,55 @@ union record_item *create_record_from_statement(Table table, char *tuple) {
     return record;
 }
 
-// TODO
 int parse_insert_statement(char *statement) {
-    /**
-     * Examples:
-     *   insert into foo values (1 "foo" true 2.1);
-     *
-     *   insert into foo values (1 "foo" true 2.1),
-     *                          (3 "baz" true 4.14),
-     *                          (2 "bar" false 5.2);
-     */
 
-    //TODO: come up with a better parsing way than this.
-    char* tokenizer = strtok(statement, " "); // "insert"
+    char *tokenizer = strtok(statement, " "); // "insert"
 
     tokenizer = strtok(NULL, " ");
-    if(tokenizer != NULL && strcasecmp(tokenizer, "into") == 0){
+    if (tokenizer != NULL && strcasecmp(tokenizer, "into") == 0) {
 
-        char* table_name = strtok(NULL, " "); // table name
-        if(table_name != NULL){
+        char *table_name = strtok(NULL, " "); // table name
+        if (table_name != NULL) {
 
             // Note: No need to free this table since it will
             // be free'd upon termination of application.
             Table table = get_table_from_catalog(table_name);
 
-            if(table == NULL){ // table doesn't exist
+            if (table == NULL) { // table doesn't exist
                 fprintf(stderr, "Error: Table %s does not exist.\n", table_name);
                 return -1;
             }
 
-            int result = 0;
             tokenizer = strtok(NULL, " ");
-            if(tokenizer != NULL && strcasecmp(tokenizer, "values") == 0){
+            if (tokenizer != NULL && strcasecmp(tokenizer, "values") == 0) {
 
                 tokenizer = strtok(NULL, ";");
-                char* tuples = malloc(strlen(tokenizer)+1);
+                char *tuples = malloc(strlen(tokenizer) + 1);
                 strcpy(tuples, tokenizer);
 
-                char* tuple_token;
-                char * tuple = strtok_r(tuples, ",", &tuple_token);
-                while(tuple != NULL){
+                char *tuple_token;
+                char *tuple = strtok_r(tuples, ",", &tuple_token);
+                while (tuple != NULL) {
 
-                    union record_item* record = create_record_from_statement(table, tuple);
-                    if(record != NULL){
-                        //NOTE: THIS IS FOR TESTING ONLY
+                    union record_item *record = create_record_from_statement(table, tuple);
+
+                    if (record != NULL) {
+                        // NOTE: THIS IS FOR TESTING ONLY. Do not include this line for Phase3 submission.
                         print_record(table, record);
 
                         // insert the tuple into the storage manager
-                        result = insert_record(table->tableId, record);
-                        freeRecord(table, record);
+                        if(insert_record(table->tableId, record) == -1){
+                            fprintf(stderr, "Error: Cannot insert:\n\t");
+                            print_record(table, record);
+                        }
+
+                        freeRecord(record);
                     }
+
                     tuple = strtok_r(NULL, ",", &tuple_token);
                 }
                 free(tuples);
-                return result;
+                return 0;
             }
         }
     }
