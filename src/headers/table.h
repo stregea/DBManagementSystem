@@ -31,7 +31,8 @@ struct Constraints {
     bool notnull;
     bool primary_key;
     bool unique;
-}; typedef struct Constraints* Constraints;
+};
+typedef struct Constraints *Constraints;
 
 /**
  * Struct to contain information in regards to a attribute/column.
@@ -42,7 +43,7 @@ struct Attribute {
     int type; // the type of data within the column (0-4) / int-varchar
     int size; // used to determine the size of a char or varchar.
     int default_size;
-    char* default_value;
+    char *default_value;
     struct Constraints *constraints;
     struct ForeignKey *foreignKey;
 };
@@ -71,7 +72,7 @@ typedef struct Table *Table;
  * Free a table struct from memory.
  * @param table - The table to free.
  */
-struct Table * createTable(char *name);
+struct Table *createTable(char *name);
 
 /**
  * Frees all memory referenced by an Attribute, then the struct itself
@@ -160,26 +161,35 @@ int write_foreign_key_to_disk();
  * @param file - pointer to catalog file
  * @return pointer to key struct
  */
-struct ForeignKey * read_foreign_key_from_disk(FILE *file);
+struct ForeignKey *read_foreign_key_from_disk(FILE *file);
 
 /**
  * Read an attribute and all of its contents from disk.
  * @param file - pointer to catalog file
  * @return pointer to key struct
  */
-struct Attribute * read_attribute_from_disk(FILE *file);
+struct Attribute *read_attribute_from_disk(FILE *file);
 
 /**
  * Read a key and all of its contents from disk.
  * @param file - pointer to catalog file
  * @return pointer to key struct
  */
-struct PrimaryKey* read_primary_key_from_disk(FILE *file, struct Table *table);
+struct PrimaryKey *read_primary_key_from_disk(FILE *file, struct Table *table);
 
 /**
  * Read a table and all of its contents from disk.
  * @param file - pointer to catalog file
  * @return pointer to table struct
  */
-struct Table* read_table_from_disk(FILE *file);
-#endif //DBMANAGEMENTSYSTEM_TABLE_H
+struct Table *read_table_from_disk(FILE *file);
+
+/**
+ * Retrive an attribute from a table.
+ * @param table - The table to search.
+ * @param attribute_name - The specified attribute.
+ * @return an Attribute. NULL if not found.
+ */
+Attribute get_attribute_from_table(Table table, char *attribute_name);
+
+#endif

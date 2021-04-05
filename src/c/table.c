@@ -235,9 +235,9 @@ int write_primary_key_to_disk(FILE *file, struct PrimaryKey *primaryKey) {
     } else {
         fwrite(&primaryKey->size, sizeof(int), 1, file);
 
-        if(primaryKey->size > 0) {
+        if (primaryKey->size > 0) {
             // write each attribute name to a string
-            char* attributes = malloc(sizeof(char));
+            char *attributes = malloc(sizeof(char));
             // null terminator
             size_t attributes_string_size = 1;
             struct Attribute *current_attribute;
@@ -248,10 +248,9 @@ int write_primary_key_to_disk(FILE *file, struct PrimaryKey *primaryKey) {
                 attributes_string_size += current_attribute->name_size;
                 attributes = realloc(attributes, attributes_string_size);
 
-                if(i == 0){
+                if (i == 0) {
                     strcpy(attributes, current_attribute->name);
-                }
-                else{
+                } else {
                     strcat(attributes, current_attribute->name);
                 }
 
@@ -321,10 +320,9 @@ struct Attribute *read_attribute_from_disk(FILE *file) {
 
     fread(&attribute->default_size, sizeof(int), 1, file);
 
-    if(attribute->default_size == 0) {
+    if (attribute->default_size == 0) {
         attribute->default_value = NULL;
-    }
-    else {
+    } else {
         attribute->default_value = malloc(attribute->default_size);
         fread(attribute->default_value, attribute->default_size, 1, file);
     }
@@ -343,7 +341,7 @@ struct PrimaryKey *read_primary_key_from_disk(FILE *file, struct Table *table) {
     int key_size;
     struct PrimaryKey *primaryKey;
     int attributes_string_size;
-    char* names;
+    char *names;
     fread(&key_size, sizeof(int), 1, file);
 
     if (key_size == 0) {
@@ -352,7 +350,7 @@ struct PrimaryKey *read_primary_key_from_disk(FILE *file, struct Table *table) {
 
         fread(&attributes_string_size, sizeof(int), 1, file);
 
-        if(attributes_string_size == 0){
+        if (attributes_string_size == 0) {
             return NULL;
         }
 
@@ -400,4 +398,13 @@ struct Table *read_table_from_disk(FILE *file) {
     table->primary_key = read_primary_key_from_disk(file, table);
 
     return table;
+}
+
+Attribute get_attribute_from_table(Table table, char *attribute_name) {
+    for (int i = 0; i < table->attribute_count; i++) {
+        if (strcasecmp(table->attributes[i]->name, attribute_name) == 0) {
+            return table->attributes[i];
+        }
+    }
+    return NULL;
 }

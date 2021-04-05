@@ -1,10 +1,46 @@
 #include "../headers/dml_manager.h"
 #include "../headers/Enums.h"
 #include "../headers/catalog.h"
+#include "../headers/clause_parser.h"
 #include "../headers/storagemanager.h"
+#include "../headers/arrays.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+/**
+ * Retrieve the index of the first occurrence of a word within a string.
+ * @param str - The string to search.
+ * @param word - The word to search for.
+ * @return -1 on error, otherwise the index at which the word first occurs.
+ */
+int get_index_of_word_from_string(const char *string, const char *word) {
+    int i, j, flag;
+
+    i = 0;
+    while (string[i] != '\0') {
+        if (string[i] == word[0]) {
+            flag = 1;
+            j = 0;
+            while (word[j] != '\0') {
+                if (string[i + j] != word[j]) {
+                    flag = 0;
+                    break;
+                }
+                j++;
+            }
+        }
+        if (flag == 1) {
+            break;
+        }
+        i++;
+    }
+    if (flag == 0) {
+        return -1;
+    } else {
+        return i;
+    }
+}
 
 void freeRecord(union record_item *record) {
     if (record != NULL) {
@@ -48,12 +84,12 @@ union record_item create_record_item(Attribute attribute, char *value) {
 
     int string_size;
 
-    if(attribute->type == CHAR || attribute->type == VARCHAR){
+    if (attribute->type == CHAR || attribute->type == VARCHAR) {
         string_size = attribute->size;
 
         // If '"' is on both ends of the string, add 2 to the allowed size of the string
         // since, they don't technically count towards the total size of the string.
-        if(value[0] == '"' && value[strlen(value)-1] == '"'){
+        if (value[0] == '"' && value[strlen(value) - 1] == '"') {
             string_size += 2;
         }
     }
@@ -162,7 +198,7 @@ int parse_insert_statement(char *statement) {
                         print_record(table, record);
 
                         // insert the tuple into the storage manager
-                        if(insert_record(table->tableId, record) == -1){
+                        if (insert_record(table->tableId, record) == -1) {
                             fprintf(stderr, "Error: Cannot insert:\n\t");
                             print_record(table, record);
                         }
@@ -182,7 +218,95 @@ int parse_insert_statement(char *statement) {
 }
 
 // TODO
-int parse_update_statement(char *statement) { return 0; }
+int parse_update_statement(char *statement) {
+    char *temp_statement = malloc(strlen(statement) + 1);
+    strcpy(temp_statement, statement);
+
+    char **statement_array = string_to_array(temp_statement);
+    free(temp_statement);
+
+    if (get_index_of_word_from_string(statement, "update") == -1 ||
+        get_index_of_word_from_string(statement, "set") == -1) {
+        fprintf(stderr, "Error: Invalid command.\n"); // missing 'update' and 'set'. 'Where' is optional.
+
+        free_string_array(statement_array);
+        return -1;
+    }
+
+    int index = 0;
+    if (statement_array[index] != NULL && strcasecmp(statement_array[index++], "update") == 0) {
+
+        if (statement_array[index] != NULL) {
+            char* table_name = statement_array[index++];
+            Table table = get_table_from_catalog(table_name);
+
+            if (table != NULL) {
+
+                char *set_clause = NULL;
+                char *where_clause = NULL;
+                Clause set = NULL;
+                Clause where = NULL;
+
+                // Determine if a where clause exists.
+                bool includes_where = false;
+                if (get_index_of_word_from_string(statement, "where") >= 0) {
+                    includes_where = true;
+                }
+
+                // Build the set clause
+                if (includes_where) {
+                    set_clause = array_of_tokens_to_string(statement_array, "set", "where", false);
+                } else {
+                    set_clause = array_of_tokens_to_string(statement_array, "set", END_OF_ARRAY, false);
+                }
+
+                if (set_clause != NULL) {
+                    set = parse_set_clause(set_clause);
+
+                    if (set != NULL) {
+
+                        if (includes_where) {
+                            where_clause = array_of_tokens_to_string(statement_array, "where", END_OF_ARRAY, false);
+                            where = parse_where_clause(where_clause);
+                        }
+
+
+                        // if where clause
+                        // grab all records that follow pertain to the clause
+                        // iterate through all records then update values based on set clause
+
+                        // else there is no where clause
+                        // iterate through all records then update values based on set clause
+
+                        // updating pseudocode:
+                        // for each record
+                        // select attribute column
+                        // int value = record[column]
+                        // if clause contains attribute name operator and value (ex, bar = bar + 1)
+                        //   perform necessary operations
+                        // else (ex bar = 3)
+                        //   update the record with specified value
+
+
+                        if (includes_where) {
+                            free(where_clause);
+                            free_clause(where);
+                        }
+                        free_clause(set);
+                        free(set_clause);
+                        free_string_array(statement_array);
+                        return 0;
+
+                    }
+                    free(set_clause);
+                }
+            }
+        }
+    }
+    free_string_array(statement_array);
+    // bad keyword
+    return -1;
+}
 
 // TODO
 int parse_delete_from_statement(char *statement) { return 0; }
