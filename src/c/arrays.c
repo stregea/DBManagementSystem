@@ -78,6 +78,5 @@ char * array_of_tokens_to_string(char **tokens, char* starting_token, char* endi
         strcat(string, tokens[i]);
     }
 
-    printf("%s\n", string);
     return string;
 }

@@ -34,12 +34,16 @@ Clause create_clause(){
 
 // TODO - implement attributes from Clause??
 Clause parse_set_clause(char *clauses) {
-    Clause set_clause = create_clause();
+    Clause set_clause = NULL;
 
     char *temp_clauses = malloc(strlen(clauses) + 1);
     strcpy(temp_clauses, clauses);
 
     char *clause = strtok(temp_clauses, ",");
+
+    if(clause != NULL){
+        set_clause = create_clause();
+    }
 
     while (clause != NULL) {
         // remove any misleading spaces
