@@ -29,8 +29,8 @@ char ** string_to_array(char* string){
     }
     array = realloc(array, sizeof(char*) * ++array_size);
 
-    array[tokens] = malloc(strlen("END_OF_ARRAY")+1);
-    strcpy(array[tokens++], "END_OF_ARRAY"); // null terminate the array.
+    array[tokens] = malloc(strlen(END_OF_ARRAY)+1);
+    strcpy(array[tokens++], END_OF_ARRAY); // null terminate the array.
 
     array[tokens] = NULL;
     return array;

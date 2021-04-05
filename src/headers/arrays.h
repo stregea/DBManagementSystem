@@ -1,5 +1,6 @@
 #ifndef DBMANAGEMENTSYSTEM_ARRAYS_H
 #define DBMANAGEMENTSYSTEM_ARRAYS_H
+#define END_OF_ARRAY "END_OF_ARRAY"
 
 /**
  * create a string array of tokens.
