@@ -36,7 +36,7 @@ char ** string_to_array(char* string){
     return array;
 }
 
-char * array_of_tokens_to_string(char **tokens, char* starting_token, char* ending_token){
+char * array_of_tokens_to_string(char **tokens, char* starting_token, char* ending_token, bool includes_starting_token){
     char* string = NULL;
     size_t string_size = 0;
     int starting_index = 0;
@@ -61,11 +61,23 @@ char * array_of_tokens_to_string(char **tokens, char* starting_token, char* endi
 
     // Build the string
     string = malloc(string_size);
-    strcpy(string, tokens[starting_index]);
-    for(int i = starting_index+1; i < index;i++){
+    strcpy(string, "");
+    int tmp_index = starting_index;
+
+    // if we want the starting token, append it
+    if(includes_starting_token){
+        strcat(string, tokens[tmp_index]);
+        strcat(string, " ");
+    }
+    tmp_index++;
+
+    // Build the rest of the clause
+    strcat(string, tokens[tmp_index++]);
+    for(int i = tmp_index; i < index;i++){
         strcat(string, " ");
         strcat(string, tokens[i]);
     }
 
+    printf("%s\n", string);
     return string;
 }
