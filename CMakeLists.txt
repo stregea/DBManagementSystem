@@ -21,4 +21,4 @@ add_executable(DBManagementSystem
         src/c/dml_manager.c
         src/headers/dml_manager.h
         src/c/select_parser.c
-        src/headers/select_parser.h src/c/Enums.c src/headers/Enums.h src/c/catalog.c src/headers/catalog.h src/c/table.c src/headers/table.h src/c/clause_parser.c src/headers/clause_parser.h)
+        src/headers/select_parser.h src/c/Enums.c src/headers/Enums.h src/c/catalog.c src/headers/catalog.h src/c/table.c src/headers/table.h src/c/clause_parser.c src/headers/clause_parser.h src/c/arrays.c src/headers/arrays.h)
