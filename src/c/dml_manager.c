@@ -5,6 +5,7 @@
 #include "../headers/storagemanager.h"
 #include "../headers/arrays.h"
 #include <stdio.h>
+#include <float.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -95,7 +96,7 @@ union record_item create_record_item(Attribute attribute, char *value) {
     }
 
     switch (attribute->type) {
-        case INTEGER:
+        case INTEGER:idk
             recordItem.i = atoi(value);
             break;
         case DOUBLE:
@@ -237,7 +238,7 @@ int parse_update_statement(char *statement) {
     if (statement_array[index] != NULL && strcasecmp(statement_array[index++], "update") == 0) {
 
         if (statement_array[index] != NULL) {
-            char* table_name = statement_array[index++];
+            char *table_name = statement_array[index++];
             Table table = get_table_from_catalog(table_name);
 
             if (table != NULL) {
@@ -262,21 +263,116 @@ int parse_update_statement(char *statement) {
 
                 if (set_clause != NULL) {
                     set = parse_set_clause(set_clause);
+                    set->table = table;
 
                     if (set != NULL) {
+
 
                         if (includes_where) {
                             where_clause = array_of_tokens_to_string(statement_array, "where", END_OF_ARRAY, false);
                             where = parse_where_clause(where_clause);
+                            where->table = table;
                         }
 
+                        union record_item ***storagemanager_table = NULL;
 
-                        // if where clause
-                        // grab all records that follow pertain to the clause
-                        // iterate through all records then update values based on set clause
+                        int table_size = get_records(table->tableId, storagemanager_table);
+                        if (table_size == -1) {
+                            if (includes_where) {
+                                free(where_clause);
+                                free_clause(where);
+                            }
+                            free_clause(set);
+                            free(set_clause);
+                            free_string_array(statement_array);
+                            return -1;
+                        }
 
-                        // else there is no where clause
-                        // iterate through all records then update values based on set clause
+                        if (includes_where) {
+                            // grab all records that follow pertain to the clause
+                            // iterate through all records then update values based on set clause
+//                            for(int i = 0; i < table_size; i++){
+//                                bool flags[where->clause_count];
+//                                for(int j = 0; j < where->clause_count; j++){
+//                                    char ** tmp_clause = string_to_array(where->clauses[i]);
+//
+//                                    int tmp_clause_index = 0;
+//                                    // get records that are in accordance with the clauses.
+//                                    while(tmp_clause[tmp_clause_index]){
+//                                        // check if record follows where clause
+//                                        // if it does, set flag to true
+//                                    }
+//
+//
+//                                    free_string_array(tmp_clause);
+//                                }
+//                                // if flags array is true at each index, leave record,
+//                                // otherwise null record in table since we don't need it.
+//                            }
+                        } else {
+                            // todo
+                            // iterate through all records then update values based on set clause
+                            for (int i = 0; i < table_size; i++) {
+                                for (int j = 0; j < set->clause_count; j++) {
+                                    char **tmp_clause = string_to_array(set->clauses[i]);
+
+                                    Attribute attribute = get_attribute_from_table(table, tmp_clause[0]);
+
+                                    if(attribute != NULL){
+                                        union record_item ** record = storagemanager_table[i]; // todo: may need to free this
+
+                                        switch(attribute->type){
+                                            double res;
+                                            case INTEGER:
+                                                res = calculate_value(set, tmp_clause, record); // not returning correct value due to record?
+                                                if(res == DBL_MAX){
+                                                    free_string_array(tmp_clause);
+                                                    free_clause(set);
+                                                    free(set_clause);
+                                                    free_string_array(statement_array);
+                                                    return -1;
+                                                }
+                                                record[INTEGER]->i = (int)res;
+                                                if(update_record(table->tableId, *record) == -1){
+                                                    free_string_array(tmp_clause);
+                                                    free_clause(set);
+                                                    free(set_clause);
+                                                    free_string_array(statement_array);
+                                                    return -1;
+                                                }
+                                                break;
+                                            case DOUBLE:
+                                                res = calculate_value(set, tmp_clause, record);
+                                                if(res == DBL_MAX){
+                                                    free_string_array(tmp_clause);
+                                                    free_clause(set);
+                                                    free(set_clause);
+                                                    free_string_array(statement_array);
+                                                    return -1;
+                                                }
+                                                record[DOUBLE]->d = res;
+                                                if(update_record(table->tableId, *record) == -1){
+                                                    free_string_array(tmp_clause);
+                                                    free_clause(set);
+                                                    free(set_clause);
+                                                    free_string_array(statement_array);
+                                                    return -1;
+                                                }
+                                                break;
+                                            case BOOL:
+                                                break;
+                                            case CHAR:
+                                                break;
+                                            case VARCHAR:
+                                                break;
+                                        }
+                                    }else{
+                                        // return error?
+                                    }
+                                    free_string_array(tmp_clause); // segfaults?
+                                }
+                            }
+                        }
 
                         // updating pseudocode:
                         // for each record
