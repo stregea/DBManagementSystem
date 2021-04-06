@@ -96,7 +96,7 @@ union record_item create_record_item(Attribute attribute, char *value) {
     }
 
     switch (attribute->type) {
-        case INTEGER:idk
+        case INTEGER:
             recordItem.i = atoi(value);
             break;
         case DOUBLE:
