@@ -4,6 +4,7 @@
 #include "../headers/clause_parser.h"
 #include "../headers/storagemanager.h"
 #include "../headers/arrays.h"
+#include "../headers/tuple.h"
 #include <stdio.h>
 #include <float.h>
 #include <stdlib.h>
@@ -139,25 +140,28 @@ union record_item *create_record_from_statement(Table table, char *tuple) {
 
     char *temp = malloc(strlen(tuple) + 1);
     strcpy(temp, tuple);
-    char *next_value = strtok(temp, " ()");
+    Tuple record_tuple = create_tuple(temp);
 
-    int attribute_counter = 0;
-    while (next_value != NULL || attribute_counter < table->attribute_count) { // TODO: have it be &&?
+    if (record_tuple == NULL) {
+        free(temp);
+        return NULL;
+    }
 
-        union record_item recordItem = create_record_item(table->attributes[attribute_counter], next_value);
+    for (int i = 0; i < table->attribute_count; i++) {
+        union record_item recordItem = create_record_item(table->attributes[i],
+                                                          record_tuple->tuple[i]);
 
-        // Error with char creation or varchar creation.
-        if ((table->attributes[attribute_counter]->type == CHAR && strcasecmp(recordItem.c, "ERROR") == 0) ||
-            (table->attributes[attribute_counter]->type == VARCHAR && strcasecmp(recordItem.v, "ERROR") == 0)) {
+        if ((table->attributes[i]->type == CHAR && strcasecmp(recordItem.c, "ERROR") == 0) ||
+            (table->attributes[i]->type == VARCHAR && strcasecmp(recordItem.v, "ERROR") == 0)) {
             free(temp);
+            free_tuple(record_tuple);
             freeRecord(record);
             return NULL;
         }
-
-        record[attribute_counter] = recordItem;
-        attribute_counter++;
-        next_value = strtok(NULL, " ()");
+        record[i] = recordItem;
     }
+
+    free_tuple(record_tuple);
     free(temp);
     return record;
 }
@@ -205,6 +209,11 @@ int parse_insert_statement(char *statement) {
                         }
 
                         freeRecord(record);
+                    } else {
+                        // is null -> error, don't read any more tuples.
+                        free(tuples);
+                        freeRecord(record);
+                        return -1;
                     }
 
                     tuple = strtok_r(NULL, ",", &tuple_token);
@@ -318,22 +327,23 @@ int parse_update_statement(char *statement) {
 
                                     Attribute attribute = get_attribute_from_table(table, tmp_clause[0]);
 
-                                    if(attribute != NULL){
-                                        union record_item ** record = storagemanager_table[i]; // todo: may need to free this
+                                    if (attribute != NULL) {
+                                        union record_item **record = storagemanager_table[i]; // todo: may need to free this
 
-                                        switch(attribute->type){
+                                        switch (attribute->type) {
                                             double res;
                                             case INTEGER:
-                                                res = calculate_value(set, tmp_clause, record); // not returning correct value due to record?
-                                                if(res == DBL_MAX){
+                                                res = calculate_value(set, tmp_clause,
+                                                                      record); // not returning correct value due to record?
+                                                if (res == DBL_MAX) {
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
                                                     free_string_array(statement_array);
                                                     return -1;
                                                 }
-                                                record[INTEGER]->i = (int)res;
-                                                if(update_record(table->tableId, *record) == -1){
+                                                record[INTEGER]->i = (int) res;
+                                                if (update_record(table->tableId, *record) == -1) {
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
@@ -343,7 +353,7 @@ int parse_update_statement(char *statement) {
                                                 break;
                                             case DOUBLE:
                                                 res = calculate_value(set, tmp_clause, record);
-                                                if(res == DBL_MAX){
+                                                if (res == DBL_MAX) {
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
@@ -351,7 +361,7 @@ int parse_update_statement(char *statement) {
                                                     return -1;
                                                 }
                                                 record[DOUBLE]->d = res;
-                                                if(update_record(table->tableId, *record) == -1){
+                                                if (update_record(table->tableId, *record) == -1) {
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
@@ -366,7 +376,7 @@ int parse_update_statement(char *statement) {
                                             case VARCHAR:
                                                 break;
                                         }
-                                    }else{
+                                    } else {
                                         // return error?
                                     }
                                     free_string_array(tmp_clause); // segfaults?
