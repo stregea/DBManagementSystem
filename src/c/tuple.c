@@ -11,6 +11,7 @@ void free_tuple(Tuple tuple){
                 free(tuple->tuple[i]);
             }
         }
+        free(tuple->tuple);
         free(tuple);
     }
 }
