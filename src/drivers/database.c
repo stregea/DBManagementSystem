@@ -55,6 +55,11 @@ int execute_query(char *query, union record_item ***result) {
  * @return 0 on success, -1 on error.
  */
 int parse_statement(char *statement) {
+
+    if (strcasecmp(statement, "quit;") == 0){
+        return 0;
+    }
+
     char *tmp_statement = malloc(strlen(statement) + 1);
     strcpy(tmp_statement, statement);
 
