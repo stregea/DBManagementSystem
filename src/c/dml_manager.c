@@ -20,7 +20,7 @@ int get_index_of_word_from_string(const char *string, const char *word) {
     int i, j, flag;
 
     i = 0;
-    flag = -1;
+//    flag = -1;
     while (string[i] != '\0') {
         if (string[i] == word[0]) {
             flag = 1;
@@ -348,16 +348,8 @@ int parse_update_statement(char *statement) {
                                             double res;
                                             case INTEGER:
                                                 res = calculate_value(set, tmp_clause, record); // not returning correct value due to record?
-                                                if (res == DBL_MAX) {
-                                                    free_string_array(tmp_clause);
-                                                    free_clause(set);
-                                                    free(set_clause);
-                                                    free_string_array(statement_array);
-                                                    free_table_from_storagemanager(table_size, storagemanager_table);
-                                                    return -1;
-                                                }
                                                 record[INTEGER].i = (int) res;
-                                                if (update_record(table->tableId, record) == -1) {
+                                                if (res == DBL_MAX || update_record(table->tableId, record) == -1) {
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
@@ -368,16 +360,8 @@ int parse_update_statement(char *statement) {
                                                 break;
                                             case DOUBLE:
                                                 res = calculate_value(set, tmp_clause, record);
-                                                if (res == DBL_MAX) {
-                                                    free_string_array(tmp_clause);
-                                                    free_clause(set);
-                                                    free(set_clause);
-                                                    free_string_array(statement_array);
-                                                    free_table_from_storagemanager(table_size, storagemanager_table);
-                                                    return -1;
-                                                }
                                                 record[DOUBLE].d = res;
-                                                if (update_record(table->tableId, record) == -1) {
+                                                if (res == DBL_MAX || update_record(table->tableId, record) == -1) {
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
