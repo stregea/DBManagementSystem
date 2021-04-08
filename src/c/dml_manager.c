@@ -335,6 +335,8 @@ int parse_update_statement(char *statement) {
                             // todo
                             // iterate through all records then update values based on set clause
                             for (int i = 0; i < table_size; i++) {
+                                union record_item *record = storagemanager_table[i]; // todo: may need to free this
+
                                 for (int j = 0; j < set->clause_count; j++) {
                                     char **tmp_clause = string_to_array(set->clauses[j]);
 
@@ -342,7 +344,6 @@ int parse_update_statement(char *statement) {
                                     Attribute attribute = get_attribute_from_table(table, attribute_name);
 
                                     if (attribute != NULL) {
-                                        union record_item *record = storagemanager_table[i]; // todo: may need to free this
 
                                         switch (attribute->type) {
                                             double res;

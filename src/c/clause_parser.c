@@ -51,10 +51,24 @@ double calculate_value(Clause clause, char **math_expression, union record_item 
     // check to see if a column value was passed in
     attribute1 = get_attribute_from_table(clause->table, math_expression[2]);
     if (attribute1 != NULL) {
-        if (attribute1->type == INTEGER) {
-            value1 = record[INTEGER].i;
-        } else if (attribute1->type == DOUBLE) {
-            value1 = record[DOUBLE].d;
+        if (attribute1->type == INTEGER || attribute1->type == DOUBLE) {
+            int i = 0;
+            // iterate through each attribute in the table.
+            while(i < clause->table->attribute_count){
+                if (strcasecmp(clause->table->attributes[i]->name, attribute1->name) == 0) {
+
+                    // set the value from the index of the attribute within the table.
+                    if(attribute1->type == INTEGER){
+                        value1 = record[i].i;
+                        break;
+                    }
+                    else{ // otherwise a double
+                        value1 = record[i].d;
+                        break;
+                    }
+                }
+                i++;
+            }
         } else { // error if char or varchar. todo: error if bool?
             return DBL_MAX;
         }
@@ -71,23 +85,36 @@ double calculate_value(Clause clause, char **math_expression, union record_item 
 
     attribute2 = get_attribute_from_table(clause->table, math_expression[4]);
     if (attribute2 != NULL) {
-        if (attribute2->type == INTEGER) {
-            value2 = record[INTEGER].i;
-        } else if (attribute2->type == DOUBLE) {
-            value2 = record[DOUBLE].d;
+        if (attribute2->type == INTEGER || attribute2->type == DOUBLE) {
+
+            int i = 0;
+            // iterate through each attribute in the table.
+            while(i < clause->table->attribute_count){
+                if (strcasecmp(clause->table->attributes[i]->name, attribute2->name) == 0) {
+
+                    // set the value from the index of the attribute within the table.
+                    if(attribute2->type == INTEGER){
+                        value2 = record[i].i;
+                        break;
+                    }
+                    else{ // otherwise a double
+                        value2 = record[i].d;
+                        break;
+                    }
+                }
+                i++;
+            }
         } else { // error if char or varchar. todo: error if bool?
             return DBL_MAX;
         }
     } else {
         // todo: check if string here    if string -> error?
-        value2 = strtod(math_expression[2], &val2pointer);
+        value2 = strtod(math_expression[4], &val2pointer);
     }
 
     switch (operator) {
-        double test;
         case ADDITION:
-            test = (value1 + value2);
-            return test;
+            return value1 + value2;
         case SUBTRACTION:
             return value1 - value2;
         case MULTIPLICATION:
