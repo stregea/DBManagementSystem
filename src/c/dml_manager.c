@@ -231,6 +231,15 @@ int parse_insert_statement(char *statement) {
     return -1;
 }
 
+void free_table_from_storagemanager(int table_size, union record_item **storagemanager_table){
+    if(storagemanager_table != NULL){
+        for(int i = 0; i < table_size; i++){
+            free(storagemanager_table[i]);
+        }
+        free(storagemanager_table);
+    }
+}
+
 // TODO
 int parse_update_statement(char *statement) {
     char *temp_statement = malloc(strlen(statement) + 1);
@@ -344,7 +353,7 @@ int parse_update_statement(char *statement) {
                                                     free_clause(set);
                                                     free(set_clause);
                                                     free_string_array(statement_array);
-                                                    free(storagemanager_table);
+                                                    free_table_from_storagemanager(table_size, storagemanager_table);
                                                     return -1;
                                                 }
                                                 record[INTEGER].i = (int) res;
@@ -353,7 +362,7 @@ int parse_update_statement(char *statement) {
                                                     free_clause(set);
                                                     free(set_clause);
                                                     free_string_array(statement_array);
-                                                    free(storagemanager_table);
+                                                    free_table_from_storagemanager(table_size, storagemanager_table);
                                                     return -1;
                                                 }
                                                 break;
@@ -364,7 +373,7 @@ int parse_update_statement(char *statement) {
                                                     free_clause(set);
                                                     free(set_clause);
                                                     free_string_array(statement_array);
-                                                    free(storagemanager_table);
+                                                    free_table_from_storagemanager(table_size, storagemanager_table);
                                                     return -1;
                                                 }
                                                 record[DOUBLE].d = res;
@@ -373,7 +382,7 @@ int parse_update_statement(char *statement) {
                                                     free_clause(set);
                                                     free(set_clause);
                                                     free_string_array(statement_array);
-                                                    free(storagemanager_table);
+                                                    free_table_from_storagemanager(table_size, storagemanager_table);
                                                     return -1;
                                                 }
                                                 break;
@@ -391,7 +400,7 @@ int parse_update_statement(char *statement) {
                                         free_clause(set);
                                         free(set_clause);
                                         free_string_array(statement_array);
-                                        free(storagemanager_table);
+                                        free_table_from_storagemanager(table_size, storagemanager_table);
                                         return -1;
                                     }
                                     free_string_array(tmp_clause);
@@ -416,7 +425,7 @@ int parse_update_statement(char *statement) {
                         free_clause(set);
                         free(set_clause);
                         free_string_array(statement_array);
-                        free(storagemanager_table);
+                        free_table_from_storagemanager(table_size, storagemanager_table);
                         return 0;
 
                     }
