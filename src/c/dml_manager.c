@@ -344,6 +344,7 @@ int parse_update_statement(char *statement) {
                                                     free_clause(set);
                                                     free(set_clause);
                                                     free_string_array(statement_array);
+                                                    free(storagemanager_table);
                                                     return -1;
                                                 }
                                                 record[INTEGER].i = (int) res;
@@ -352,6 +353,7 @@ int parse_update_statement(char *statement) {
                                                     free_clause(set);
                                                     free(set_clause);
                                                     free_string_array(statement_array);
+                                                    free(storagemanager_table);
                                                     return -1;
                                                 }
                                                 break;
@@ -362,6 +364,7 @@ int parse_update_statement(char *statement) {
                                                     free_clause(set);
                                                     free(set_clause);
                                                     free_string_array(statement_array);
+                                                    free(storagemanager_table);
                                                     return -1;
                                                 }
                                                 record[DOUBLE].d = res;
@@ -370,6 +373,7 @@ int parse_update_statement(char *statement) {
                                                     free_clause(set);
                                                     free(set_clause);
                                                     free_string_array(statement_array);
+                                                    free(storagemanager_table);
                                                     return -1;
                                                 }
                                                 break;
@@ -387,6 +391,7 @@ int parse_update_statement(char *statement) {
                                         free_clause(set);
                                         free(set_clause);
                                         free_string_array(statement_array);
+                                        free(storagemanager_table);
                                         return -1;
                                     }
                                     free_string_array(tmp_clause);
@@ -411,6 +416,7 @@ int parse_update_statement(char *statement) {
                         free_clause(set);
                         free(set_clause);
                         free_string_array(statement_array);
+                        free(storagemanager_table);
                         return 0;
 
                     }

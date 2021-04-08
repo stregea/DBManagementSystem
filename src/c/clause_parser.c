@@ -136,6 +136,7 @@ Clause parse_set_clause(char *clauses) {
         clause = strtok(NULL, ",");
     }
 
+    free(temp_clauses);
     return set_clause;
 }
 
