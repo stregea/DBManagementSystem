@@ -323,18 +323,18 @@ int parse_update_statement(char *statement) {
                             // iterate through all records then update values based on set clause
                             for (int i = 0; i < table_size; i++) {
                                 for (int j = 0; j < set->clause_count; j++) {
-                                    char **tmp_clause = string_to_array(set->clauses[i]);
+                                    char **tmp_clause = string_to_array(set->clauses[j]);
 
-                                    Attribute attribute = get_attribute_from_table(table, tmp_clause[0]);
+                                    char * attribute_name = tmp_clause[0];
+                                    Attribute attribute = get_attribute_from_table(table, attribute_name);
 
                                     if (attribute != NULL) {
-                                        union record_item **record = &storagemanager_table[i]; // todo: may need to free this
+                                        union record_item *record = storagemanager_table[i]; // todo: may need to free this
 
                                         switch (attribute->type) {
                                             double res;
                                             case INTEGER:
-                                                res = calculate_value(set, tmp_clause,
-                                                                      record); // not returning correct value due to record?
+                                                res = calculate_value(set, tmp_clause, record); // not returning correct value due to record?
                                                 if (res == DBL_MAX) {
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
@@ -342,8 +342,8 @@ int parse_update_statement(char *statement) {
                                                     free_string_array(statement_array);
                                                     return -1;
                                                 }
-                                                record[INTEGER]->i = (int) res;
-                                                if (update_record(table->tableId, *record) == -1) {
+                                                record[INTEGER].i = (int) res;
+                                                if (update_record(table->tableId, record) == -1) {
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
@@ -360,8 +360,8 @@ int parse_update_statement(char *statement) {
                                                     free_string_array(statement_array);
                                                     return -1;
                                                 }
-                                                record[DOUBLE]->d = res;
-                                                if (update_record(table->tableId, *record) == -1) {
+                                                record[DOUBLE].d = res;
+                                                if (update_record(table->tableId, record) == -1) {
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
@@ -377,9 +377,15 @@ int parse_update_statement(char *statement) {
                                                 break;
                                         }
                                     } else {
-                                        // return error?
+                                        // return error
+                                        fprintf(stderr, "Error: %s does not exist as an attribute within %s.\n", attribute_name, table->name);
+                                        free_string_array(tmp_clause);
+                                        free_clause(set);
+                                        free(set_clause);
+                                        free_string_array(statement_array);
+                                        return -1;
                                     }
-                                    free_string_array(tmp_clause); // segfaults?
+                                    free_string_array(tmp_clause);
                                 }
                             }
                         }

@@ -401,9 +401,11 @@ struct Table *read_table_from_disk(FILE *file) {
 }
 
 Attribute get_attribute_from_table(Table table, char *attribute_name) {
-    for (int i = 0; i < table->attribute_count; i++) {
-        if (strcasecmp(table->attributes[i]->name, attribute_name) == 0) {
-            return table->attributes[i];
+    if(attribute_name != NULL){
+        for (int i = 0; i < table->attribute_count; i++) {
+            if (strcasecmp(table->attributes[i]->name, attribute_name) == 0) {
+                return table->attributes[i];
+            }
         }
     }
     return NULL;

@@ -33,7 +33,7 @@ Clause create_clause();
  * @param record - The record to use in the case the expression uses a table attribute.
  * @return A value based on the math expression passed in.
  */
-double calculate_value(Clause clause, char **math_expression, union record_item ** record);
+double calculate_value(Clause clause, char **math_expression, union record_item * record);
 /**
  * Parse the set clause into a Clause struct.
  * ex: set bar = bar + 1, baz = 1.1

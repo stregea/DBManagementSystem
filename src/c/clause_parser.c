@@ -35,7 +35,7 @@ Clause create_clause() {
     return clause;
 }
 
-double calculate_value(Clause clause, char **math_expression, union record_item **record) {
+double calculate_value(Clause clause, char **math_expression, union record_item *record) {
     Attribute attribute1 = NULL;
     Attribute attribute2 = NULL;
     double value1 = 0.0, value2 = 0.0;
@@ -52,9 +52,9 @@ double calculate_value(Clause clause, char **math_expression, union record_item 
     attribute1 = get_attribute_from_table(clause->table, math_expression[2]);
     if (attribute1 != NULL) {
         if (attribute1->type == INTEGER) {
-            value1 = record[INTEGER]->i;
+            value1 = record[INTEGER].i;
         } else if (attribute1->type == DOUBLE) {
-            value1 = record[DOUBLE]->d;
+            value1 = record[DOUBLE].d;
         } else { // error if char or varchar. todo: error if bool?
             return DBL_MAX;
         }
@@ -72,9 +72,9 @@ double calculate_value(Clause clause, char **math_expression, union record_item 
     attribute2 = get_attribute_from_table(clause->table, math_expression[4]);
     if (attribute2 != NULL) {
         if (attribute2->type == INTEGER) {
-            value2 = record[INTEGER]->i;
+            value2 = record[INTEGER].i;
         } else if (attribute2->type == DOUBLE) {
-            value2 = record[DOUBLE]->d;
+            value2 = record[DOUBLE].d;
         } else { // error if char or varchar. todo: error if bool?
             return DBL_MAX;
         }

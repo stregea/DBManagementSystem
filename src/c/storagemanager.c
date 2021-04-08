@@ -349,7 +349,7 @@ int update_record( int table_id, union record_item * record ){
             }
         }
     }
-    fprintf(stderr, "No such record");
+    fprintf(stderr, "No such record.\n");
     return 0;
 }
     

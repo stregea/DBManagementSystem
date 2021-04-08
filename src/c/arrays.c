@@ -3,28 +3,35 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
 void free_string_array(char **array) {
     if (array != NULL) {
         int index = 0;
-        while (array[index] != NULL) {
+        while (strcmp(array[index], END_OF_ARRAY) != 0) {
             free(array[index++]);
         }
+        free(array[index]);
         free(array);
     }
 }
 
 char **string_to_array(char *string) {
-//    int array_size = 0;
-    int tokens = 0;
-    char **array = malloc(sizeof(char *));
+    if(string == NULL){
+        return NULL;
+    }
 
-    char *token = strtok(string, " ;");
+    char* temp_string = malloc(strlen(string) + 1);
+    strcpy(temp_string, string);
+
+    int tokens = 0;
+    char **array = malloc(sizeof(char *) * 1);
+
+    char *token = strtok(temp_string, " ;");
     while (token != NULL) {
         array = realloc(array, sizeof(char *) * (tokens + 1));
         array[tokens] = malloc(strlen(token) + 1);
         strcpy(array[tokens], token);
 
-//        array_size++;
         tokens++;
         token = strtok(NULL, " ;");
     }
@@ -33,7 +40,7 @@ char **string_to_array(char *string) {
     array[tokens] = malloc(strlen(END_OF_ARRAY) + 1);
     strcpy(array[tokens], END_OF_ARRAY); // null terminate the array.
 
-    array[tokens + 1] = NULL;
+    free(temp_string);
     return array;
 }
 
