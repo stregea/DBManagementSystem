@@ -59,10 +59,15 @@ char *array_of_tokens_to_string(char **tokens, char *starting_token, char *endin
     char *string = NULL;
     size_t string_size = 0;
     int starting_index = 0;
+    int array_size = get_array_size(tokens);
+
+    if(array_size == 0){
+        return NULL;
+    }
 
     // get to the starting token.
     while (strcasecmp(tokens[starting_index], starting_token) != 0) {
-        if (tokens[starting_index] == NULL) { // starting token doesn't exist.
+        if (strcasecmp(tokens[starting_index], END_OF_ARRAY) == 0) { // starting token doesn't exist.
             return NULL;
         }
         starting_index++;
@@ -70,8 +75,8 @@ char *array_of_tokens_to_string(char **tokens, char *starting_token, char *endin
 
     // calculate the total string size to create
     int index = starting_index;
-    while (strcasecmp(tokens[index], ending_token) != 0) {
-        if (tokens[index] == NULL) { // ending token doesn't exist.
+    while (index < array_size && strcasecmp(tokens[index], ending_token) != 0) {
+        if (strcasecmp(tokens[starting_index], END_OF_ARRAY) == 0) { // ending token doesn't exist.
             return NULL;
         }
         string_size += strlen(tokens[index]) + 1;
