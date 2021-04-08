@@ -667,9 +667,9 @@ static int read_page( struct page_data ** p_out, int page_id,
 	}
 	
 	//read in page
-	int length = snprintf(NULL, 0, "%s%d", db_db_loc, page_id);
+	int length = snprintf(NULL, 0, "%s/%d", db_db_loc, page_id);
 	char * page_loc = malloc(length+1);
-	snprintf(page_loc, length+1, "%s%d", db_db_loc, page_id);
+	snprintf(page_loc, length+1, "%s/%d", db_db_loc, page_id);
 	
 	FILE * page_file = fopen(page_loc, "rb");
 
