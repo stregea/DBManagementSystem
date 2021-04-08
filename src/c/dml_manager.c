@@ -283,9 +283,9 @@ int parse_update_statement(char *statement) {
                             where->table = table;
                         }
 
-                        union record_item ***storagemanager_table = NULL;
+                        union record_item **storagemanager_table = NULL;
 
-                        int table_size = get_records(table->tableId, storagemanager_table);
+                        int table_size = get_records(table->tableId, &storagemanager_table);
                         if (table_size == -1) {
                             if (includes_where) {
                                 free(where_clause);
@@ -328,7 +328,7 @@ int parse_update_statement(char *statement) {
                                     Attribute attribute = get_attribute_from_table(table, tmp_clause[0]);
 
                                     if (attribute != NULL) {
-                                        union record_item **record = storagemanager_table[i]; // todo: may need to free this
+                                        union record_item **record = &storagemanager_table[i]; // todo: may need to free this
 
                                         switch (attribute->type) {
                                             double res;

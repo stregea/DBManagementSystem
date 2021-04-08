@@ -14,25 +14,26 @@ void free_string_array(char **array) {
 }
 
 char **string_to_array(char *string) {
-    int array_size = 0;
+//    int array_size = 0;
     int tokens = 0;
     char **array = malloc(sizeof(char *));
 
     char *token = strtok(string, " ;");
     while (token != NULL) {
-        array = realloc(array, sizeof(char *) * ++array_size);
+        array = realloc(array, sizeof(char *) * (tokens + 1));
         array[tokens] = malloc(strlen(token) + 1);
         strcpy(array[tokens], token);
 
+//        array_size++;
         tokens++;
         token = strtok(NULL, " ;");
     }
-    array = realloc(array, sizeof(char *) * ++array_size);
+    array = realloc(array, sizeof(char *) * (tokens + 1));
 
     array[tokens] = malloc(strlen(END_OF_ARRAY) + 1);
-    strcpy(array[tokens++], END_OF_ARRAY); // null terminate the array.
+    strcpy(array[tokens], END_OF_ARRAY); // null terminate the array.
 
-    array[tokens] = NULL;
+    array[tokens + 1] = NULL;
     return array;
 }
 
