@@ -20,6 +20,7 @@ int get_index_of_word_from_string(const char *string, const char *word) {
     int i, j, flag;
 
     i = 0;
+    flag = -1;
     while (string[i] != '\0') {
         if (string[i] == word[0]) {
             flag = 1;
@@ -206,6 +207,9 @@ int parse_insert_statement(char *statement) {
                         if (insert_record(table->tableId, record) == -1) {
                             fprintf(stderr, "Error: Cannot insert:\n\t");
                             print_record(table, record);
+                            free(tuples);
+                            freeRecord(record);
+                            return -1;
                         }
 
                         freeRecord(record);
