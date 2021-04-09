@@ -507,7 +507,9 @@ int parse_delete_from_statement(char *statement) {
     // parse where clause
     Clause where_clause = parse_where_clause(condition);
 
-    printf("clauses: %s\n", where_clause->clauses->array[0]);
+    printf("clauses: %s\n", where_clause->clauses->array[1]);
+
+    free(where_clause);
 
     /**
     if(selected_records == NULL) {

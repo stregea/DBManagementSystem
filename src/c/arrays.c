@@ -7,6 +7,7 @@ StringArray create_string_array() {
     StringArray string = malloc(sizeof(struct StringArray));
     string->size = 0;
     string->array = malloc(sizeof(char *));
+    return string;
 }
 
 void free_string_array(StringArray string) {

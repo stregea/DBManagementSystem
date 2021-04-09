@@ -27,7 +27,7 @@ void free_clause(Clause clause) {
 Clause create_clause() {
     Clause clause = malloc(sizeof(struct Clause));
     clause->clauses = create_string_array();
-    clause->operators = NULL;
+    clause->operators = create_string_array();
 
     return clause;
 }
