@@ -182,6 +182,7 @@ Clause parse_where_clause(char *clauses) {
     }
     printf("logical_operator_size: %d\n", where_clause->operators->size);
 
+    free(condition);
     condition = strdup(clauses);
     printf("condition: %s\n", condition);
 
@@ -195,6 +196,7 @@ Clause parse_where_clause(char *clauses) {
         token = strstr(condition, where_clause->operators->array[i]);
 
         if (token == NULL){
+            free(condition);
             return NULL;
         }
 
@@ -229,6 +231,6 @@ Clause parse_where_clause(char *clauses) {
     for(int i = 0; i < where_clause->operators->size; i++) {
         printf("\"%s\"\n\n", where_clause->operators->array[i]);
     }
-
+    free(condition);
     return where_clause;
 }
