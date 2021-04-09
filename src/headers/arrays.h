@@ -28,7 +28,7 @@ void free_string_array(StringArray array);
  * @param array - The array to determine the size for;
  * @return the size of the array.
  */
-//int get_array_size(char **array);
+int get_array_size(StringArray array);
 
 /**
  * Create a string of tokens based on two specified tokens.

@@ -11,10 +11,13 @@ StringArray create_string_array() {
 
 void free_string_array(StringArray string) {
     if (string != NULL) {
-        for (int i = 0; i <= string->size; i++) {
-            if (string->array[i] != NULL) {
-                free(string->array[i]);
+        if(string->array != NULL){
+            for (int i = 0; i < string->size; i++) {
+                if (string->array[i] != NULL) {
+                    free(string->array[i]);
+                }
             }
+            free(string->array);
         }
         free(string);
     }
@@ -41,7 +44,7 @@ StringArray string_to_array(char *string) {
 
     stringArray->array[stringArray->size] = malloc(strlen(END_OF_ARRAY) + 1);
     strcpy(stringArray->array[stringArray->size], END_OF_ARRAY); // null terminate the array.
-
+    stringArray->size++;
     free(temp_string);
     return stringArray;
 }
@@ -75,15 +78,9 @@ StringArray string_to_array(char *string) {
 //}
 
 
-//int get_array_size(char **array) {
-//    int size = 0;
-//
-//    while (strcasecmp(array[size], END_OF_ARRAY) != 0) {
-//        size++;
-//    }
-//
-//    return size;
-//}
+int get_array_size(StringArray array) {
+    return array->size - 1;
+}
 
 char *
 array_of_tokens_to_string(StringArray tokens, char *starting_token, char *ending_token, bool includes_starting_token) {

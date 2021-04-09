@@ -75,7 +75,7 @@ double calculate_value(Clause clause, StringArray math_expression, union record_
         value1 = strtod(math_expression->array[2], &val1pointer);
     }
 
-    if (math_expression->size == 3) { // ex, bar = 3, or bar = foo
+    if (get_array_size(math_expression) == 3) { // ex, bar = 3, or bar = foo
         return value1;
     }
 
@@ -150,12 +150,11 @@ Clause parse_set_clause(char *clauses) {
             last--;
         }
 
-        set_clause->clauses = realloc(set_clause->clauses, sizeof(char *) * (set_clause->clause_count));
+        set_clause->clauses->array = realloc(set_clause->clauses->array, sizeof(char *) * (set_clause->clauses->size + 1));
 
         // copy clause to array
-        set_clause->clauses->array[set_clause->clause_count] = malloc(strlen(clause) + 1);
-        strcpy(set_clause->clauses->array[set_clause->clause_count++], clause);
-        set_clause->clauses->size++; // may not need clause_count
+        set_clause->clauses->array[set_clause->clauses->size] = malloc(strlen(clause) + 1);
+        strcpy(set_clause->clauses->array[set_clause->clauses->size++], clause);
 
         clause = strtok(NULL, ",");
     }
