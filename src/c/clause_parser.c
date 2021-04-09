@@ -50,24 +50,20 @@ double calculate_value(Clause clause, StringArray math_expression, union record_
     attribute1 = get_attribute_from_table(clause->table, math_expression->array[2]);
     if (attribute1 != NULL) {
         if (attribute1->type == INTEGER || attribute1->type == DOUBLE) {
-            int i = 0;
-            // iterate through each attribute in the table.
-            while(i < clause->table->attribute_count){
-                if (strcasecmp(clause->table->attributes[i]->name, attribute1->name) == 0) {
+            int i = get_attribute_index(clause->table, attribute1);
 
-                    // set the value from the index of the attribute within the table.
-                    if(attribute1->type == INTEGER){
-                        value1 = record[i].i;
-                        break;
-                    }
-                    else{ // otherwise a double
-                        value1 = record[i].d;
-                        break;
-                    }
-                }
-                i++;
+            if(i == -1){
+                return DBL_MAX;
             }
-        } else { // error if char or varchar. todo: error if bool?
+
+            if(attribute1->type == INTEGER){
+                value1 = record[i].i;
+            }
+            else{ // otherwise a double
+                value1 = record[i].d;
+            }
+
+        } else {
             return DBL_MAX;
         }
     } else { // couldn't find attribute in table, assume regular value
@@ -85,24 +81,19 @@ double calculate_value(Clause clause, StringArray math_expression, union record_
     if (attribute2 != NULL) {
         if (attribute2->type == INTEGER || attribute2->type == DOUBLE) {
 
-            int i = 0;
-            // iterate through each attribute in the table.
-            while(i < clause->table->attribute_count){
-                if (strcasecmp(clause->table->attributes[i]->name, attribute2->name) == 0) {
+            int i = get_attribute_index(clause->table, attribute2);
 
-                    // set the value from the index of the attribute within the table.
-                    if(attribute2->type == INTEGER){
-                        value2 = record[i].i;
-                        break;
-                    }
-                    else{ // otherwise a double
-                        value2 = record[i].d;
-                        break;
-                    }
-                }
-                i++;
+            if(i == -1){
+                return DBL_MAX;
             }
-        } else { // error if char or varchar. todo: error if bool?
+
+            if(attribute2->type == INTEGER){
+                value2 = record[i].i;
+            }
+            else{ // otherwise a double
+                value2 = record[i].d;
+            }
+        } else {
             return DBL_MAX;
         }
     } else {

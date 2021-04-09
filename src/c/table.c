@@ -401,7 +401,7 @@ struct Table *read_table_from_disk(FILE *file) {
 }
 
 Attribute get_attribute_from_table(Table table, char *attribute_name) {
-    if(attribute_name != NULL){
+    if(table != NULL && attribute_name != NULL){
         for (int i = 0; i < table->attribute_count; i++) {
             if (strcasecmp(table->attributes[i]->name, attribute_name) == 0) {
                 return table->attributes[i];
@@ -409,4 +409,17 @@ Attribute get_attribute_from_table(Table table, char *attribute_name) {
         }
     }
     return NULL;
+}
+
+int get_attribute_index(Table table, Attribute attribute){
+    if(table != NULL && attribute != NULL){
+        if(table != NULL && attribute != NULL){
+            for (int i = 0; i < table->attribute_count; i++) {
+                if (strcasecmp(table->attributes[i]->name, attribute->name) == 0) {
+                    return i;
+                }
+            }
+        }
+    }
+    return -1;
 }

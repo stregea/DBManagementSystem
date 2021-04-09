@@ -83,7 +83,7 @@ void print_record(Table table, union record_item *record) {
     }
 }
 
-union record_item create_record_item(int * flag, Attribute attribute, char *value) {
+union record_item create_record_item(int *flag, Attribute attribute, char *value) {
     union record_item recordItem;
 
     if (attribute->constraints->notnull == true && strcasecmp(value, "null") == 0) {
@@ -168,12 +168,12 @@ union record_item *create_record_from_statement(Table table, char *tuple) {
 
     for (int i = 0; i < table->attribute_count; i++) {
 
-        int * flag = malloc(sizeof(int) * 1);
+        int *flag = malloc(sizeof(int) * 1);
         flag[0] = 0;
         union record_item recordItem = create_record_item(flag, table->attributes[i], record_tuple->tuple[i]);
 
         // check for any potential errors
-        if ( flag[0] == -1) {
+        if (flag[0] == -1) {
             free(flag);
             free(temp);
             free_tuple(record_tuple);
@@ -367,13 +367,21 @@ int parse_update_statement(char *statement) {
                                     Attribute attribute = get_attribute_from_table(table, attribute_name);
 
                                     if (attribute != NULL) {
+                                        int record_index = get_attribute_index(table, attribute);
+                                        if (record_index == -1) {
+                                            free_string_array(tmp_clause);
+                                            free_clause(set);
+                                            free(set_clause);
+                                            free_string_array(statement_array);
+                                            free_table_from_storagemanager(table_size, storagemanager_table);
+                                            return -1;
+                                        }
 
                                         switch (attribute->type) {
                                             double res;
                                             case INTEGER:
-                                                res = calculate_value(set, tmp_clause,
-                                                                      record); // not returning correct value due to record?
-                                                record[INTEGER].i = (int) res;
+                                                res = calculate_value(set, tmp_clause, record);
+                                                record[record_index].i = (int) res;
                                                 if (res == DBL_MAX || update_record(table->tableId, record) == -1) {
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
@@ -385,7 +393,7 @@ int parse_update_statement(char *statement) {
                                                 break;
                                             case DOUBLE:
                                                 res = calculate_value(set, tmp_clause, record);
-                                                record[DOUBLE].d = res;
+                                                record[record_index].d = res;
                                                 if (res == DBL_MAX || update_record(table->tableId, record) == -1) {
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);

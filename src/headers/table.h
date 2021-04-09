@@ -185,11 +185,18 @@ struct PrimaryKey *read_primary_key_from_disk(FILE *file, struct Table *table);
 struct Table *read_table_from_disk(FILE *file);
 
 /**
- * Retrive an attribute from a table.
+ * Retrieve an attribute from a table.
  * @param table - The table to search.
  * @param attribute_name - The specified attribute.
  * @return an Attribute. NULL if not found.
  */
 Attribute get_attribute_from_table(Table table, char *attribute_name);
 
+/**
+ * Return the index of the attribute in which it appears in the table.
+ * @param table - The table to search.
+ * @param attribute - The specified attribute.
+ * @return The index of the attribute. -1 if it doesn't exist.
+ */
+int get_attribute_index(Table table, Attribute attribute);
 #endif
