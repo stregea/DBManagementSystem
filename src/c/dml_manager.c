@@ -268,7 +268,7 @@ int parse_update_statement(char *statement) {
     char *temp_statement = malloc(strlen(statement) + 1);
     strcpy(temp_statement, statement);
 
-    char **statement_array = string_to_array(temp_statement);
+    StringArray statement_array = string_to_array(temp_statement);
     free(temp_statement);
 
     if (get_index_of_word_from_string(statement, "update") == -1 ||
@@ -280,10 +280,10 @@ int parse_update_statement(char *statement) {
     }
 
     int index = 0;
-    if (statement_array[index] != NULL && strcasecmp(statement_array[index++], "update") == 0) {
+    if (statement_array->array[index] != NULL && strcasecmp(statement_array->array[index++], "update") == 0) {
 
-        if (statement_array[index] != NULL) {
-            char *table_name = statement_array[index++];
+        if (statement_array->array[index] != NULL) {
+            char *table_name = statement_array->array[index++];
             Table table = get_table_from_catalog(table_name);
 
             if (table != NULL) {
@@ -361,9 +361,9 @@ int parse_update_statement(char *statement) {
                                 union record_item *record = storagemanager_table[i]; // todo: may need to free this
 
                                 for (int j = 0; j < set->clause_count; j++) {
-                                    char **tmp_clause = string_to_array(set->clauses[j]);
+                                    StringArray tmp_clause = string_to_array(set->clauses->array[j]);
 
-                                    char *attribute_name = tmp_clause[0];
+                                    char *attribute_name = tmp_clause->array[0];
                                     Attribute attribute = get_attribute_from_table(table, attribute_name);
 
                                     if (attribute != NULL) {

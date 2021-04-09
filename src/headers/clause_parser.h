@@ -2,13 +2,13 @@
 #define DBMANAGEMENTSYSTEM_CLAUSE_PARSER_H
 #include "table.h"
 #include "storagemanager.h"
+#include "arrays.h"
 
 struct Clause {
-    int array_size; // the size of the clause array.
     int clause_count; // the total count of clauses.
 //    int attribute_count; // todo (may not need): counter to keep track of the total attributes specified.
 //    Attribute * attributes; // todo (may not need): Array of attributes that point to a tables particular attribute.
-    char **clauses; // 2-D array of strings that at each row will contain each specified clause
+    StringArray clauses; // 2-D array of strings that at each row will contain each specified clause
     Table table;
 };
 typedef struct Clause *Clause;
@@ -33,7 +33,7 @@ Clause create_clause();
  * @param record - The record to use in the case the expression uses a table attribute.
  * @return A value based on the math expression passed in.
  */
-double calculate_value(Clause clause, char **math_expression, union record_item * record);
+double calculate_value(Clause clause, StringArray math_expression, union record_item * record);
 /**
  * Parse the set clause into a Clause struct.
  * ex: set bar = bar + 1, baz = 1.1
