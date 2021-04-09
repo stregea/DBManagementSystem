@@ -21,7 +21,7 @@ int get_index_of_word_from_string(const char *string, const char *word) {
     int i, j, flag;
 
     i = 0;
-//    flag = -1;
+    flag = 0;
     while (string[i] != '\0') {
         if (string[i] == word[0]) {
             flag = 1;
