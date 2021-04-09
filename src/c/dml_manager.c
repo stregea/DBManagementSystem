@@ -9,6 +9,7 @@
 #include <float.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 /**
  * Retrieve the index of the first occurrence of a word within a string.
@@ -82,14 +83,18 @@ void print_record(Table table, union record_item *record) {
     }
 }
 
-union record_item create_record_item(Attribute attribute, char *value) {
+union record_item create_record_item(int * flag, Attribute attribute, char *value) {
     union record_item recordItem;
 
-    int string_size;
+    if (attribute->constraints->notnull == true && strcasecmp(value, "null") == 0) {
+        fprintf(stderr, "Error: %s cannot be null.\n", attribute->name);
+        flag[0] = -1;
+        return recordItem;
+    }
 
+    int string_size;
     if (attribute->type == CHAR || attribute->type == VARCHAR) {
         string_size = attribute->size;
-
         // If '"' is on both ends of the string, add 2 to the allowed size of the string
         // since, they don't technically count towards the total size of the string.
         if (value[0] == '"' && value[strlen(value) - 1] == '"') {
@@ -99,35 +104,48 @@ union record_item create_record_item(Attribute attribute, char *value) {
 
     switch (attribute->type) {
         case INTEGER:
-            recordItem.i = atoi(value);
+            if (strcasecmp(value, "null") == 0) {
+                recordItem.i = INT_MIN;
+            } else {
+                recordItem.i = atoi(value);
+            }
             break;
         case DOUBLE:
-            recordItem.d = atof(value);
+            if (strcasecmp(value, "null") == 0) {
+                recordItem.d = DBL_MIN;
+            } else {
+                recordItem.d = atof(value);
+            }
             break;
         case BOOL:
-            if (strcasecmp(value, "true") == 0) { // i'm not too sure about this one.
+            if (strcasecmp(value, "null") == 0) {
+                recordItem.b[0] = NULL;
+                recordItem.b[1] = 0;
+            } else if (strcasecmp(value, "true") == 0) {
                 recordItem.b[0] = true;
-                recordItem.b[1] = true;
+                recordItem.b[1] = 1;
             } else {
                 recordItem.b[0] = false;
-                recordItem.b[1] = false;
+                recordItem.b[1] = 1;
             }
             break;
         case CHAR:
-            if (strlen(value) != string_size) {
+            if (strcasecmp(value, "null") == 0 || strlen(value) == string_size) {
+                strcpy(recordItem.c, value);
+            } else { // string size isn't correct
                 fprintf(stderr, "Error: %s's length must be equal to %d.\n", value, attribute->size);
-                strcpy(recordItem.c, "ERROR"); // not sure if this is how we want to handle this?
+                flag[0] = -1;
                 return recordItem;
             }
-            strcpy(recordItem.c, value);
             break;
         case VARCHAR:
-            if (strlen(value) > string_size) {
+            if (strcasecmp(value, "null") == 0 || strlen(value) <= string_size) {
+                strcpy(recordItem.v, value);
+            } else { // string size isn't correct
                 fprintf(stderr, "Error: %s's length must be <= to %d.\n", value, attribute->size);
-                strcpy(recordItem.v, "ERROR"); // not sure if this is how we want to handle this?
+                flag[0] = -1;
                 return recordItem;
             }
-            strcpy(recordItem.v, value);
             break;
         default:
             break;
@@ -149,16 +167,21 @@ union record_item *create_record_from_statement(Table table, char *tuple) {
     }
 
     for (int i = 0; i < table->attribute_count; i++) {
-        union record_item recordItem = create_record_item(table->attributes[i],
-                                                          record_tuple->tuple[i]);
 
-        if ((table->attributes[i]->type == CHAR && strcasecmp(recordItem.c, "ERROR") == 0) ||
-            (table->attributes[i]->type == VARCHAR && strcasecmp(recordItem.v, "ERROR") == 0)) {
+        int * flag = malloc(sizeof(int) * 1);
+        flag[0] = 0;
+        union record_item recordItem = create_record_item(flag, table->attributes[i], record_tuple->tuple[i]);
+
+        // check for any potential errors
+        if ( flag[0] == -1) {
+            free(flag);
             free(temp);
             free_tuple(record_tuple);
             freeRecord(record);
             return NULL;
         }
+
+        free(flag);
         record[i] = recordItem;
     }
 
@@ -231,9 +254,9 @@ int parse_insert_statement(char *statement) {
     return -1;
 }
 
-void free_table_from_storagemanager(int table_size, union record_item **storagemanager_table){
-    if(storagemanager_table != NULL){
-        for(int i = 0; i < table_size; i++){
+void free_table_from_storagemanager(int table_size, union record_item **storagemanager_table) {
+    if (storagemanager_table != NULL) {
+        for (int i = 0; i < table_size; i++) {
             free(storagemanager_table[i]);
         }
         free(storagemanager_table);
@@ -340,7 +363,7 @@ int parse_update_statement(char *statement) {
                                 for (int j = 0; j < set->clause_count; j++) {
                                     char **tmp_clause = string_to_array(set->clauses[j]);
 
-                                    char * attribute_name = tmp_clause[0];
+                                    char *attribute_name = tmp_clause[0];
                                     Attribute attribute = get_attribute_from_table(table, attribute_name);
 
                                     if (attribute != NULL) {
@@ -348,7 +371,8 @@ int parse_update_statement(char *statement) {
                                         switch (attribute->type) {
                                             double res;
                                             case INTEGER:
-                                                res = calculate_value(set, tmp_clause, record); // not returning correct value due to record?
+                                                res = calculate_value(set, tmp_clause,
+                                                                      record); // not returning correct value due to record?
                                                 record[INTEGER].i = (int) res;
                                                 if (res == DBL_MAX || update_record(table->tableId, record) == -1) {
                                                     free_string_array(tmp_clause);
@@ -380,7 +404,8 @@ int parse_update_statement(char *statement) {
                                         }
                                     } else {
                                         // return error
-                                        fprintf(stderr, "Error: %s does not exist as an attribute within %s.\n", attribute_name, table->name);
+                                        fprintf(stderr, "Error: %s does not exist as an attribute within %s.\n",
+                                                attribute_name, table->name);
                                         free_string_array(tmp_clause);
                                         free_clause(set);
                                         free(set_clause);
