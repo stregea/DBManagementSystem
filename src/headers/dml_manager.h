@@ -61,4 +61,8 @@ void freeRecord(union record_item *record);
  * @return an array of record items.
  */
 union record_item * create_record_from_statement(Table table, char *tuple);
+
+// todo
+bool does_record_satisfy_condition(union record_item *record, char *condition, Table table);
+
 #endif

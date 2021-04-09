@@ -458,7 +458,132 @@ int parse_update_statement(char *statement) {
 }
 
 // TODO
-int parse_delete_from_statement(char *statement) { return 0; }
+int parse_delete_from_statement(char *statement) { 
+    
+    // delete token
+    char *token = strtok(statement, " ");
+    //printf("delete token: %s\n", token);
+
+    // expected to be "from"
+    token = strtok(NULL, " ");
+    //printf("from token: %s\n", token);
+
+    if(token == NULL && strcasecmp(token, "from") != 0) {
+        fprintf(stderr, "Error: expected \"from\" got %s\n", token);
+        return -1;
+    }
+
+    // expected to be existing table name
+    char *table_name = strtok(NULL, " ");
+    //printf("table_name: %s\n", table_name);
+    Table table = get_table_from_catalog(table_name);
+
+    if (table == NULL) { // table doesn't exist
+        fprintf(stderr, "Error: Table %s does not exist.\n", table_name);
+        return -1;
+    }
+
+    // expected to be "where"
+    token = strtok(NULL, " ");
+    //printf("where token: %s\n", token);
+
+    if(token == NULL && strcasecmp(token, "where") != 0) {
+        fprintf(stderr, "Error: expected \"where\" got %s\n", token);
+        return -1;
+    }
+
+    union record_item **records = NULL;
+    int table_size = get_records(table->tableId, &records);
+
+    if(table_size == -1) {
+        fprintf(stderr, "Error: unable to records from table %s\n", table_name);
+        return -1;
+    }
+
+    // conditionals
+    char *condition = strtok(NULL, ";");
+    printf("condition: %s\n", condition);
+    
+    // parse where clause
+    Clause where_clause = parse_where_clause(condition);
+
+    printf("clauses: %s\n", where_clause->clauses->array[0]);
+
+    /**
+    if(selected_records == NULL) {
+        // do not consider this an error
+        printf("Unable to find records that satisfy condition: %s\n", condition);
+        return 0;
+    }
+
+    
+    union record_item *record = records[0];
+    union record_item *key_values = malloc(table->key_indices_count * sizeof(union record_item*));
+    
+    int key_index;
+    for(int i = 0; i < table->key_indices_count; i++) {
+        key_index = table->key_indices[i];
+        key_values[i] = record[i];
+    }
+    
+    int remove_result = remove_record(table->tableId, key_values);
+    // print all records
+    for(int i = 0; i < table_size; i++) {
+        print_record(table, records[i]);
+    }
+    */
+    return 0; 
+ }
 
 // TODO
 int parse_select_statement(char *statement) { return 0; }
+
+bool does_record_satisfy_condition(union record_item *record, char *condition, Table table) {
+
+    size_t condition_length = strlen(condition);
+    char *condition_formatted = malloc(condition_length + 2);
+    strcpy(condition_formatted, condition);
+    condition_formatted[condition_length + 1] = ';';
+    condition_formatted[condition_length + 2] = '0';
+
+    char *attribute_name = strtok(condition, " ");
+    printf("attribute_name: \"%s\"\n", attribute_name);
+    union record_item item;
+    for(int i = 0; i < table->attribute_count; i++) {
+        if(strcasecmp(table->attributes[i]->name, attribute_name) == 0) {
+            item = record[i];
+        }
+    }
+
+    /*
+    if(item == NULL) {
+        fprintf(stderr, "Error: no attribute \"%s\" in table\n", attribute_name);
+        return false;
+    }
+    */
+
+    char *operator =  strtok(NULL, " ");
+    char *value = strtok(NULL, ";");
+    printf("operator: \"%s\"\n", operator);
+    printf("value: \"%s\"\n", value);
+
+    int type = get_conditional(operator);
+    
+    switch(type) {
+      case EQUALS :
+        break;
+      case GREATER_THAN :
+        break;
+      case GREATER_THAN_OR_EQUAL_TO :
+        break;
+      case LESS_THAN :
+        break;
+      case LESS_THAN_OR_EQUAL_TO :
+        break;
+      case NOT_EQUALS:
+        break;
+      default :
+        fprintf(stderr, "Error: no operator \"%s\" in table\n", operator);
+    }
+    return true;
+}

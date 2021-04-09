@@ -17,7 +17,7 @@ enum Math {
 
 // Conditional operations
 enum Conditionals {
-    EQUALS = 0, GREATER_THAN = 1, GREATER_THAN_OR_EQUAL_TO = 2, LESS_THAN = 3, LESS_THAN_OR_EQUAL_TO = 4
+    EQUALS = 0, GREATER_THAN = 1, GREATER_THAN_OR_EQUAL_TO = 2, LESS_THAN = 3, LESS_THAN_OR_EQUAL_TO = 4, NOT_EQUALS = 5
 };
 
 /**

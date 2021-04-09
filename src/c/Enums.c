@@ -41,6 +41,8 @@ int get_conditional(char *conditional) {
         return LESS_THAN;
     } else if (strcmp(conditional, "<=") == 0) {
         return LESS_THAN_OR_EQUAL_TO;
-    }
+    } else if (strcmp(conditional, "!=") == 0) {
+        return NOT_EQUALS;
+    }    
     return INVALID;
 }
