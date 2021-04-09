@@ -114,15 +114,17 @@ double calculate_value(Clause clause, StringArray math_expression, union record_
 
 }
 
-void clean_clause(char* clause){
-    while (clause[0] == ' ') {
-        clause++;
+char* clean_clause(char* clause){
+    char *tmp = clause;
+    while (tmp[0] == ' ') {
+        tmp++;
     }
-    int last = strlen(clause) - 1;
-    while (clause[last] == ' ') {
-        clause[last] = '\0';
+    int last = strlen(tmp) - 1;
+    while (tmp[last] == ' ') {
+        tmp[last] = '\0';
         last--;
     }
+    return tmp;
 }
 
 // TODO - implement attributes from Clause??
@@ -141,7 +143,7 @@ Clause parse_set_clause(char *clauses) {
     while (clause != NULL) {
         // remove any misleading spaces
 
-        clean_clause(clause);
+        clause = clean_clause(clause);
 
         set_clause->clauses->array = realloc(set_clause->clauses->array, sizeof(char *) * (set_clause->clauses->size + 1));
 
@@ -196,13 +198,11 @@ Clause parse_where_clause(char *clauses) {
             return NULL;
         }
 
-        clean_clause(condition);
-
         *token = '\0';
         token = token + strlen(where_clause->operators->array[i]);
         printf("op: [%s]\n", where_clause->operators->array[i]);
 
-
+        condition = clean_clause(condition);
         printf("condition: [%s]\n", condition);
         where_clause->clauses->array = realloc(where_clause->clauses->array, sizeof(char*) * (where_clause->clauses->size + 1));
         where_clause->clauses->array[where_clause->clauses->size] = malloc(strlen(condition) + 1);
@@ -211,7 +211,7 @@ Clause parse_where_clause(char *clauses) {
         where_clause->clauses->size++;
 
         if(i == where_clause->operators->size - 1){ // strstr makes us do this
-            clean_clause(token);
+            token = clean_clause(token);
 
             printf("condition: [%s]\n", token);
             where_clause->clauses->array = realloc(where_clause->clauses->array, sizeof(char*) * (where_clause->clauses->size + 1));
