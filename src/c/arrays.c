@@ -82,8 +82,7 @@ int get_array_size(StringArray array) {
     return array->size - 1;
 }
 
-char *
-array_of_tokens_to_string(StringArray tokens, char *starting_token, char *ending_token, bool includes_starting_token) {
+char *array_of_tokens_to_string(StringArray tokens, char *starting_token, char *ending_token, bool includes_starting_token) {
     char *string = NULL;
     size_t string_size = 0;
     int starting_index = 0;

@@ -360,7 +360,7 @@ int parse_update_statement(char *statement) {
                             for (int i = 0; i < table_size; i++) {
                                 union record_item *record = storagemanager_table[i]; // todo: may need to free this
 
-                                for (int j = 0; j < set->clause_count; j++) {
+                                for (int j = 0; j < set->clauses->size; j++) {
                                     StringArray tmp_clause = string_to_array(set->clauses->array[j]);
 
                                     char *attribute_name = tmp_clause->array[0];

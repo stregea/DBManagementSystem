@@ -5,10 +5,10 @@
 #include "arrays.h"
 
 struct Clause {
-    int clause_count; // the total count of clauses.
 //    int attribute_count; // todo (may not need): counter to keep track of the total attributes specified.
 //    Attribute * attributes; // todo (may not need): Array of attributes that point to a tables particular attribute.
     StringArray clauses; // 2-D array of strings that at each row will contain each specified clause
+    StringArray operators;
     Table table;
 };
 typedef struct Clause *Clause;

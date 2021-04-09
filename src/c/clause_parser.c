@@ -9,12 +9,12 @@
 void free_clause(Clause clause) {
     if (clause != NULL) {
         if (clause->clauses != NULL) {
-//            for (int i = 0; i < clause->clause_count; i++) {
-//                free(clause->clauses[i]);
-//            }
             free_string_array(clause->clauses);
         }
 
+        if(clause->operators != NULL){
+            free_string_array(clause->operators);
+        }
 //        if(clause->attributes != NULL){
 //            // NOTE: no need to free the pointers here. freeTable will handle it.
 //            free(clause->attributes);
@@ -26,10 +26,8 @@ void free_clause(Clause clause) {
 
 Clause create_clause() {
     Clause clause = malloc(sizeof(struct Clause));
-    clause->clause_count = 0;
-//    clause->attribute_count = 0;
-//    clause->attributes = malloc(sizeof(struct Attribute));
     clause->clauses = create_string_array();
+    clause->operators = NULL;
 
     return clause;
 }
@@ -116,6 +114,16 @@ double calculate_value(Clause clause, StringArray math_expression, union record_
 
 }
 
+void clean_clause(char* clause){
+    while (clause[0] == ' ') {
+        clause++;
+    }
+    int last = strlen(clause) - 1;
+    while (clause[last] == ' ') {
+        clause[last] = '\0';
+        last--;
+    }
+}
 
 // TODO - implement attributes from Clause??
 Clause parse_set_clause(char *clauses) {
@@ -132,14 +140,8 @@ Clause parse_set_clause(char *clauses) {
 
     while (clause != NULL) {
         // remove any misleading spaces
-        while (clause[0] == ' ') {
-            clause++;
-        }
-        int last = strlen(clause) - 1;
-        while (clause[last] == ' ') {
-            clause[last] = '\0';
-            last--;
-        }
+
+        clean_clause(clause);
 
         set_clause->clauses->array = realloc(set_clause->clauses->array, sizeof(char *) * (set_clause->clauses->size + 1));
 
@@ -159,6 +161,74 @@ Clause parse_where_clause(char *clauses) {
     // accepted keywords: AND, OR, NOT
 
     Clause where_clause = create_clause();
+    where_clause->operators = create_string_array();
+
+    char* condition = strdup(clauses);
+
+    char* token = strtok(condition, " ");
+
+    // determine the difference kinds of logical operators found in string
+    while(token != NULL){
+        if(strcasecmp(token, "and") == 0 || strcasecmp(token, "or") == 0){
+            where_clause->operators->array = realloc(where_clause->operators->array, sizeof(char *) * (where_clause->operators->size + 1));
+            where_clause->operators->array[where_clause->operators->size] = malloc(strlen(token) + 1);
+
+            strcpy(where_clause->operators->array[where_clause->operators->size], token);
+            where_clause->operators->size++;
+        }
+        token = strtok(NULL, " ");
+    }
+    printf("logical_operator_size: %d\n", where_clause->operators->size);
+
+    condition = strdup(clauses);
+    printf("condition: %s\n", condition);
+
+    // build the where clause
+    for(int i = 0; i < where_clause->operators->size; i++){
+
+        if(i != 0){
+            condition = token;
+        }
+
+        token = strstr(condition, where_clause->operators->array[i]);
+
+        if (token == NULL){
+            return NULL;
+        }
+
+        clean_clause(condition);
+
+        *token = '\0';
+        token = token + strlen(where_clause->operators->array[i]);
+        printf("op: [%s]\n", where_clause->operators->array[i]);
+
+
+        printf("condition: [%s]\n", condition);
+        where_clause->clauses->array = realloc(where_clause->clauses->array, sizeof(char*) * (where_clause->clauses->size + 1));
+        where_clause->clauses->array[where_clause->clauses->size] = malloc(strlen(condition) + 1);
+
+        strcpy(where_clause->clauses->array[where_clause->clauses->size], condition);
+        where_clause->clauses->size++;
+
+        if(i == where_clause->operators->size - 1){ // strstr makes us do this
+            clean_clause(token);
+
+            printf("condition: [%s]\n", token);
+            where_clause->clauses->array = realloc(where_clause->clauses->array, sizeof(char*) * (where_clause->clauses->size + 1));
+            where_clause->clauses->array[where_clause->clauses->size] = malloc(strlen(token) + 1);
+
+            strcpy(where_clause->clauses->array[where_clause->clauses->size], token);
+            where_clause->clauses->size++;
+        }
+
+    }
+    printf("**************************************************\n");
+    for(int i = 0; i < where_clause->clauses->size; i++) {
+        printf("\"%s\"\n", where_clause->clauses->array[i]);
+    }
+    for(int i = 0; i < where_clause->operators->size; i++) {
+        printf("\"%s\"\n\n", where_clause->operators->array[i]);
+    }
 
     return where_clause;
 }
