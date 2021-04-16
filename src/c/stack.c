@@ -27,7 +27,7 @@ int size(Stack stack) {
 
 // Utility function to check if the stack is empty or not
 int isEmpty(Stack stack) {
-    return size(stack) == 0;
+    return stack->top == -1;
 }
 
 // Utility function to add an element `x` to the stack
@@ -53,10 +53,12 @@ void *pop(Stack stack) {
     // check for stack underflow
     if (!isEmpty(stack)) {
         // decrement stack size by 1 and (optionally) return the popped element
+        stack->size--;
         return stack->items[stack->top--];
     }
     return NULL;
 }
+
 void free_stack(Stack stack){
     for(int i = 0; i < size(stack); i++){
         if(stack->items[i] != NULL){

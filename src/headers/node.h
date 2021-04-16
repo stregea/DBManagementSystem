@@ -2,7 +2,7 @@
 // Created by sdtre on 4/15/2021.
 //
 #include <stdbool.h>
-#include <storagemanager.h>
+#include "../headers/storagemanager.h"
 #ifndef DBMANAGEMENTSYSTEM_NODE_H
 #define DBMANAGEMENTSYSTEM_NODE_H
 

@@ -10,4 +10,8 @@
 OperationTree build_tree(StringArray string);
 
 double eval(Node node);
+
+int precedence(char *operation);
+StringArray expression_to_string_list(char *expression);
+StringArray infix_to_postfix(StringArray expression);
 #endif //DBMANAGEMENTSYSTEM_SHUNTING_YARD_PARSER_H

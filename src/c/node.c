@@ -3,8 +3,8 @@
 #include <stdlib.h>
 
 
-struct Node * create_node(){
-    struct Node * node = malloc(sizeof(struct Node));
+Node create_node(){
+    Node node = malloc(sizeof(struct Node));
     node->left = NULL;
     node->right = NULL;
     node->is_operation = false;
@@ -14,8 +14,7 @@ struct Node * create_node(){
     node->conditional = INVALID;
     node->type = INVALID;
     return node;
-} typedef struct Node * Node;
-
+}
 
 OperationTree create_operation_tree(){
     OperationTree tree = NULL;

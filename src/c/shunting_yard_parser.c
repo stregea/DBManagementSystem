@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <float.h>
 #include <limits.h>
@@ -18,7 +19,7 @@ bool is_conditional(char *condition) {
            conditional == LESS_THAN || conditional == LESS_THAN_OR_EQUAL_TO || conditional == NOT_EQUALS;
 }
 
-int get_type(char *value) {
+int get_data_type(char *value) {
 
     // check if value can be cast as boolean
     // determine if integer value
@@ -40,7 +41,7 @@ OperationTree build_tree(StringArray string) {
         if (!is_operator(*string->array[i]) && !is_conditional(string->array[i])) {
             node = create_node();
             // determine node type
-            node->type = get_type(string->array[i]);
+            node->type = get_data_type(string->array[i]);
             node->value = strdup(string->array[i]);
             push(stack, node);
         } else {
@@ -160,4 +161,104 @@ double evaluate_node_operation(Node node) {
     }
 
     return DBL_MAX;
+}
+
+int precedence(char *operation) {
+    switch(operation[0]) {
+        case '+' :
+            return 2;
+        case '-' :
+            return 2;
+        case '*' :
+            return 3;
+        case '/' :
+            return 3;
+        case '^' :
+            return 4;
+        default :
+            printf("Invalid operand\n" );
+            return -1;
+   }
+}
+
+StringArray expression_to_string_list(char *expression) {
+    
+    char* tmp = strdup(expression);
+    int length = strlen(expression);
+    // will have to fix this allocation from freeing issues
+    char** tokens = malloc(length * sizeof(char *));
+    int token_index = 0;
+
+    char * ops = "*-+/";
+    char *token = strtok(tmp, ops);
+
+    // add all numerical values to string array
+    while(token != NULL) {
+        // store number token
+        tokens[token_index] = malloc(strlen(token) + 1);
+        strcpy(tokens[token_index], token);
+        token_index++;
+        
+        // allocate space for operation char
+        tokens[token_index] = malloc(sizeof(char) + 1);
+        token_index++;
+
+        // get next token
+        token = strtok(NULL, ops);
+    }
+
+    // add all op strings
+    int ops_index = 1;
+    for(int i = 0; i < length; i++) {
+        if(expression[i] == '+' || expression[i] == '-' || expression[i] == '*' || expression[i] == '/') {
+            tokens[ops_index][0] = expression[i];
+            ops_index += 2;
+        }
+    }
+
+    StringArray strings = malloc(sizeof(struct StringArray));
+    strings->array = tokens;
+    strings->size = token_index;
+
+    return strings;
+}
+
+StringArray infix_to_postfix(StringArray expression) {
+    QueueADT queue = que_create();
+    Stack stack = create_stack();
+
+    for(int i = 0; i < expression->size; i++) {
+        // all even indices are numerical values
+        if(i % 2 == 0) {
+            que_insert(queue, expression->array[i]);
+        }
+        // if the string is an operand
+        else{
+            while(!isEmpty(stack) && precedence(expression->array[i]) <= precedence(peek(stack))) {
+                // pop operators from the operator stack onto the output queue
+                que_insert(queue, pop(stack));
+            }
+            // push it onto the operator stack
+            push(stack, expression->array[i]);
+        }
+    }
+
+    while(!isEmpty(stack)) {
+        que_insert(queue, pop(stack));
+    }
+
+    StringArray postfix = malloc(sizeof(struct StringArray));
+    postfix->size = (int)sizeQue(queue);
+    postfix->array = malloc(postfix->size * sizeof(char*));
+
+    char *current_string;
+    for(int i = 0; i < postfix->size; i++) {
+        current_string = (char*)que_remove(queue);
+        postfix->array[i] = malloc(strlen(current_string) + 1);
+        strcpy(postfix->array[i], current_string);
+    }
+
+    que_destroy(queue);
+    free_stack(stack);
+    return postfix;
 }
