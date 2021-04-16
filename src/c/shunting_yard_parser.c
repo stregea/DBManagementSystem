@@ -67,8 +67,41 @@ OperationTree build_tree(StringArray string) {
     return tree;
 }
 
+// Utility function to return the integer value
+// of a given string
+int toInt(char *string) {
+    int num = 0;
+    bool is_negative = false;
+
+    // Check if the integral value is
+    // negative or not
+    // If it is not negative, generate the number
+    // normally
+    if (string[0] == '-') {
+        is_negative = true;
+    }
+
+    // If it is negative, calculate the +ve number
+    // first ignoring the sign and invert the
+    // sign at the end
+
+    for (int i = 1; i < strlen(string); i++) {
+        num = num * 10 + (((int) string[i]) - 48);
+        if (is_negative) {
+            num = num * -1;
+        }
+    }
+
+    return num;
+}
+
+bool toBool(char* string){
+    return strcasecmp(string, "true") == 0;
+}
+
 double toDouble(char *value) {
-    return 0;
+    char *val_pointer;
+    return strtod(value, &val_pointer);
 }
 
 double evaluate_node_operation(Node node) {
@@ -83,9 +116,9 @@ double evaluate_node_operation(Node node) {
         // determine type of value (int, double, bool, char, varchar)
         switch (node->type) {
             case INTEGER: // or bool
+                 return toInt(node->value);
             case BOOL:
-                // return toInt(value)
-                return 0;
+                return toBool(node->value);
             case DOUBLE:
             case CHAR:
             case VARCHAR:
