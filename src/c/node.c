@@ -1,33 +1,41 @@
 #include "../headers/node.h"
+#include "../headers/Enums.h"
 #include <stdlib.h>
 
 
-struct Node create_node(){
-    struct Node node = {
-            .left = {},
-            .right = {},
-            .left_child_type = -1,
-            .right_child_type = -1,
-            .operation = -1,
-    };
+struct Node * create_node(){
+    struct Node * node = malloc(sizeof(struct Node));
+    node->left = NULL;
+    node->right = NULL;
+    node->is_operation = false;
+    node->is_conditional = false;
+    node->value = NULL;
+    node->operation = INVALID;
+    node->conditional = INVALID;
+    node->type = INVALID;
     return node;
-}
-//
-//void insert_left_child(struct OperationTree tree, struct Node node){
-//
-//    if(node == NULL){
-//        node = create_node();
-//    }
-//
-//}
+} typedef struct Node * Node;
 
-struct OperationTree create_operation_tree(){
-    struct OperationTree tree = {
-           .root = create_node(),
-    };
+
+OperationTree create_operation_tree(){
+    OperationTree tree = NULL;
     return tree;
 }
 
-//void freeOperationTree(){
-//
-//}
+void free_nodes(Node root){
+    if(root != NULL){
+        free_nodes(root->left);
+        free_nodes(root->right);
+        if(root->value != NULL) {
+            free(root->value);
+        }
+        free(root);
+    }
+}
+
+void freeOperationTree(OperationTree tree){
+    if(tree != NULL){
+        free_nodes(tree->root);
+        free(tree);
+    }
+}

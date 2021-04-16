@@ -1,26 +1,31 @@
 //
 // Created by sdtre on 4/15/2021.
 //
-
+#include <stdbool.h>
+#include <storagemanager.h>
 #ifndef DBMANAGEMENTSYSTEM_NODE_H
 #define DBMANAGEMENTSYSTEM_NODE_H
 
+
 struct Node{
-    struct Node left;
-    int left_child_type;
-    struct Node right;
-    int right_child_type;
+    struct Node * left;
+    struct Node * right;
+    bool is_operation;
+    bool is_conditional;
     int operation;
-};
+    int conditional;
+    int type;
+    char* value;
+}; typedef struct Node * Node;
 
 struct OperationTree{
-    struct Node root;
-};
+    Node root;
+}; typedef struct OperationTree * OperationTree;
 
 
-struct Node create_node();
+Node create_node();
 
-struct OperationTree create_operation_tree();
+OperationTree create_operation_tree();
 
-void freeOperationTree();
+void freeOperationTree(OperationTree tree);
 #endif //DBMANAGEMENTSYSTEM_NODE_H
