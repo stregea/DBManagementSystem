@@ -1,0 +1,8 @@
+//
+// Created by sdtre on 4/16/2021.
+//
+
+#ifndef DBMANAGEMENTSYSTEM_STACK_H
+#define DBMANAGEMENTSYSTEM_STACK_H
+
+#endif //DBMANAGEMENTSYSTEM_STACK_H
