@@ -164,6 +164,8 @@ double evaluate_node_operation(Node node) {
 }
 
 int precedence(char *operation) {
+    //printf("operand: %s\n", operation);
+    //printf("operand char: %c\n\n", operation[0]);
     switch(operation[0]) {
         case '+' :
             return 2;
@@ -176,7 +178,7 @@ int precedence(char *operation) {
         case '^' :
             return 4;
         default :
-            printf("Invalid operand\n" );
+            //printf("Invalid operand\n" );
             return -1;
    }
 }
@@ -218,7 +220,7 @@ StringArray expression_to_string_list(char *expression) {
 
     StringArray strings = malloc(sizeof(struct StringArray));
     strings->array = tokens;
-    strings->size = token_index;
+    strings->size = token_index - 1;
 
     return strings;
 }
@@ -230,21 +232,24 @@ StringArray infix_to_postfix(StringArray expression) {
     for(int i = 0; i < expression->size; i++) {
         // all even indices are numerical values
         if(i % 2 == 0) {
+            //printf("number: %s\n", expression->array[i]);
             que_insert(queue, expression->array[i]);
         }
         // if the string is an operand
         else{
-            while(!isEmpty(stack) && precedence(expression->array[i]) <= precedence(peek(stack))) {
+            while(!isEmpty(stack) && precedence(expression->array[i]) <= precedence((char*)peek(stack))) {
                 // pop operators from the operator stack onto the output queue
-                que_insert(queue, pop(stack));
+                que_insert(queue, (char*)pop(stack));
             }
             // push it onto the operator stack
+            printf("operand: %s\n", expression->array[i]);
             push(stack, expression->array[i]);
+            printf("operand stack: %s\n", (char*)peek(stack));
         }
     }
 
     while(!isEmpty(stack)) {
-        que_insert(queue, pop(stack));
+        que_insert(queue, (char*)pop(stack));
     }
 
     StringArray postfix = malloc(sizeof(struct StringArray));

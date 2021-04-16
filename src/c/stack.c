@@ -33,7 +33,7 @@ int isEmpty(Stack stack) {
 // Utility function to add an element `x` to the stack
 void push(Stack stack, void *data) {
     StackData stackData = create_stack_data(data);
-    stack->items = realloc(stack->items, size(stack) + 1);
+    stack->items = realloc(stack->items, sizeof(StackData) * (size(stack) + 1 ));
     // add an element and increment the top's index
     stack->items[++stack->top] = stackData;
     stack->size++;
