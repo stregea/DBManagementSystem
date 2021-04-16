@@ -31,7 +31,7 @@ int get_type(char *value) {
 // todo implement stack functionality
 OperationTree build_tree(StringArray string) {
     OperationTree tree = malloc(sizeof(struct OperationTree));
-    //Stack stack = create_stack();
+    Stack stack = create_stack();
     Node node = NULL;
     Node left_child = NULL;
     Node right_child = NULL;
@@ -42,7 +42,7 @@ OperationTree build_tree(StringArray string) {
             // determine node type
             node->type = get_type(string->array[i]);
             node->value = strdup(string->array[i]);
-            //stack.push(node);
+            push(stack, node);
         } else {
             node = create_node();
             if (is_operator(*string->array[i])) {
@@ -53,17 +53,18 @@ OperationTree build_tree(StringArray string) {
                 node->conditional = get_conditional(string->array[i]);
             }
 
-            //left_child = stack.pop()
-            //right_child = stack.pop()
+            left_child = pop(stack);
+            right_child = pop(stack);
 
             node->left = left_child;
-            node->right = left_child;
-            //stack.push(node);
+            node->right = right_child;
+
+            push(stack, node);
         }
     }
 
-//    tree->root = stack.peek();
-// freeStack(stack)
+    tree->root = peek(stack);
+    free_stack(stack);
     return tree;
 }
 
