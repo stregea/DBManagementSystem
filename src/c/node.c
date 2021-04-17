@@ -17,7 +17,8 @@ Node create_node(){
 }
 
 OperationTree create_operation_tree(){
-    OperationTree tree = NULL;
+    OperationTree tree = malloc(sizeof(struct OperationTree));
+    tree->root = NULL;
     return tree;
 }
 

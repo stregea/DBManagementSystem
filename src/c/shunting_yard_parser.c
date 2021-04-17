@@ -10,7 +10,7 @@
 
 bool is_operator(char operator) {
     int operation = get_operation(operator);
-    return operation == ADDITION || operator == SUBTRACTION || operator == DIVISION || operator == MULTIPLICATION;
+    return operation == ADDITION || operation == SUBTRACTION || operation == DIVISION || operation == MULTIPLICATION;
 }
 
 bool is_conditional(char *condition) {
@@ -31,7 +31,7 @@ int get_data_type(char *value) {
 
 // todo implement stack functionality
 OperationTree build_tree(StringArray string) {
-    OperationTree tree = malloc(sizeof(struct OperationTree));
+    OperationTree tree = create_operation_tree();
     Stack stack = create_stack();
     Node node = NULL;
     Node left_child = NULL;
@@ -54,8 +54,8 @@ OperationTree build_tree(StringArray string) {
                 node->conditional = get_conditional(string->array[i]);
             }
 
-            left_child = pop(stack);
-            right_child = pop(stack);
+            left_child = (Node) pop(stack);
+            right_child = (Node) pop(stack);
 
             node->left = left_child;
             node->right = right_child;
@@ -64,7 +64,7 @@ OperationTree build_tree(StringArray string) {
         }
     }
 
-    tree->root = peek(stack);
+    tree->root = (Node)peek(stack);
     free_stack(stack);
     return tree;
 }
