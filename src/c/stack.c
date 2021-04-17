@@ -43,7 +43,7 @@ void push(Stack stack, void *data) {
 void *peek(Stack stack) {
     // check for an empty stack
     if (!isEmpty(stack)) {
-        return stack->items[stack->top];
+        return stack->items[stack->top]->data;
     }
     return NULL;
 }
@@ -53,8 +53,8 @@ void *pop(Stack stack) {
     // check for stack underflow
     if (!isEmpty(stack)) {
         // decrement stack size by 1 and (optionally) return the popped element
-        stack->size--;
-        return stack->items[stack->top--];
+//        stack->size--;
+        return stack->items[stack->top--]->data;
     }
     return NULL;
 }
