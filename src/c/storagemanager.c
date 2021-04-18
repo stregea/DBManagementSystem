@@ -1,4 +1,4 @@
-#include "../headers/storagemanager.h"
+#include "../../../../../Downloads/phase2_sol/storagemanager.h"
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
@@ -170,6 +170,7 @@ int restart_database( char * db_loc ){
 		fprintf(stderr, "Failed to restart database\n");
 		return -1;
 	}
+	printf("Here1\n");
 	page_buffer = malloc(sizeof(struct page_data *) * db_buffer_size);
 	for(int i = 0; i < db_buffer_size; i++){
 		page_buffer[i] = NULL;
@@ -389,7 +390,7 @@ int remove_record( int table_id, union record_item * key_values ){
 					for(int k = i; k < t_data->num_pages; k++){
 						t_data->pages[k] = t_data->pages[k+1];
 					}
-					t_data->pages = realloc(t_data->pages, t_data->num_pages);
+					t_data->pages = realloc(t_data->pages, sizeof(int) * t_data->num_pages);
 					t_data->num_pages--;
 				}
 				else{
@@ -407,19 +408,9 @@ int remove_record( int table_id, union record_item * key_values ){
     return -1;
 }
 
-int free_table(struct table_data * table){
-    if(table != NULL){
-        free(table->attr_types);
-        free(table->key_indices);
-        free(table->pages);
-        free(table);
-        return 0;
-    }
-    return -1;
-}
-
 int add_table( int * data_types, int * key_indices, 
                int data_types_size, int key_indices_size ){
+    printf("STORAGE MANAGER ADDING TABLE\n"); 
     int table_num = get_table_num();
     
     struct table_data * t_data = malloc(sizeof(struct table_data));
@@ -440,6 +431,7 @@ int add_table( int * data_types, int * key_indices,
 }
 
 int drop_table( int table_id ){
+	printf("STORAGE MANAGER DROPPING TABLE\n"); 
 	if(table_id >= num_tables){
         fprintf(stderr, "Invalid table number: %d\n", table_id);
         return -1;
@@ -449,21 +441,12 @@ int drop_table( int table_id ){
         fprintf(stderr, "Invalid table number: %d\n", table_id);
         return -1;
     }
-
-    // no need to clear the table when we can just perform a drop.
 	int rs = clear_table(table_id);
 	if(rs != 0){
 		fprintf(stderr, "Failed to drop table\n");
 		return -1;
 	}
-
-    free_table(t_data);
-    table_data[table_id] = NULL;
-
-    // TODO
-    // There is an issue with how tables are handled once they are dropped.
-    // This storage manager will read/write null tables that have been dropped but won't free them.
-    // It's a weird bug.
+	table_data[table_id] = NULL;
 	return 0;
 }
 
@@ -493,12 +476,11 @@ int clear_table( int table_id ){
 			return -1;
 		}
 	}
-
-    free(t_data->pages);
-    t_data->pages = NULL;
+	
+	t_data->pages = NULL;
 	t_data->num_pages = 0;
 	t_data->table_size = 0;
-
+	
 	return 0;
 }
 
@@ -533,17 +515,6 @@ int terminate_database(){
 		        "Storage Manager: terminate database failed to write metadata\n");
 		return -1;
 	}
-	free(db_db_loc);
-
-	for(int i = 0; i < num_tables; i ++){
-	    free_table(table_data[i]);
-	}
-    free(table_data);
-
-	for(int i = 0; i < next_page; i++){
-	    free(page_buffer[i]);
-	}
-	free(page_buffer);
 	return 0;
 }
 
@@ -562,7 +533,7 @@ static int key_match(int * key_attr_types, union record_item * key,
                     return 0;
 				break;
             case 2:; //boolean
-                if(key[i].b[0] != key_values[i].b[0] || key[i].b[1] != key_values[i].b[1])
+                if(key[i].b != key_values[i].b)
                     return 0;
 				break;
             case 3:; // char
@@ -584,6 +555,7 @@ static int compare_record(struct table_data * t_data,
                           union record_item * r1, union record_item * r2){
 	for(int j = 0; j < t_data->num_key_attr; j++){
 		int i = t_data->key_indices[j];
+		int rs1, rs2;
         switch(t_data->attr_types[i]){
             case 0: //int
                 if(r1[i].i < r2[i].i)
@@ -591,33 +563,27 @@ static int compare_record(struct table_data * t_data,
 				else if(r1[i].i > r2[i].i)
 					return 1;
 				break;
-            case 1:; //double
+            case 1: //double
                 if(r1[i].d < r2[i].d)
                     return -1;
 				else if(r1[i].d > r2[i].d)
 					return 1;
 				break;
-            case 2:; //boolean
-                if(r1[i].b[1] < r2[i].b[1]) {
+            case 2: //boolean
+                if(r1[i].b < r2[i].b)
                     return -1;
-                } else if(r1[i].b[1] > r2[i].b[1]) {
-                    return 1;
-                } else {
-                    if (r1[i].b[0] < r2[i].b[0])
-                        return -1;
-                    else if (r1[i].b[0] > r2[i].b[0])
-                        return 1;
-                }
+				else if(r1[i].b > r2[i].b)
+					return 1;
 				break;
-            case 3:; // char
-                int rs1 = strcmp(r1[i].c, r2[i].c);
+            case 3: // char
+                rs1 = strcmp(r1[i].c, r2[i].c);
                 if (rs1 < 0)
                     return -1;
 				else if(rs1 > 0)
 					return 1;
 				break;
-            case 4:; // varchar
-                int rs2 = strcmp(r1[i].v, r2[i].v);
+            case 4: // varchar
+                rs2 = strcmp(r1[i].v, r2[i].v);
                 if (rs2 < 0)
                     return -1;
 				else if(rs2 > 0)
@@ -962,9 +928,9 @@ static void write_table_metadata(struct table_data * t_data, FILE * meta_file){
 
 	
 static int write_metadata(){ 
-	int length = snprintf(NULL, 0, "%s/metadata", db_db_loc);
+	int length = snprintf(NULL, 0, "%smetadata.dat", db_db_loc);
 	char * meta_loc = malloc(length+1);
-	snprintf(meta_loc, length+1, "%s/metadata", db_db_loc);
+	snprintf(meta_loc, length+1, "%smetadata.data", db_db_loc);
 	
 	//write page size and buffer size
 	FILE * meta_file = fopen(meta_loc, "wb");
@@ -980,10 +946,7 @@ static int write_metadata(){
 		if(table_data[i] != NULL)
 			write_table_metadata(table_data[i], meta_file);
 	}
-
-	free(meta_loc);
-	fclose(meta_file);
-	return 0;
+	return 0; 
 }
 
 static void read_table_metadata(FILE * meta_file){
@@ -1015,9 +978,9 @@ static void read_table_metadata(FILE * meta_file){
 }
 
 static int read_metadata(){ 
-	int length = snprintf(NULL, 0, "%s/metadata", db_db_loc);
+	int length = snprintf(NULL, 0, "%smetadata.dat", db_db_loc);
 	char * meta_loc = malloc(length+1);
-	snprintf(meta_loc, length+1, "%s/metadata", db_db_loc);
+	snprintf(meta_loc, length+1, "%smetadata.data", db_db_loc);
 	
 	//read page size and buffer size
 	FILE * meta_file = fopen(meta_loc, "rb");
@@ -1034,9 +997,6 @@ static int read_metadata(){
 		table_data[i] = NULL;
 		read_table_metadata(meta_file);
 	}
-
-	free(meta_loc);
-	fclose(meta_file);
 	return 0; 
  }	
 	

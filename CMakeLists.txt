@@ -12,13 +12,13 @@ add_executable(DBManagementSystem
         src/headers/dml_parser.h
         src/headers/ddl_parser.h
         src/headers/database.h
-        src/c/storagemanager.c
+        old/storagemanager.c
         src/c/dml_parser.c
-        src/c/ddl_parser.c
-        src/drivers/database.c
+        old/ddl_parser.c
+        old/database.c
         src/c/ddl_manager.c
         src/headers/ddl_manager.h
         src/c/dml_manager.c
         src/headers/dml_manager.h
         src/c/select_parser.c
-        src/headers/select_parser.h src/c/Enums.c src/c/Enums.h src/c/catalog.c src/headers/catalog.h src/c/table.c src/headers/table.h)
+        src/headers/select_parser.h src/c/Enums.c src/c/Enums.h old/catalog.c old/catalog.h old/table.c old/table.h)

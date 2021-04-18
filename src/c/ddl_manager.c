@@ -13,7 +13,7 @@
 
 #include "../headers/ddl_manager.h"
 #include "../headers/storagemanager.h"
-#include "../headers/catalog.h"
+#include "old/catalog.h"
 #include <float.h>
 
 int initialize_ddl_parser(char *db_loc, bool restart) {

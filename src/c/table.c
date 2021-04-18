@@ -1,421 +1,302 @@
-#include "../headers/table.h"
+
+#include "old/table.h"
 #include <string.h>
+#include <stdio.h>
+#include "../headers/catalog.h"
 #include <stdlib.h>
+#include "../headers/storagemanager.h"
 
-struct Table *createTable(char *name) {
-    struct Table *table_data = malloc(sizeof(struct Table));
-
-    // set counts and allocate memory
-    table_data->attribute_count = 0;
-    table_data->primary_key_count = 0;
-    table_data->key_indices_count = 0;
-    table_data->data_type_size = 0;
-    table_data->attributes = malloc(sizeof(struct Attribute));
-    table_data->data_types = malloc(sizeof(int));
-    table_data->key_indices = NULL;
-    table_data->primary_key = NULL;
-    table_data->name = malloc(strlen(name) + 1);
-    table_data->name_size = strlen(name) + 1;
-    strcpy(table_data->name, name);
-
-    return table_data;
+Table create_table( int num, char * name ){
+	Table table = malloc(sizeof(struct table_));
+	table->num = num;
+	table->name = malloc(strlen(name) + 1);
+	strcpy(table->name, name);
+	table->attrs = 0; //NULL
+	table->attrs_size = 0;
+	table->primary_key = 0; //NULL
+	table->uniques = 0; //NULL
+	table->uniques_size = 0;
+	table->fks = 0; //NULL
+	table->fks_size = 0;
+	table->ref_fks = 0; //NULL
+	table->ref_fks_size = 0;
+	return table;
 }
 
-void freeKey(PrimaryKey key) {
-    if (key != NULL) {
-        if (key->attributes != NULL) {
-            // there is no need to handle the freeing
-            // of the attributes here since they are removed in
-            // freeTable, thus we only need to free this pointer:
-            free(key->attributes);
-        }
-        free(key);
-    }
+char * get_name( Table table ){
+	return table->name;
 }
 
-void freeAttribute(Attribute attr) {
-    if (attr != NULL) {
-        if (attr->name != NULL) {
-            free(attr->name);
-        }
-
-        if (attr->constraints != NULL) {
-            free(attr->constraints);
-        }
-
-        if (attr->foreignKey != NULL) {
-            if (attr->foreignKey->referenced_table_name != NULL) {
-                free(attr->foreignKey->referenced_table_name);
-            }
-            if (attr->foreignKey->referenced_column_name != NULL) {
-                free(attr->foreignKey->referenced_column_name);
-            }
-            free(attr->foreignKey);
-        }
-
-        if (attr->default_value != NULL) {
-            free(attr->default_value);
-        }
-
-        free(attr);
-    }
+int get_num( Table table ){
+	return table->num;
 }
 
-void freeTable(Table table) {
-    if (table != NULL) {
-        if (table->name != NULL) {
-            free(table->name);
-        }
-        if (table->data_types != NULL) {
-            free(table->data_types);
-        }
-
-        // free primary key
-        if (table->primary_key != NULL) {
-            freeKey(table->primary_key);
-        }
-
-        // free attributes
-        if (table->attributes != NULL) {
-            for (int i = 0; i < table->attribute_count; i++) {
-                if (table->attributes[i] != NULL) {
-                    freeAttribute(table->attributes[i]);
-                }
-            }
-            free(table->attributes);
-        }
-
-
-        // free key_indices
-        if (table->key_indices) {
-            free(table->key_indices);
-        }
-
-        free(table);
-    }
+void set_num( Table table, int num ){
+	table->num = num;
 }
 
-int get_attribute_type(char *type) {
+Attr * get_attrs( Table table ){
+	return table->attrs;
+}	
 
-    if (strcasecmp(type, "integer") == 0) {
-        return 0;
-    } else if (strcasecmp(type, "double") == 0) {
-        return 1;
-    } else if (strcasecmp(type, "bool") == 0) {
-        return 2;
-
-    } else if (strcasecmp(type, "char") == 0) {
-        return 3;
-
-    } else if (strcasecmp(type, "varchar") == 0) {
-        return 4;
-    }
-    return -1;
+Attr get_attr_by_position( Table table, int position ){
+	return table->attrs[position];
 }
 
-struct PrimaryKey *create_key(char *attribute_names, Table table) {
-//    printf("parsing primary key\n");
-    struct PrimaryKey *key = malloc(sizeof(struct PrimaryKey));
-    key->attributes = NULL;
-    key->size = 0;
-
-    // split the attributes on space
-    char *tokenizer = strtok(attribute_names, " ");
-    struct Attribute **attributes = table->attributes;
-
-    while (tokenizer != NULL) {
-        for (int i = 0; i < table->attribute_count; i++) {
-
-            if (strcasecmp(tokenizer, attributes[i]->name) == 0) {
-                key->attributes = realloc(key->attributes, sizeof(struct Attribute *) * (key->size + 1));
-                key->attributes[key->size] = attributes[i];
-                key->size++;
-            }
-        }
-        tokenizer = strtok(NULL, " ");
-    }
-//    printf("returning primary key with size: %d\n", key->size);
-    table->key_indices_count = key->size;
-    table->key_indices = malloc(sizeof(int) * key->size);
-    for (int i = 0; i < key->size; i++) {
-        table->key_indices[i] = key->attributes[i]->type;
-    }
-    return key;
+Attr get_attr_by_name( Table table, char * name ){
+	for(int i = 0; i < table->attrs_size; i++){
+		if(strcmp(name, table->attrs[i]->name) == 0)
+			return table->attrs[i];
+	}
+	return 0;
 }
 
-PrimaryKey create_key_from_attr(Attribute attr, Table table) {
-//    printf("parsing primary key in line\n");
-    PrimaryKey key = malloc(sizeof(struct PrimaryKey));
-    key->attributes = malloc(sizeof(struct Attribute *));
-    key->attributes[0] = attr;
-    key->size = 1;
-    table->key_indices_count = key->size;
-    table->key_indices = malloc(sizeof(int));
-    table->key_indices[0] = attr->type;
-
-    return key;
+Unique * get_uniques( Table table ){
+	return table->uniques;
 }
 
-struct PrimaryKey *create_key_from_disk(char *attribute_names, Table table, int key_size) {
-    struct PrimaryKey *key = malloc(sizeof(struct PrimaryKey));
-    key->attributes = malloc(sizeof(struct Attribute *) * key_size);
-    key->size = key_size;
-    int key_attribute_index = 0;
-
-    // split the attributes on space
-    char *tokenizer = strtok(attribute_names, " ");
-    struct Attribute **attributes = table->attributes;
-
-    while (tokenizer != NULL) {
-        for (int i = 0; i < table->attribute_count; i++) {
-            // check if token equal attribute name
-            if (strcasecmp(tokenizer, attributes[i]->name) == 0) {
-                key->attributes[key_attribute_index] = attributes[i];
-                key_attribute_index++;
-            }
-        }
-        tokenizer = strtok(NULL, " ");
-    }
-
-    table->key_indices_count = key->size;
-    table->key_indices = malloc(sizeof(int) * key->size);
-    for (int i = 0; i < key->size; i++) {
-
-        table->key_indices[i] = key->attributes[i]->type;
-    }
-    return key;
+int get_uniques_size( Table table ){
+	return table->uniques_size;
 }
 
-int add_primary_key_to_table(Table table, PrimaryKey key) {
-    if (table->primary_key_count == 0) {
-        table->primary_key = key;
-        table->primary_key_count++;
-        return 0;
-    }
-    freeKey(key);
-    return -1; // error since primary key already exists in table.
+Unique get_primary_key( Table table ){
+	return table->primary_key;
 }
 
-int write_table_to_disk(FILE *file, struct Table *table) {
-    // write id
-    fwrite(&table->tableId, sizeof(int), 1, file);
-
-    // write name
-    fwrite(&table->name_size, sizeof(int), 1, file);
-    fwrite(table->name, table->name_size, 1, file);
-
-    // write array sizes
-    fwrite(&table->primary_key_count, sizeof(int), 1, file);
-    fwrite(&table->attribute_count, sizeof(int), 1, file);
-    fwrite(&table->key_indices_count, sizeof(int), 1, file);
-    fwrite(&table->data_type_size, sizeof(int), 1, file);
-
-    // write each attribute
-    for (int i = 0; i < table->attribute_count; i++) {
-        write_attribute_to_disk(file, table->attributes[i]);
-    }
-
-    // write data types array
-    fwrite(table->data_types, sizeof(int), table->data_type_size, file);
-
-    // write primary key
-    write_primary_key_to_disk(file, table->primary_key);
-
-    return 0;
+void set_primary_key ( Table table, Unique pk ){
+	table->primary_key = pk;
 }
 
-int write_attribute_to_disk(FILE *file, struct Attribute *attribute) {
-    int null_value = 0;
-
-    fwrite(&attribute->name_size, sizeof(int), 1, file);
-    fwrite(attribute->name, attribute->name_size, 1, file);
-
-    // read size of arrays
-    fwrite(&attribute->type, sizeof(int), 1, file);
-    fwrite(&attribute->size, sizeof(int), 1, file);
-    fwrite(&attribute->default_size, sizeof(int), 1, file);
-    fwrite(attribute->default_value, attribute->default_size, 1, file);
-
-    // write constaints
-    fwrite(attribute->constraints, sizeof(struct Constraints), 1, file);
-
-    write_foreign_key_to_disk(file, attribute->foreignKey);
-
-    return 0;
+Foreign_Key * get_foreign_keys( Table table ){
+	return table->fks;
 }
 
-int write_primary_key_to_disk(FILE *file, struct PrimaryKey *primaryKey) {
-    int null_value = 0;
-
-    // might not be needed if size 0 and null are treated the same
-    if (primaryKey == NULL) {
-        fwrite(&null_value, sizeof(int), 1, file);
-    } else {
-        fwrite(&primaryKey->size, sizeof(int), 1, file);
-
-        if(primaryKey->size > 0) {
-            // write each attribute name to a string
-            char* attributes = malloc(sizeof(char));
-            // null terminator
-            size_t attributes_string_size = 1;
-            struct Attribute *current_attribute;
-
-            // append the name of each attribute to the string
-            for (int i = 0; i < primaryKey->size; i++) {
-                current_attribute = primaryKey->attributes[i];
-                attributes_string_size += current_attribute->name_size;
-                attributes = realloc(attributes, attributes_string_size);
-
-                if(i == 0){
-                    strcpy(attributes, current_attribute->name);
-                }
-                else{
-                    strcat(attributes, current_attribute->name);
-                }
-
-                strcat(attributes, " ");
-            }
-
-            // write contents to disk
-            fwrite(&attributes_string_size, sizeof(int), 1, file);
-            fwrite(attributes, attributes_string_size, 1, file);
-
-            free(attributes);
-        }
-
-    }
-    return 0;
+int get_foreign_keys_size( Table table ){
+	return table->fks_size;
 }
 
-int write_foreign_key_to_disk(FILE *file, struct ForeignKey *foreignKey) {
-    int null_value = 0;
-    if (foreignKey == NULL) {
-        fwrite(&null_value, sizeof(int), 1, file);
-    } else {
-        // write the corresponding table and column name
-        fwrite(&foreignKey->referenced_table_name_size, sizeof(int), 1, file);
-        fwrite(&foreignKey->referenced_column_name_size, sizeof(int), 1, file);
-        fwrite(foreignKey->referenced_table_name, foreignKey->referenced_table_name_size, 1, file);
-        fwrite(foreignKey->referenced_column_name, foreignKey->referenced_column_name_size, 1, file);
-    }
-
-    return 0;
+int add_attr( Table table, Attr attr ){
+	//look for attr with same name
+	//return -1 (error)
+	if(get_attr_by_name(table, attr->name) != 0){
+		fprintf(stderr, "ERROR: Table %s already has attr named %s\n", table->name, attr->name);
+		return -1;
+	}
+	
+	table->attrs = realloc(table->attrs, sizeof(Attr) * (table->attrs_size + 1));
+	table->attrs[table->attrs_size] = attr;
+	set_attr_postion( attr, table->attrs_size );
+	table->attrs_size++;
+	
+	return 0;
 }
 
-struct ForeignKey *read_foreign_key_from_disk(FILE *file) {
-    struct ForeignKey *foreignKey;
-
-    // read in the corresponding table and column name
-    int first_value;
-    fread(&first_value, sizeof(int), 1, file);
-
-    // check if the foreign key is actually null
-    if (first_value == 0) {
-        foreignKey = NULL;
-    } else {
-        foreignKey = malloc(sizeof(struct ForeignKey));
-        foreignKey->referenced_table_name_size = first_value;
-        fread(&foreignKey->referenced_column_name_size, sizeof(int), 1, file);
-        foreignKey->referenced_table_name = malloc(foreignKey->referenced_table_name_size);
-        fread(foreignKey->referenced_table_name, sizeof(foreignKey->referenced_table_name), 1, file);
-        foreignKey->referenced_column_name = malloc(foreignKey->referenced_column_name_size);
-        fread(foreignKey->referenced_column_name, sizeof(foreignKey->referenced_column_name), 1, file);
-    }
-
-    return foreignKey;
+void update_uniques( Table table, Attr attr ){
+	int count = 0;
+	for(int i = 0; i < table->uniques_size; i++){
+		if(unique_contains_attr(table->uniques[i], attr)){
+			table->uniques[i] = 0; // null it for now
+		}
+		else{
+			count++;
+		}
+	}
+	
+	if(count == 0){
+		table->uniques = NULL;
+	}
+	else{
+		Unique * temp = malloc(sizeof(Unique) * count);
+		int index = 0;
+		for(int i = 0; i < table->uniques_size; i++){
+			if(table->uniques[i] == 0){
+				continue;
+			}
+			temp[index] = table->uniques[i];
+			index++;
+		}
+		table->uniques = temp;
+		table->uniques_size = count;
+	}
 }
 
-struct Attribute *read_attribute_from_disk(FILE *file) {
-
-    struct Attribute *attribute = malloc(sizeof(struct Attribute));
-
-    fread(&attribute->name_size, sizeof(int), 1, file);
-    attribute->name = malloc(attribute->name_size);
-    fread(attribute->name, attribute->name_size, 1, file);
-
-    // read size of arrays
-    fread(&attribute->type, sizeof(int), 1, file);
-    fread(&attribute->size, sizeof(int), 1, file);
-
-    fread(&attribute->default_size, sizeof(int), 1, file);
-
-    if(attribute->default_size == 0) {
-        attribute->default_value = NULL;
-    }
-    else {
-        attribute->default_value = malloc(attribute->default_size);
-        fread(attribute->default_value, attribute->default_size, 1, file);
-    }
-
-    // write constraints
-    attribute->constraints = malloc(sizeof(struct Constraints));
-    fread(attribute->constraints, sizeof(struct Constraints), 1, file);
-
-    // write foreign key
-    attribute->foreignKey = read_foreign_key_from_disk(file);
-
-    return attribute;
+void update_ref_fks( Table table, Table refer_table, Attr attr ){
+	int count = 0;
+	for(int i = 0; i < table->fks_size; i++){
+		if(fk_contains_ref_attr(table->fks[i], refer_table->name, attr)){
+			table->fks[i] = 0; // null it for now
+		}
+		else{
+			count++;
+		}
+	}
+	
+	if(count == 0){
+		table->fks = NULL;
+		table->fks_size = 0;
+	}
+	else{
+		Foreign_Key * temp = malloc(sizeof(Foreign_Key) * count);
+		int index = 0;
+		for(int i = 0; i < table->fks_size; i++){
+			if(table->fks[i] == 0){
+				continue;
+			}
+			temp[index] = table->fks[i];
+			index++;
+		}
+		table->fks = temp;
+		table->fks_size = count;
+	}
 }
 
-struct PrimaryKey *read_primary_key_from_disk(FILE *file, struct Table *table) {
-    int key_size;
-    struct PrimaryKey *primaryKey;
-    int attributes_string_size;
-    char* names;
-    fread(&key_size, sizeof(int), 1, file);
-
-    if (key_size == 0) {
-        primaryKey = NULL;
-    } else {
-
-        fread(&attributes_string_size, sizeof(int), 1, file);
-
-        if(attributes_string_size == 0){
-            return NULL;
-        }
-
-        names = malloc(attributes_string_size);
-
-        fread(names, attributes_string_size, 1, file);
-
-        primaryKey = create_key_from_disk(names, table, key_size);
-        free(names);
-    }
-
-    return primaryKey;
+void update_fks( Table table, Attr attr ){
+	int count = 0;
+	for(int i = 0; i < table->fks_size; i++){
+		if(fk_contains_attr(table->fks[i], attr)){
+			table->fks[i] = 0; // null it for now
+		}
+		else{
+			count++;
+		}
+	}
+	
+	if(count == 0){
+		table->fks = 0;
+	}
+	else{
+		Foreign_Key * temp = malloc(sizeof(Foreign_Key) * count);
+		int index = 0;
+		for(int i = 0; i < table->fks_size; i++){
+			if(table->fks[i] == 0){
+				continue;
+			}
+			temp[index] = table->fks[i];
+			index++;
+		}
+		table->fks = temp;
+		table->fks_size = count;
+	}
+	
+	for(int i = 0; i < table->ref_fks_size; i++){
+		Table ref = get_table_by_name(table->ref_fks[i]);
+		update_ref_fks(ref , table, attr);
+	}
 }
 
-struct Table *read_table_from_disk(FILE *file) {
-    int tableID;
-    int name_size;
+int drop_attr( Table table, Attr attr ){
+	if(unique_contains_attr(table->primary_key, attr)){
+		return -1;
+	}
+	//assumes the attr exists
+	for(int i = attr->position; i < table->attrs_size - 1; i++){
+		table->attrs[i]->position--;
+		table->attrs[i] = table->attrs[i+1];
+	}
+	table->attrs_size--;
+	table->attrs = realloc(table->attrs, sizeof(Attr) * table->attrs_size);
 
-    fread(&tableID, sizeof(int), 1, file);
-    fread(&name_size, sizeof(int), 1, file);
-    char *name = malloc(name_size);
-    fread(name, name_size, 1, file);
-
-    // only adds name and name size to struct
-    struct Table *table = createTable(name);
-    table->tableId = tableID;
-    free(name);
-
-    // write array sizes
-    fread(&table->primary_key_count, sizeof(int), 1, file);
-    fread(&table->attribute_count, sizeof(int), 1, file);
-    fread(&table->key_indices_count, sizeof(int), 1, file);
-    fread(&table->data_type_size, sizeof(int), 1, file);
-
-    // read each attribute
-    for (int i = 0; i < table->attribute_count; i++) {
-        table->attributes[i] = read_attribute_from_disk(file);
-    }
-
-    // write data types array
-    table->data_types = realloc(table->data_types, sizeof(int) * table->data_type_size);
-    fread(table->data_types, sizeof(int), table->data_type_size, file);
-
-    // read primary key
-    table->primary_key = read_primary_key_from_disk(file, table);
-
-    return table;
+	update_uniques(table, attr);
+	update_fks(table, attr);
+	
+	union record_item ** records = NULL;
+	
+	int size = get_records(table->num, &records);
+	drop_table(table->num);
+	
+	int * data_types = malloc(sizeof(int) * table->attrs_size);
+	for(int i = 0; i < table->attrs_size; i++)
+		data_types[i] = get_type_num(get_attr_type(table->attrs[i]));
+	
+	Unique pk = get_primary_key(table);
+	int key_indices_size = get_unique_attrs_size( pk );
+	int * key_indices = malloc(sizeof(int) * key_indices_size);
+	
+	for(int i = 0; i < key_indices_size; i++)
+		key_indices[i] = get_attr_position(pk->attrs[i]);
+	
+	int table_number = add_table(data_types, key_indices, table->attrs_size, key_indices_size);
+	
+	if(table_number == -1){
+		//error
+		return -1;
+	}
+	
+	table->num = table_number;
+	
+	for(int i = 0; i < size; i++){
+		int index = 0;
+		union record_item * new_record = malloc(sizeof(union record_item) * table->attrs_size);
+		for(int j = 0; j <= table->attrs_size; j++){
+			if(j != attr->position){
+				new_record[index] = records[i][j];
+				index++;
+			}
+		}
+		
+		insert_record(table_number, new_record);
+	}
+	
+	return 0;
 }
+
+int add_unique( Table table, Unique unique ){
+	//check for duplicate unique
+	for(int i = 0; i < table->uniques_size; i++){
+		if(unique_equality(table->uniques[i], unique))
+			return -1;
+	}
+	
+	table->uniques = realloc(table->uniques, sizeof(Unique) * (table->uniques_size + 1));
+	table->uniques[table->uniques_size] = unique;
+	table->uniques_size++;
+	return 0;
+}
+
+void add_fk_ref( Table table, Table reffering){
+	if(table->ref_fks == NULL)
+		table->ref_fks = malloc(sizeof(char *));
+	else
+		table->ref_fks = realloc(table->fks, sizeof(char *) * (table->ref_fks_size + 1));
+	table->ref_fks[table->ref_fks_size] = reffering->name;
+	table->ref_fks_size++;
+}
+
+int add_foreign_key( Table table, Foreign_Key fk ){
+	for(int i = 0; i < table->fks_size; i++){
+		if(fk_equality(table->fks[i], fk))
+			return -1;
+	}
+	
+	if(table->fks == NULL)
+		table->fks = malloc(sizeof(Foreign_Key));
+	else
+		table->fks = realloc(table->fks, sizeof(Foreign_Key) * (table->fks_size + 1));
+	table->fks[table->fks_size] = fk;
+	table->fks_size++;
+	
+	Table ref_table = get_table_by_name( fk->ref_table_name );
+	add_fk_ref( ref_table, table);
+	
+	return 0;
+}
+
+void print_table_schema( Table table ){
+	printf("Table %s(%d):\n", table->name, table->num);
+	for(int i = 0; i < table->attrs_size; i++){
+		printf("\t");
+		print_attr_schema(table->attrs[i]);
+		printf("\n");
+	}
+	for(int i = 0; i < table->uniques_size; i++){
+		printf("\t");
+		print_unique_schema(table->uniques[i]);
+		printf("\n");
+	}
+	for(int i = 0; i < table->fks_size; i++){
+		printf("\t");
+		print_fk_schema(table->fks[i]);
+		printf("\n");
+	}
+}
+	
