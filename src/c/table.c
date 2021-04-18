@@ -1,5 +1,5 @@
 
-#include "old/table.h"
+#include "table.h"
 #include <string.h>
 #include <stdio.h>
 #include "../headers/catalog.h"

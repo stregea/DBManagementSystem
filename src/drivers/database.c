@@ -56,7 +56,7 @@ int main(int argc, char ** argv ){
 		size_t len = 0;
 		ssize_t line_size = 0;
 		
-		line_size = getline(&line, &len, stdin);
+		//line_size = getline(&line, &len, stdin);
 		stmt = realloc(stmt, strlen(stmt) + line_size + 1);
 		line[line_size-1] = '\0';
 		if(strlen(stmt) != 0)

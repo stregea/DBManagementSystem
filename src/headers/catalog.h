@@ -2,7 +2,7 @@
 #ifndef CATALOG_H
 #define CATALOG_H
 
-#include "../../../../../Downloads/phase2_sol/table.h"
+#include "headers/table.h"
 
 typedef struct catalog_{
 	char * db_loc;

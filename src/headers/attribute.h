@@ -2,7 +2,7 @@
 #ifndef ATTRIBUTE_H
 #define ATTRIBUTE_H
 
-#include "../../../../../Downloads/phase2_sol/type.h"
+#include "type.h"
 #include <stdbool.h>
 
 typedef struct attr_{

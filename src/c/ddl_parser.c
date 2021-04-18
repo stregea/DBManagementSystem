@@ -1,14 +1,14 @@
-#include "../../../../../Downloads/phase2_sol/ddl_parser.h"
+#include "ddl_parser.h"
 #include <stdio.h>
 #include <stdbool.h>
-#include "catalog.h"
+#include "headers/catalog.h"
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "../../../../../Downloads/phase2_sol/foreign_key.h"
-#include "../../../../../Downloads/phase2_sol/unique.h"
+#include "foreign_key.h"
+#include "unique.h"
 #include "attribute.h"
-#include "../../../../../Downloads/phase2_sol/utils.h"
+#include "utils.h"
 
 int parse_type_str( char * t_str );
 
