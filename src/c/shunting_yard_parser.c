@@ -29,7 +29,7 @@ int get_data_type(char *value) {
     return INTEGER;
 }
 
-// todo implement stack functionality
+//todo
 OperationTree build_tree(StringArray string) {
     OperationTree tree = create_operation_tree();
     Stack stack = create_stack();
@@ -41,7 +41,7 @@ OperationTree build_tree(StringArray string) {
         if (!is_operator(*string->array[i]) && !is_conditional(string->array[i])) {
             node = create_node();
             // determine node type
-            node->type = get_data_type(string->array[i]);
+            node->type = get_data_type(string->array[i]); //todo
             node->value = strdup(string->array[i]);
             push(stack, node);
         } else {
@@ -53,9 +53,10 @@ OperationTree build_tree(StringArray string) {
                 node->is_conditional = true;
                 node->conditional = get_conditional(string->array[i]);
             }
+            node->value = strdup(string->array[i]);
 
-            left_child = (Node) pop(stack);
             right_child = (Node) pop(stack);
+            left_child = (Node) pop(stack);
 
             node->left = left_child;
             node->right = right_child;

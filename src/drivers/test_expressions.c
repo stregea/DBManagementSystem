@@ -10,34 +10,15 @@
 #include <string.h>
 #include <unistd.h>
 
+void treeprint(Node root, int level) {
+    if (root == NULL)
+        return;
+    for (int i = 0; i < level; i++)
+        printf(i == level - 1 ? "- " : "  ");
 
-void printNodes(Node node) {
-    if (node != NULL) {
-        printNodes(node->left);
-//        if(node->left != NULL && node->right != NULL){
-        if (node->is_operation) {
-            switch (node->operation) {
-                case ADDITION:
-                    printf("+\n");
-                    break;
-                case SUBTRACTION:
-                    printf("-\n");
-                    break;
-                case DIVISION:
-                    printf("/\n");
-                    break;
-                case MULTIPLICATION:
-                    printf("*\n");
-                    break;
-            }
-            if(node->right->value != NULL && node->left->value != NULL){
-                printf("%s %s\n", node->right->value, node->left->value);
-            }
-        } else if (node->is_conditional) {
-            // todo
-        }
-        printNodes(node->right);
-    }
+    printf("%s\n", root->value);
+    treeprint(root->left, level + 1);
+    treeprint(root->right, level + 1);
 }
 
 int main() {
@@ -53,7 +34,7 @@ int main() {
     printf("\n");
     OperationTree tree = build_tree(strings);
 
-    printNodes(tree->root);
+    treeprint(tree->root, 0);
 //    printf("%d\n", tree->root->operation);
     return 0;
 }
