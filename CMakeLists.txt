@@ -8,38 +8,46 @@ include_directories(src)
 include_directories(src/headers)
 
 add_executable(DBManagementSystem
-        src/headers/storagemanager.h
-        src/headers/dml_parser.h
-        src/headers/ddl_parser.h
-        src/headers/database.h
-        src/c/storagemanager.c
-        src/c/dml_parser.c
-        src/c/ddl_parser.c
-        src/drivers/database.c
-        #src/drivers/test_expressions.c
-        src/c/ddl_manager.c
-        src/headers/ddl_manager.h
-        src/c/dml_manager.c
-        src/headers/dml_manager.h
-        src/c/select_parser.c
-        src/headers/select_parser.h
-        src/c/Enums.c
-        src/headers/Enums.h
-        src/c/catalog.c
-        src/headers/catalog.h
-        src/c/table.c
-        src/headers/table.h
-        src/c/clause_parser.c
-        src/headers/clause_parser.h
-        src/c/arrays.c
         src/headers/arrays.h
-        src/c/tuple.c
-        src/headers/tuple.h
-        src/c/node.c
+        src/headers/attribute.h
+        src/headers/catalog.h
+        src/headers/clause_parser.h
+        src/headers/database.h
+        src/headers/ddl_parser.h
+        src/headers/dml_manager.h
+        src/headers/dml_parser.h
+        src/headers/Enums.h
+        src/headers/foreign_key.h
         src/headers/node.h
-        src/c/queue.c
         src/headers/queue.h
-        src/c/stack.c
+        src/headers/select_parser.h
+        src/headers/shunting_yard_parser.h
         src/headers/stack.h
+        src/headers/storagemanager.h
+        src/headers/table.h
+        src/headers/tuple.h
+        src/headers/type.h
+        src/headers/unique.h
+        src/headers/utils.h
+        src/c/arrays.c
+        src/c/attribute.c
+        src/c/catalog.c
+        src/c/clause_parser.c
+        src/c/ddl_parser.c
+        src/c/dml_manager.c
+        src/c/dml_parser.c
+        src/c/Enums.c
+        src/c/foreign_key.c
+        src/c/node.c
+        src/c/queue.c
+        src/c/select_parser.c
         src/c/shunting_yard_parser.c
-        src/headers/shunting_yard_parser.h)
+        src/c/stack.c
+        src/c/storagemanager.c
+        src/c/table.c
+        src/c/tuple.c
+        src/c/type.c
+        src/c/unique.c
+        src/c/utils.c
+        #src/drivers/test_expressions.c
+        src/drivers/database.c)

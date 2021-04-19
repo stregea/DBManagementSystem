@@ -1,6 +1,7 @@
 #include "../headers/clause_parser.h"
 #include "../headers/arrays.h"
 #include "../headers/Enums.h"
+#include "../headers/table.h"
 #include <stdio.h>
 #include <float.h>
 #include <stdlib.h>
@@ -33,8 +34,8 @@ Clause create_clause() {
 }
 
 double calculate_value(Clause clause, StringArray math_expression, union record_item *record) {
-    Attribute attribute1 = NULL;
-    Attribute attribute2 = NULL;
+    Attr attribute1 = NULL;
+    Attr attribute2 = NULL;
     double value1 = 0.0, value2 = 0.0;
     char *val1pointer, *val2pointer;
     int operator;
@@ -45,10 +46,10 @@ double calculate_value(Clause clause, StringArray math_expression, union record_
     //    bar = foo + bar
 
     // check to see if a column value was passed in
-    attribute1 = get_attribute_from_table(clause->table, math_expression->array[2]);
+    attribute1 = get_attr_by_name(clause->table, math_expression->array[2]);
     if (attribute1 != NULL) {
-        if (attribute1->type == INTEGER || attribute1->type == DOUBLE) {
-            int i = get_attribute_index(clause->table, attribute1);
+        if (attribute1->type->type_num == INTEGER || attribute1->type->type_num == DOUBLE) {
+            int i = attribute1->position;
 
             if(i == -1){
                 return DBL_MAX;
@@ -75,11 +76,11 @@ double calculate_value(Clause clause, StringArray math_expression, union record_
 
     operator = get_operation(*math_expression->array[3]);
 
-    attribute2 = get_attribute_from_table(clause->table, math_expression->array[4]);
+    attribute2 = get_attr_by_name(clause->table, math_expression->array[4]);
     if (attribute2 != NULL) {
-        if (attribute2->type == INTEGER || attribute2->type == DOUBLE) {
+        if (attribute2->type->type_num == INTEGER || attribute2->type->type_num == DOUBLE) {
 
-            int i = get_attribute_index(clause->table, attribute2);
+            int i = attribute2->position;
 
             if(i == -1){
                 return DBL_MAX;

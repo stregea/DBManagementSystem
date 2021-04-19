@@ -57,13 +57,13 @@ void freeRecord(union record_item *record) {
  */
 void print_record(Table table, union record_item *record) {
     printf("(");
-    for (int i = 0; i < table->attribute_count; i++) {
+    for (int i = 0; i < table->attrs_size; i++) {
         char *extra_space = " ";
 
-        if (i == table->attribute_count - 1) {
+        if (i == table->attrs_size - 1) {
             extra_space = ")\n"; // close the tuple, create new line
         }
-        switch (table->attributes[i]->type) {
+        switch (table->attrs[i]->type->type_num) {
             case INTEGER:
                 printf("%d%s", record[i].i, extra_space);
                 break;
@@ -71,7 +71,7 @@ void print_record(Table table, union record_item *record) {
                 printf("%f%s", record[i].d, extra_space);
                 break;
             case BOOL:
-                printf("%d%s", record[i].b[0], extra_space); // not to sure by bool is an array
+                printf("%d%s", record[i].b, extra_space); // not to sure by bool is an array
                 break;
             case CHAR:
                 printf("%s%s", record[i].c, extra_space);
@@ -83,18 +83,18 @@ void print_record(Table table, union record_item *record) {
     }
 }
 
-union record_item create_record_item(int *flag, Attribute attribute, char *value) {
+union record_item create_record_item(int *flag, Attr attribute, char *value) {
     union record_item recordItem;
 
-    if (attribute->constraints->notnull == true && strcasecmp(value, "null") == 0) {
+    if (attribute->notnull == true && strcasecmp(value, "null") == 0) {
         fprintf(stderr, "Error: %s cannot be null.\n", attribute->name);
         flag[0] = -1;
         return recordItem;
     }
 
     int string_size;
-    if (attribute->type == CHAR || attribute->type == VARCHAR) {
-        string_size = attribute->size;
+    if (attribute->type->type_num == CHAR || attribute->type->type_num == VARCHAR) {
+        string_size = (int) strlen(attribute->name);
         // If '"' is on both ends of the string, add 2 to the allowed size of the string
         // since, they don't technically count towards the total size of the string.
         if (value[0] == '"' && value[strlen(value) - 1] == '"') {
@@ -102,7 +102,7 @@ union record_item create_record_item(int *flag, Attribute attribute, char *value
         }
     }
 
-    switch (attribute->type) {
+    switch (attribute->type->type_num) {
         case INTEGER:
             if (strcasecmp(value, "null") == 0) {
                 recordItem.i = INT_MIN;
@@ -133,7 +133,7 @@ union record_item create_record_item(int *flag, Attribute attribute, char *value
             if (strcasecmp(value, "null") == 0 || strlen(value) == string_size) {
                 strcpy(recordItem.c, value);
             } else { // string size isn't correct
-                fprintf(stderr, "Error: %s's length must be equal to %d.\n", value, attribute->size);
+                fprintf(stderr, "Error: %s's length must be equal to %d.\n", value, attribute->type->num_chars);
                 flag[0] = -1;
                 return recordItem;
             }
@@ -142,7 +142,7 @@ union record_item create_record_item(int *flag, Attribute attribute, char *value
             if (strcasecmp(value, "null") == 0 || strlen(value) <= string_size) {
                 strcpy(recordItem.v, value);
             } else { // string size isn't correct
-                fprintf(stderr, "Error: %s's length must be <= to %d.\n", value, attribute->size);
+                fprintf(stderr, "Error: %s's length must be <= to %d.\n", value, attribute->type->num_chars);
                 flag[0] = -1;
                 return recordItem;
             }
@@ -155,7 +155,7 @@ union record_item create_record_item(int *flag, Attribute attribute, char *value
 
 union record_item *create_record_from_statement(Table table, char *tuple) {
 
-    union record_item *record = malloc(sizeof(union record_item) * table->attribute_count);
+    union record_item *record = malloc(sizeof(union record_item) * table->attrs_size);
 
     char *temp = malloc(strlen(tuple) + 1);
     strcpy(temp, tuple);
@@ -166,11 +166,11 @@ union record_item *create_record_from_statement(Table table, char *tuple) {
         return NULL;
     }
 
-    for (int i = 0; i < table->attribute_count; i++) {
+    for (int i = 0; i < table->attrs_size; i++) {
 
         int *flag = malloc(sizeof(int) * 1);
         flag[0] = 0;
-        union record_item recordItem = create_record_item(flag, table->attributes[i], record_tuple->tuple[i]);
+        union record_item recordItem = create_record_item(flag, table->attrs[i], record_tuple->tuple[i]);
 
         // check for any potential errors
         if (flag[0] == -1) {
@@ -202,7 +202,7 @@ int parse_insert_statement(char *statement) {
 
             // Note: No need to free this table since it will
             // be free'd upon termination of application.
-            Table table = get_table_from_catalog(table_name);
+            Table table = get_table_by_name(table_name);
 
             if (table == NULL) { // table doesn't exist
                 fprintf(stderr, "Error: Table %s does not exist.\n", table_name);
@@ -227,7 +227,7 @@ int parse_insert_statement(char *statement) {
                         print_record(table, record);
 
                         // insert the tuple into the storage manager
-                        if (insert_record(table->tableId, record) == -1) {
+                        if (insert_record(table->num, record) == -1) {
                             fprintf(stderr, "Error: Cannot insert:\n\t");
                             print_record(table, record);
                             free(tuples);
@@ -284,7 +284,7 @@ int parse_update_statement(char *statement) {
 
         if (statement_array->array[index] != NULL) {
             char *table_name = statement_array->array[index++];
-            Table table = get_table_from_catalog(table_name);
+            Table table = get_table_by_name(table_name);
 
             if (table != NULL) {
 
@@ -321,7 +321,7 @@ int parse_update_statement(char *statement) {
 
                         union record_item **storagemanager_table = NULL;
 
-                        int table_size = get_records(table->tableId, &storagemanager_table);
+                        int table_size = get_records(table->num, &storagemanager_table);
                         if (table_size == -1) {
                             if (includes_where) {
                                 free(where_clause);
@@ -364,10 +364,10 @@ int parse_update_statement(char *statement) {
                                     StringArray tmp_clause = string_to_array(set->clauses->array[j]);
 
                                     char *attribute_name = tmp_clause->array[0];
-                                    Attribute attribute = get_attribute_from_table(table, attribute_name);
+                                    Attr attribute = get_attr_by_name(table, attribute_name);
 
                                     if (attribute != NULL) {
-                                        int record_index = get_attribute_index(table, attribute);
+                                        int record_index = attribute->position;
                                         if (record_index == -1) {
                                             free_string_array(tmp_clause);
                                             free_clause(set);
@@ -377,12 +377,12 @@ int parse_update_statement(char *statement) {
                                             return -1;
                                         }
 
-                                        switch (attribute->type) {
+                                        switch (attribute->type->type_num) {
                                             double res;
                                             case INTEGER:
                                                 res = calculate_value(set, tmp_clause, record);
                                                 record[record_index].i = (int) res;
-                                                if (res == DBL_MAX || update_record(table->tableId, record) == -1) {
+                                                if (res == DBL_MAX || update_record(table->num, record) == -1) {
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
@@ -394,7 +394,7 @@ int parse_update_statement(char *statement) {
                                             case DOUBLE:
                                                 res = calculate_value(set, tmp_clause, record);
                                                 record[record_index].d = res;
-                                                if (res == DBL_MAX || update_record(table->tableId, record) == -1) {
+                                                if (res == DBL_MAX || update_record(table->num, record) == -1) {
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
@@ -476,7 +476,7 @@ int parse_delete_from_statement(char *statement) {
     // expected to be existing table name
     char *table_name = strtok(NULL, " ");
     //printf("table_name: %s\n", table_name);
-    Table table = get_table_from_catalog(table_name);
+    Table table = get_table_by_name(table_name);
 
     if (table == NULL) { // table doesn't exist
         fprintf(stderr, "Error: Table %s does not exist.\n", table_name);
@@ -493,7 +493,7 @@ int parse_delete_from_statement(char *statement) {
     }
 
     union record_item **records = NULL;
-    int table_size = get_records(table->tableId, &records);
+    int table_size = get_records(table->num, &records);
 
     if(table_size == -1) {
         fprintf(stderr, "Error: unable to records from table %s\n", table_name);
@@ -551,8 +551,8 @@ bool does_record_satisfy_condition(union record_item *record, char *condition, T
     char *attribute_name = strtok(condition, " ");
     printf("attribute_name: \"%s\"\n", attribute_name);
     union record_item item;
-    for(int i = 0; i < table->attribute_count; i++) {
-        if(strcasecmp(table->attributes[i]->name, attribute_name) == 0) {
+    for(int i = 0; i < table->attrs_size; i++) {
+        if(strcasecmp(table->attrs[i]->name, attribute_name) == 0) {
             item = record[i];
         }
     }
