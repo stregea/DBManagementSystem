@@ -55,7 +55,7 @@ double calculate_value(Clause clause, StringArray math_expression, union record_
                 return DBL_MAX;
             }
 
-            if(attribute1->type == INTEGER){
+            if(attribute1->type->type_num == INTEGER){
                 value1 = record[i].i;
             }
             else{ // otherwise a double
@@ -86,7 +86,7 @@ double calculate_value(Clause clause, StringArray math_expression, union record_
                 return DBL_MAX;
             }
 
-            if(attribute2->type == INTEGER){
+            if(attribute2->type->type_num == INTEGER){
                 value2 = record[i].i;
             }
             else{ // otherwise a double
