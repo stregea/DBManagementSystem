@@ -560,7 +560,7 @@ int parse_select_statement(char *statement) {
         from_clause_index++; // TODO: This is pretty basic atm. must be able to handle multiple tables though
         if (statement_array->array[from_clause_index] != NULL) {
             char *table_name = statement_array->array[from_clause_index];
-            Table table = get_table_from_catalog(table_name);
+            Table table = get_table_by_name(table_name);
 
             if (table != NULL) {
 
