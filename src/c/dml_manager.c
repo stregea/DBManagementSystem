@@ -538,7 +538,60 @@ int parse_delete_from_statement(char *statement) {
  }
 
 // TODO
-int parse_select_statement(char *statement) { return 0; }
+int parse_select_statement(char *statement) {
+    char *temp_statement = malloc(strlen(statement) + 1);
+    strcpy(temp_statement, statement);
+
+    StringArray statement_array = string_to_array(temp_statement);
+    free(temp_statement);
+
+    if (get_index_of_word_from_string(statement, "select") == -1 ||
+        get_index_of_word_from_string(statement, "from") == -1) {
+        fprintf(stderr, "Error: Invalid command.\n"); // missing 'select' and 'from'. 'where' is optional.
+
+        free_string_array(statement_array);
+        return -1;
+    }
+
+    int index = 0;
+    if (statement_array->array[index] != NULL && strcasecmp(statement_array->array[index++], "update") == 0) {
+
+        int from_clause_index = get_index_of_word_from_string(statement, "from");
+        from_clause_index++; // TODO: This is pretty basic atm. must be able to handle multiple tables though
+        if (statement_array->array[from_clause_index] != NULL) {
+            char *table_name = statement_array->array[from_clause_index];
+            Table table = get_table_from_catalog(table_name);
+
+            if (table != NULL) {
+
+                // TODO: Get the whole of the records from the table if it isn't null.
+
+                char *select_clause = NULL;
+                char *where_clause = NULL;
+                Clause select = NULL;
+                Clause where = NULL;
+
+                // Determine if a where clause exists.
+                bool includes_where = false;
+                if (get_index_of_word_from_string(statement, "where") >= 0) {
+                    includes_where = true;
+                }
+
+                // Build the select clause
+                select_clause = array_of_tokens_to_string(statement_array, "select", "from", false);
+
+                // TODO: determine selected rows
+
+                if (includes_where){
+                    //TODO: where clause logic
+                }
+            }
+        }
+    }
+    free_string_array(statement_array);
+    // bad keyword
+    return -1;
+}
 
 bool does_record_satisfy_condition(union record_item *record, char *condition, Table table) {
 
