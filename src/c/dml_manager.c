@@ -364,9 +364,11 @@ int parse_update_statement(char *statement) {
                                     StringArray tmp_clause = string_to_array(set->clauses->array[j]);
                                     char *attribute_name = tmp_clause->array[0];
                                     Attr attribute = get_attr_by_name(table, attribute_name);
+                                    Attr attribute2 = NULL;
                                     int string_size;
+                                    int string_size_attribute2;
 
-                                    if (attribute != NULL) {
+                                    if (attribute != 0) {
                                         int record_index = attribute->position;
                                         if (record_index == -1) {
                                             free_string_array(tmp_clause);
@@ -425,7 +427,13 @@ int parse_update_statement(char *statement) {
                                                 break;
                                             case BOOL:
                                                 // handle inserting null (includes all records).
-                                                if(strcasecmp(tmp_clause->array[2], "true") == 0
+
+                                                // check to see if another column value
+                                                attribute2 = get_attr_by_name(table, tmp_clause->array[2]);
+                                                if(attribute2 != 0 && attribute2->type->type_num == BOOL){
+                                                    record[record_index].b[0] = record[attribute2->position].b[0];
+                                                }
+                                                else if(strcasecmp(tmp_clause->array[2], "true") == 0
                                                     || strcasecmp(tmp_clause->array[2], "false") == 0
                                                     || strcasecmp(tmp_clause->array[2], "null") == 0 ){
 
@@ -449,7 +457,33 @@ int parse_update_statement(char *statement) {
                                                 }
                                                 break;
                                             case CHAR:
-                                                if (strcasecmp(tmp_clause->array[2], "null") == 0 || strlen(tmp_clause->array[2]) == string_size) {
+                                                // check to see if another column value
+                                                attribute2 = get_attr_by_name(table, tmp_clause->array[2]);
+                                                if(attribute2 != 0 && attribute2->type->type_num == CHAR){
+
+                                                    string_size_attribute2 = attribute2->type->num_chars;
+
+                                                    // If '"' is on both ends of the string, add 2 to the allowed size of the string
+                                                    // since, they don't technically count towards the total size of the string.
+                                                    char* value2 = record[attribute2->position].c;
+                                                    if (value2[0] == '"' && value2[strlen(value2) - 1] == '"') {
+                                                        string_size_attribute2 += 2;
+                                                    }
+
+                                                    // determine if attribute 2 meets the size constraints for attribute 1
+                                                    if(strlen(record[attribute2->position].c) != string_size_attribute2){
+                                                        fprintf(stderr, "Error: %s's length must be equal to %d.\n", attribute2->name, attribute->type->num_chars);
+                                                        free_string_array(tmp_clause);
+                                                        free_clause(set);
+                                                        free(set_clause);
+                                                        free_string_array(statement_array);
+                                                        free_table_from_storagemanager(table_size, storagemanager_table);
+                                                        return -1;
+                                                    }
+
+                                                    strcpy(record[record_index].c, record[attribute2->position].c);
+                                                }
+                                                else if (strcasecmp(tmp_clause->array[2], "null") == 0 || strlen(tmp_clause->array[2]) == string_size) {
                                                     strcpy(record[record_index].c, tmp_clause->array[2]);
                                                 } else { // error
                                                     fprintf(stderr, "Error: %s's length must be equal to %d.\n", tmp_clause->array[2], attribute->type->num_chars);
@@ -462,7 +496,34 @@ int parse_update_statement(char *statement) {
                                                 }
                                                 break;
                                             case VARCHAR:
-                                                if (strcasecmp(tmp_clause->array[2], "null") == 0 || strlen(tmp_clause->array[2]) <= string_size) {
+                                                // check to see if another column value
+                                                attribute2 = get_attr_by_name(table, tmp_clause->array[2]);
+
+                                                if(attribute2 != 0 && attribute2->type->type_num == VARCHAR){
+
+                                                    string_size_attribute2 = attribute2->type->num_chars;
+
+                                                    // If '"' is on both ends of the string, add 2 to the allowed size of the string
+                                                    // since, they don't technically count towards the total size of the string.
+                                                    char* value2 = record[attribute2->position].c;
+                                                    if (value2[0] == '"' && value2[strlen(value2) - 1] == '"') {
+                                                        string_size_attribute2 += 2;
+                                                    }
+
+                                                    // determine if attribute 2 meets the size constraints for attribute 1
+                                                    if(strlen(record[attribute2->position].c) > string_size_attribute2){
+                                                        fprintf(stderr, "Error: %s's length must be equal to %d.\n", attribute2->name, attribute->type->num_chars);
+                                                        free_string_array(tmp_clause);
+                                                        free_clause(set);
+                                                        free(set_clause);
+                                                        free_string_array(statement_array);
+                                                        free_table_from_storagemanager(table_size, storagemanager_table);
+                                                        return -1;
+                                                    }
+
+                                                    strcpy(record[record_index].c, record[attribute2->position].c);
+                                                }
+                                                else if (strcasecmp(tmp_clause->array[2], "null") == 0 || strlen(tmp_clause->array[2]) <= string_size) {
                                                     strcpy(record[record_index].v, tmp_clause->array[2]);
                                                 } else { // string size isn't correct
                                                     fprintf(stderr, "Error: %s's length must be less than or equal to %d.\n", tmp_clause->array[2], attribute->type->num_chars);
