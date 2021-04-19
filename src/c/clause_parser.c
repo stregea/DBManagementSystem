@@ -162,6 +162,7 @@ Clause parse_set_clause(char *clauses) {
 // todo
 Clause parse_where_clause(char *clauses) {
     // accepted keywords: AND, OR, NOT
+    printf("***************************** PARSE WHERE CLAUSE *****************************\n");
 
     Clause where_clause = create_clause();
     where_clause->operators = create_string_array();
@@ -181,13 +182,13 @@ Clause parse_where_clause(char *clauses) {
         }
         token = strtok(NULL, " ");
     }
-    printf("logical_operator_size: %d\n", where_clause->operators->size);
+    //printf("logical_operator_size: %d\n", where_clause->operators->size);
 
-    printf("line hit\n");
+    //printf("line hit\n");
 
     free(condition);
     condition = strdup(clauses);
-    printf("condition: %s\n", condition);
+    //printf("condition: %s\n", condition);
 
     // build the where clause
     for(int i = 0; i < where_clause->operators->size; i++){
@@ -205,10 +206,10 @@ Clause parse_where_clause(char *clauses) {
 
         *token = '\0';
         token = token + strlen(where_clause->operators->array[i]);
-        printf("op: [%s]\n", where_clause->operators->array[i]);
+        //printf("op: [%s]\n", where_clause->operators->array[i]);
 
         condition = clean_clause(condition);
-        printf("condition: [%s]\n", condition);
+        //printf("condition: [%s]\n", condition);
         where_clause->clauses->array = realloc(where_clause->clauses->array, sizeof(char*) * (where_clause->clauses->size + 1));
         where_clause->clauses->array[where_clause->clauses->size] = malloc(strlen(condition) + 1);
 
@@ -218,7 +219,7 @@ Clause parse_where_clause(char *clauses) {
         if(i == where_clause->operators->size - 1){ // strstr makes us do this
             token = clean_clause(token);
 
-            printf("condition: [%s]\n", token);
+            //printf("condition: [%s]\n", token);
             where_clause->clauses->array = realloc(where_clause->clauses->array, sizeof(char*) * (where_clause->clauses->size + 1));
             where_clause->clauses->array[where_clause->clauses->size] = malloc(strlen(token) + 1);
 
@@ -227,14 +228,7 @@ Clause parse_where_clause(char *clauses) {
         }
 
     }
-    printf("**************************************************\n");
-    for(int i = 0; i < where_clause->clauses->size; i++) {
-        printf("\"%s\"\n", where_clause->clauses->array[i]);
-        //does_record_satisfy_condition(where_clause->clauses->array[i]);
-    }
-    for(int i = 0; i < where_clause->operators->size; i++) {
-        printf("\"%s\"\n\n", where_clause->operators->array[i]);
-    }
+    
     free(condition);
     return where_clause;
 }
