@@ -21,12 +21,25 @@ bool is_conditional(char *condition) {
 
 int get_data_type(char *value) {
 
+    int i;
+    double d;
+//    bool b;
     // check if value can be cast as boolean
     // determine if integer value
     // check if boolean value
     // check if string value.
+    // check if a integer value
+    if(sscanf(value, "%d", &i) != 0){ // it's an integer
+        return INTEGER;
+    }
+    if(sscanf(value, "%f", &d) != 0){ // it's an float/double
+        return DOUBLE;
+    }
+    if(strcasecmp(value, "true") == 0 || strcasecmp(value, "false") == 0){
+        return BOOL;
+    }
 
-    return INTEGER;
+    return CHAR; // return as a char/varchar.
 }
 
 //todo
@@ -65,7 +78,7 @@ OperationTree build_tree(StringArray string) {
         }
     }
 
-    tree->root = (Node)peek(stack);
+    tree->root = (Node) peek(stack);
     free_stack(stack);
     return tree;
 }
@@ -76,13 +89,26 @@ int toInt(char *string) {
     return atoi(string);
 }
 
-bool toBool(char* string){
+// Utility function to return the boolean value
+// of a given string
+bool toBool(char *string) {
     return strcasecmp(string, "true") == 0;
 }
 
+// Utility function to return the double value
+// of a given string
 double toDouble(char *value) {
     char *val_pointer;
     return strtod(value, &val_pointer);
+}
+// Utility function to return the string value
+// of a given string
+int calculate_string_value(char* value){
+    int ret = 0;
+    for(int i = 0; i < strlen(value); i++){
+        ret += value[i];
+    }
+    return ret;
 }
 
 double evaluate_tree(Node node) {
@@ -97,13 +123,14 @@ double evaluate_tree(Node node) {
         // determine type of value (int, double, bool, char, varchar)
         switch (node->type) {
             case INTEGER: // or bool
-                 return toInt(node->value);
+                return toInt(node->value);
             case BOOL:
                 return toBool(node->value);
             case DOUBLE:
+                return toDouble(node->value);
             case CHAR:
             case VARCHAR:
-                return toDouble(node->value);
+                return calculate_string_value(node->value);
         }
     }
 
@@ -125,7 +152,7 @@ double evaluate_tree(Node node) {
     return DBL_MAX;
 }
 
-bool determine_conditional(Node node){
+bool determine_conditional(Node node) {
 
     // evaluate left side of tree
     double left_branch = evaluate_tree(node->left);
@@ -155,7 +182,7 @@ bool determine_conditional(Node node){
 int precedence(char *operation) {
     //printf("operand: %s\n", operation);
     //printf("operand char: %c\n\n", operation[0]);
-    switch(operation[0]) {
+    switch (operation[0]) {
         case '+' :
             return 2;
         case '-' :
@@ -169,27 +196,27 @@ int precedence(char *operation) {
         default :
             //printf("Invalid operand\n" );
             return -1;
-   }
+    }
 }
 
 StringArray expression_to_string_list(char *expression) {
-    
-    char* tmp = strdup(expression);
+
+    char *tmp = strdup(expression);
     int length = strlen(expression);
     // will have to fix this allocation from freeing issues
-    char** tokens = malloc(length * sizeof(char *));
+    char **tokens = malloc(length * sizeof(char *));
     int token_index = 0;
 
-    char * ops = "*-+/><=";
+    char *ops = "*-+/><=";
     char *token = strtok(tmp, ops);
 
     // add all numerical values to string array
-    while(token != NULL) {
+    while (token != NULL) {
         // store number token
         tokens[token_index] = malloc(strlen(token) + 1);
         strcpy(tokens[token_index], token);
         token_index++;
-        
+
         // allocate space for operation char
         tokens[token_index] = malloc(sizeof(char) + 2);
         strcpy(tokens[token_index], " ");
@@ -201,15 +228,15 @@ StringArray expression_to_string_list(char *expression) {
 
     // add all op strings
     int ops_index = 1;
-    for(int i = 0; i < length; i++) {
-        if(expression[i] == '+'
-        || expression[i] == '-'
-        || expression[i] == '*'
-        || expression[i] == '/'
-        || expression[i] == '>'
-        || expression[i] == '<'
-        || expression[i] == '='
-        ) {
+    for (int i = 0; i < length; i++) {
+        if (expression[i] == '+'
+            || expression[i] == '-'
+            || expression[i] == '*'
+            || expression[i] == '/'
+            || expression[i] == '>'
+            || expression[i] == '<'
+            || expression[i] == '='
+                ) {
             tokens[ops_index][0] = expression[i];
             ops_index += 2;
         }
@@ -226,36 +253,36 @@ StringArray infix_to_postfix(StringArray expression) {
     QueueADT queue = que_create();
     Stack stack = create_stack();
 
-    for(int i = 0; i < expression->size; i++) {
+    for (int i = 0; i < expression->size; i++) {
         // all even indices are numerical values
-        if(i % 2 == 0) {
+        if (i % 2 == 0) {
             //printf("number: %s\n", expression->array[i]);
             que_insert(queue, expression->array[i]);
         }
-        // if the string is an operand
-        else{
-            while(!isEmpty(stack) && precedence(expression->array[i]) <= precedence((char*)peek(stack))) {
+            // if the string is an operand
+        else {
+            while (!isEmpty(stack) && precedence(expression->array[i]) <= precedence((char *) peek(stack))) {
                 // pop operators from the operator stack onto the output queue
-                que_insert(queue, (char*)pop(stack));
+                que_insert(queue, (char *) pop(stack));
             }
             // push it onto the operator stack
             printf("operand: %s\n", expression->array[i]);
             push(stack, expression->array[i]);
-            printf("operand stack: %s\n", (char*)peek(stack));
+            printf("operand stack: %s\n", (char *) peek(stack));
         }
     }
 
-    while(!isEmpty(stack)) {
-        que_insert(queue, (char*)pop(stack));
+    while (!isEmpty(stack)) {
+        que_insert(queue, (char *) pop(stack));
     }
 
     StringArray postfix = malloc(sizeof(struct StringArray));
-    postfix->size = (int)sizeQue(queue);
-    postfix->array = malloc(postfix->size * sizeof(char*));
+    postfix->size = (int) sizeQue(queue);
+    postfix->array = malloc(postfix->size * sizeof(char *));
 
     char *current_string;
-    for(int i = 0; i < postfix->size; i++) {
-        current_string = (char*)que_remove(queue);
+    for (int i = 0; i < postfix->size; i++) {
+        current_string = (char *) que_remove(queue);
         postfix->array[i] = malloc(strlen(current_string) + 1);
         strcpy(postfix->array[i], current_string);
     }

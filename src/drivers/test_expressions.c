@@ -22,7 +22,7 @@ void treeprint(Node root, int level) {
 }
 
 int main() {
-    char *expression = "21*34+1<2-5/4";
+    char *expression = "a<b";
     char *string = malloc(strlen(expression) + 1);
     strcpy(string, expression);
     StringArray strings = expression_to_string_list(string);
