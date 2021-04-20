@@ -73,29 +73,7 @@ OperationTree build_tree(StringArray string) {
 // Utility function to return the integer value
 // of a given string
 int toInt(char *string) {
-    int num = 0;
-    bool is_negative = false;
-
-    // Check if the integral value is
-    // negative or not
-    // If it is not negative, generate the number
-    // normally
-    if (string[0] == '-') {
-        is_negative = true;
-    }
-
-    // If it is negative, calculate the +ve number
-    // first ignoring the sign and invert the
-    // sign at the end
-
-    for (int i = 1; i < strlen(string); i++) {
-        num = num * 10 + (((int) string[i]) - 48);
-        if (is_negative) {
-            num = num * -1;
-        }
-    }
-
-    return num;
+    return atoi(string);
 }
 
 bool toBool(char* string){
@@ -107,7 +85,7 @@ double toDouble(char *value) {
     return strtod(value, &val_pointer);
 }
 
-double evaluate_node_operation(Node node) {
+double evaluate_tree(Node node) {
 
     if (!node) {
         return 0;
@@ -129,8 +107,8 @@ double evaluate_node_operation(Node node) {
         }
     }
 
-    double left_value = evaluate_node_operation(node->left);
-    double right_value = evaluate_node_operation(node->right);
+    double left_value = evaluate_tree(node->left);
+    double right_value = evaluate_tree(node->right);
 
     if (node->is_operation) {
         switch (node->operation) {
@@ -144,8 +122,18 @@ double evaluate_node_operation(Node node) {
                 return left_value * right_value;
         }
     }
+    return DBL_MAX;
+}
 
-    // conditional
+bool determine_conditional(Node node){
+
+    // evaluate left side of tree
+    double left_value = evaluate_tree(node->left);
+
+    // evaluate right side of tree.
+    double right_value = evaluate_tree(node->right);
+
+    // conditional at the top of the tree
     switch (node->operation) {
         case LESS_THAN:
             return left_value < right_value;
@@ -161,7 +149,7 @@ double evaluate_node_operation(Node node) {
             return left_value != right_value;
     }
 
-    return DBL_MAX;
+    return false;
 }
 
 int precedence(char *operation) {
