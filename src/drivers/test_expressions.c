@@ -22,7 +22,7 @@ void treeprint(Node root, int level) {
 }
 
 int main() {
-    char *expression = "21*34+1/2*5/4";
+    char *expression = "21*34+1<2-5/4";
     char *string = malloc(strlen(expression) + 1);
     strcpy(string, expression);
     StringArray strings = expression_to_string_list(string);
@@ -36,7 +36,10 @@ int main() {
 
     treeprint(tree->root, 0);
 
-    double d = evaluate_tree(tree->root);
-    printf("%f\n", d);
+//    double d = evaluate_tree(tree->root);
+bool test = determine_conditional(tree->root);
+    freeOperationTree(tree);
+    printf("%s\n", test == true ? "true" : "false");
+//    printf("%f\n", d);
     return 0;
 }

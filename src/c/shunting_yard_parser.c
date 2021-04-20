@@ -128,25 +128,25 @@ double evaluate_tree(Node node) {
 bool determine_conditional(Node node){
 
     // evaluate left side of tree
-    double left_value = evaluate_tree(node->left);
+    double left_branch = evaluate_tree(node->left);
 
     // evaluate right side of tree.
-    double right_value = evaluate_tree(node->right);
+    double right_branch = evaluate_tree(node->right);
 
     // conditional at the top of the tree
-    switch (node->operation) {
+    switch (node->conditional) {
         case LESS_THAN:
-            return left_value < right_value;
+            return left_branch < right_branch;
         case LESS_THAN_OR_EQUAL_TO:
-            return left_value <= right_value;
+            return left_branch <= right_branch;
         case GREATER_THAN:
-            return left_value > right_value;
+            return left_branch > right_branch;
         case GREATER_THAN_OR_EQUAL_TO:
-            return left_value >= right_value;
+            return left_branch >= right_branch;
         case EQUALS:
-            return left_value == right_value;
+            return left_branch == right_branch;
         case NOT_EQUALS:
-            return left_value != right_value;
+            return left_branch != right_branch;
     }
 
     return false;
@@ -180,7 +180,7 @@ StringArray expression_to_string_list(char *expression) {
     char** tokens = malloc(length * sizeof(char *));
     int token_index = 0;
 
-    char * ops = "*-+/";
+    char * ops = "*-+/><=";
     char *token = strtok(tmp, ops);
 
     // add all numerical values to string array
@@ -191,7 +191,7 @@ StringArray expression_to_string_list(char *expression) {
         token_index++;
         
         // allocate space for operation char
-        tokens[token_index] = malloc(sizeof(char) + 1);
+        tokens[token_index] = malloc(sizeof(char) + 2);
         strcpy(tokens[token_index], " ");
         token_index++;
 
@@ -202,7 +202,14 @@ StringArray expression_to_string_list(char *expression) {
     // add all op strings
     int ops_index = 1;
     for(int i = 0; i < length; i++) {
-        if(expression[i] == '+' || expression[i] == '-' || expression[i] == '*' || expression[i] == '/') {
+        if(expression[i] == '+'
+        || expression[i] == '-'
+        || expression[i] == '*'
+        || expression[i] == '/'
+        || expression[i] == '>'
+        || expression[i] == '<'
+        || expression[i] == '='
+        ) {
             tokens[ops_index][0] = expression[i];
             ops_index += 2;
         }
