@@ -334,6 +334,7 @@ int parse_update_statement(char *statement) {
                         }
 
                         if (includes_where) {
+//                            where->
                             // grab all records that follow pertain to the clause
                             // iterate through all records then update values based on set clause
 //                            for(int i = 0; i < table_size; i++){
