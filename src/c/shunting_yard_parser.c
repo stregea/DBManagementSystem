@@ -204,6 +204,7 @@ StringArray expression_to_string_list(char *expression) {
         
         // allocate space for operation char
         tokens[token_index] = malloc(sizeof(char) + 1);
+        strcpy(tokens[token_index], " ");
         token_index++;
 
         // get next token
