@@ -94,7 +94,7 @@ union record_item create_record_item(int *flag, Attr attribute, char *value) {
 
     int string_size;
     if (attribute->type->type_num == CHAR || attribute->type->type_num == VARCHAR) {
-        string_size = (int) strlen(attribute->name);
+        string_size = (int) attribute->type->num_chars;
         // If '"' is on both ends of the string, add 2 to the allowed size of the string
         // since, they don't technically count towards the total size of the string.
         if (value[0] == '"' && value[strlen(value) - 1] == '"') {
@@ -554,7 +554,7 @@ int parse_select_statement(char *statement) {
     }
 
     int index = 0;
-    if (statement_array->array[index] != NULL && strcasecmp(statement_array->array[index++], "update") == 0) {
+    if (statement_array->array[index] != NULL && strcasecmp(statement_array->array[index++], "select") == 0) {
 
         int from_clause_index = get_index_of_word_from_string(statement, "from");
         from_clause_index++; // TODO: This is pretty basic atm. must be able to handle multiple tables though
@@ -580,7 +580,17 @@ int parse_select_statement(char *statement) {
                 // Build the select clause
                 select_clause = array_of_tokens_to_string(statement_array, "select", "from", false);
 
-                // TODO: determine selected rows
+                // TODO: determine selected columns
+                // get string after "select"
+                char * columns = malloc(strlen(select_clause)); // This is longer than we need but who cares
+                //TODO need to trim this but trimwhitespace is pretty cursed
+                strcpy(columns, strstr(select_clause, "select") + 6);
+                // check for correct syntax
+                // something something strtok
+                // get list of columns as strings
+                // parse column names to check for periods separating table and column
+                // check each table name to see if it exists and is part of the former list of columns
+                // check each column name to see if the table has that column
 
                 if (includes_where){
                     //TODO: where clause logic
