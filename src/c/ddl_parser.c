@@ -393,7 +393,7 @@ int parse_create_table( char * statement ){
 		attr_constraints_size++;
 	}
 	
-	attr_constraints[attr_constraints_size-1][strlen(attr_constraints[attr_constraints_size-1]) - 3] = '\0';
+	attr_constraints[attr_constraints_size-1][strlen(attr_constraints[attr_constraints_size-1]) - 2] = '\0';
 	
 	int result = 0;
 	for(int i = 0; i < attr_constraints_size; i++){

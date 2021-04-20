@@ -46,7 +46,7 @@ int execute_non_query(char *statement) {
  * @return the number of tuples in the result, -1 if upon error.
  */
 int execute_query(char *query, union record_item ***result) {
-    return 0;
+    return parse_dml_query(query, result);
 }
 
 /**

@@ -556,13 +556,25 @@ int parse_select_statement(char *statement) {
     int index = 0;
     if (statement_array->array[index] != NULL && strcasecmp(statement_array->array[index++], "select") == 0) {
 
-        int from_clause_index = get_index_of_word_from_string(statement, "from");
-        from_clause_index++; // TODO: This is pretty basic atm. must be able to handle multiple tables though
-        if (statement_array->array[from_clause_index] != NULL) {
-            char *table_name = statement_array->array[from_clause_index];
+        //check for where clause, will determine how we find the from clause
+        bool includes_where = false;
+        if (get_index_of_word_from_string(statement, "where") >= 0) {
+            includes_where = true;
+        }
+        char *from_clause = NULL;
+        if(includes_where){
+            from_clause = array_of_tokens_to_string(statement_array, "from", "where", false);
+        }
+        else{
+            from_clause = array_of_tokens_to_string(statement_array, "from", END_OF_ARRAY, false);
+        }
+
+        char *from_token;
+        char *table_name = strtok_r(from_clause, ",", &from_token);
+        if (table_name != NULL) {
             Table table = get_table_by_name(table_name);
 
-            if (table != NULL) {
+            if (table != NULL) { //turn this into a while loop to get multiple tables.
 
                 // TODO: Get the whole of the records from the table if it isn't null.
 
@@ -572,19 +584,25 @@ int parse_select_statement(char *statement) {
                 Clause where = NULL;
 
                 // Determine if a where clause exists.
-                bool includes_where = false;
-                if (get_index_of_word_from_string(statement, "where") >= 0) {
-                    includes_where = true;
-                }
+
+                union record_item **storagemanager_table = NULL;
+
+                int table_size = get_records(table->num, &storagemanager_table);
+
 
                 // Build the select clause
                 select_clause = array_of_tokens_to_string(statement_array, "select", "from", false);
+
+                for (int i = 0; i < table_size; i++) {
+                    union record_item *record = storagemanager_table[i]; // todo: may need to free this
+                    print_record(table, record);
+                }
 
                 // TODO: determine selected columns
                 // get string after "select"
                 char * columns = malloc(strlen(select_clause)); // This is longer than we need but who cares
                 //TODO need to trim this but trimwhitespace is pretty cursed
-                strcpy(columns, strstr(select_clause, "select") + 6);
+                //strcpy(columns, strstr(select_clause, "select") + 6); //This segfaults?
                 // check for correct syntax
                 // something something strtok
                 // get list of columns as strings
@@ -595,6 +613,12 @@ int parse_select_statement(char *statement) {
                 if (includes_where){
                     //TODO: where clause logic
                 }
+
+                free(columns);
+                free(from_clause);
+                free(select_clause);
+                free_string_array(statement_array);
+                return 0;
             }
         }
     }
