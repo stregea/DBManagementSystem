@@ -569,6 +569,9 @@ int parse_select_statement(char *statement) {
             from_clause = array_of_tokens_to_string(statement_array, "from", END_OF_ARRAY, false);
         }
 
+        // TODO: Create a reallocable record set to hold final result set.
+        // Ideally this should be returned
+
         char *from_token;
         char *table_name = strtok_r(from_clause, ",", &from_token);
         if (table_name != NULL) { //turn this into a while loop to get multiple tables.
@@ -576,7 +579,8 @@ int parse_select_statement(char *statement) {
 
             if (table != NULL) {
 
-                // TODO: Get the whole of the records from the table if it isn't null.
+                // TODO: Get the whole of the records from one table if it isn't null.
+                // if result set isn't empty. cartesian product these records with result set
 
                 char *select_clause = NULL;
                 char *where_clause = NULL;
@@ -591,9 +595,11 @@ int parse_select_statement(char *statement) {
 
 
                 // Build the select clause
+                // this c
                 select_clause = array_of_tokens_to_string(statement_array, "select", "from", false);
 
                 for (int i = 0; i < table_size; i++) {
+                    //testing. this could be repurposed into nested for loops for cartesian product
                     union record_item *record = storagemanager_table[i]; // todo: may need to free this
                     print_record(table, record);
                 }
