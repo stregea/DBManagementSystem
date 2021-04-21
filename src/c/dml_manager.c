@@ -705,14 +705,14 @@ int parse_select_statement(char *statement) {
         //TODO get multiple table names
         char *from_token;
         char **table_names = calloc(3, sizeof(char *));
-        char *table_name = strtok_r(from_clause, ",", &from_token);
+        char *table_name = strtok_r(from_clause, ", ", &from_token);
         table_names[0] = table_name;
-        int names_length = 3;
+        int names_length = 3; // start off with a little bit of space
         int name_index = 1;
 
-        while((table_name = strtok_r(NULL, ",", &from_token)) != NULL) {
+        while((table_name = strtok_r(NULL, ", ", &from_token)) != NULL) {
             if (name_index >= names_length) {
-                realloc(table_names, names_length * 2 * sizeof(char *));
+                realloc(table_names, names_length * 2 * sizeof(char *)); // double the length every time to reduce calls to realloc
                 names_length *= 2;
             }
             table_names[name_index] = table_name;
@@ -724,8 +724,9 @@ int parse_select_statement(char *statement) {
         }
         printf("\n");
 
+        // All of this will need to support multiple tables
         if (table_names[0] != NULL) {
-            Table table = get_table_by_name(table_name);
+            Table table = get_table_by_name(table_names[0]);
 
             if (table != NULL) {
 
@@ -755,14 +756,46 @@ int parse_select_statement(char *statement) {
                 }
 
                 // TODO: determine selected columns
-                // get string after "select"
-                char * columns = malloc(strlen(select_clause)); // This is longer than we need but who cares
-                //TODO need to trim this but trimwhitespace is pretty cursed
-                //strcpy(columns, strstr(select_clause, "select") + 6); //This segfaults?
                 // check for correct syntax
+                char * column_token;
+                // Assume that we'll have at least one column from every table
+                char ** columns = calloc(names_length, sizeof(char *));
+                char *column_name = strtok_r(select_clause, ", ", &column_token);
+                columns[0] = column_name;
+                int column_index = 1;
+                int columns_length = names_length;
+
+                bool found_star;
+                if (strcmp(column_name, "*") == 0) {
+                    found_star = true;
+                } else {
+                    found_star = false;
+                }
+
+                while ((column_name = strtok_r(NULL, ", ", &column_token)) != NULL) {
+                    if (found_star) {
+                        fprintf(stderr, "Error: cannot specify additional columns alongside a *\n");
+                        return -1;
+                    }
+                    if (column_index >= columns_length) {
+                        realloc(columns, columns_length * 2 * sizeof(char *));
+                        columns_length *= 2;
+                    }
+                    columns[column_index] = column_name;
+                    if (strcmp(column_name, "*") == 0) {
+                        fprintf(stderr, "Error: cannot specify additional columns alongside a *\n");
+                        return -1;
+                    }
+                    column_index++;
+                }
+
+                for (int i = 0; i < column_index; i++) {
+                    printf("%s ", columns[i]);
+                }
+                printf("\n");
                 // something something strtok
                 // get list of columns as strings
-                // parse column names to check for periods separating table and column
+                // parse column names to check for periods separating table and column NOTE: not quite how that works
                 // check each table name to see if it exists and is part of the former list of columns
                 // check each column name to see if the table has that column
 
