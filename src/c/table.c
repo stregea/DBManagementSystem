@@ -1,10 +1,10 @@
 
-#include "table.h"
+#include "../headers/table.h"
 #include <string.h>
 #include <stdio.h>
-#include "catalog.h"
+#include "../headers/catalog.h"
 #include <stdlib.h>
-#include "storagemanager.h"
+#include "../headers/storagemanager.h"
 
 Table create_table( int num, char * name ){
 	Table table = malloc(sizeof(struct table_));

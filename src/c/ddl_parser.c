@@ -1,14 +1,14 @@
-#include "ddl_parser.h"
+#include "../headers/ddl_parser.h"
 #include <stdio.h>
 #include <stdbool.h>
-#include "catalog.h"
+#include "../headers/catalog.h"
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "foreign_key.h"
-#include "unique.h"
-#include "attribute.h"
-#include "utils.h"
+#include "../headers/foreign_key.h"
+#include "../headers/unique.h"
+#include "../headers/attribute.h"
+#include "../headers/utils.h"
 
 int parse_type_str( char * t_str );
 

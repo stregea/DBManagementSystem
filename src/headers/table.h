@@ -6,6 +6,7 @@
 #include "unique.h"
 #include "foreign_key.h"
 
+
 typedef struct table_{
 	int num;
 	char * name;

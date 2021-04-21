@@ -1,9 +1,9 @@
 
-#include "type.h"
+#include "../headers/type.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "utils.h"
+#include "../headers/utils.h"
 
 Type create_type(int type_num, int num_chars){
 	Type new_type = malloc(sizeof(struct type_));
