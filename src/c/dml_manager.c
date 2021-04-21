@@ -571,10 +571,10 @@ int parse_select_statement(char *statement) {
 
         char *from_token;
         char *table_name = strtok_r(from_clause, ",", &from_token);
-        if (table_name != NULL) {
+        if (table_name != NULL) { //turn this into a while loop to get multiple tables.
             Table table = get_table_by_name(table_name);
 
-            if (table != NULL) { //turn this into a while loop to get multiple tables.
+            if (table != NULL) {
 
                 // TODO: Get the whole of the records from the table if it isn't null.
 
