@@ -32,7 +32,7 @@ int get_data_type(char *value) {
     if(sscanf(value, "%d", &i) != 0){ // it's an integer
         return INTEGER;
     }
-    if(sscanf(value, "%f", &d) != 0){ // it's an float/double
+    if(sscanf(value, "%lf", &d) != 0){ // it's an float/double
         return DOUBLE;
     }
     if(strcasecmp(value, "true") == 0 || strcasecmp(value, "false") == 0){
@@ -205,52 +205,96 @@ int precedence(char *operation) {
     }
 }
 
-StringArray expression_to_string_list(char *expression) {
-
-    char *tmp = strdup(expression);
-    int length = strlen(expression);
-    // will have to fix this allocation from freeing issues
-    char **tokens = malloc(length * sizeof(char *));
-    int token_index = 0;
-
-    char *ops = "*-+/><=";
-    char *token = strtok(tmp, ops);
-
-    // add all numerical values to string array
-    while (token != NULL) {
-        // store number token
-        tokens[token_index] = malloc(strlen(token) + 1);
-        strcpy(tokens[token_index], token);
-        token_index++;
-
-        // allocate space for operation char
-        tokens[token_index] = malloc(sizeof(char) + 2);
-        strcpy(tokens[token_index], " ");
-        token_index++;
-
-        // get next token
-        token = strtok(NULL, ops);
+bool is_character_operator(char character) {
+    if (
+        character == '+'
+        || character == '-'
+        || character == '*'
+        || character == '/'
+        || character == '>'
+        || character == '<'
+        || character == '='
+        || character == '!'
+    ) {
+        return true;
     }
+    else {
+        return false;
+    }
+}
 
-    // add all op strings
-    int ops_index = 1;
-    for (int i = 0; i < length; i++) {
-        if (expression[i] == '+'
-            || expression[i] == '-'
-            || expression[i] == '*'
-            || expression[i] == '/'
-            || expression[i] == '>'
-            || expression[i] == '<'
-            || expression[i] == '='
-                ) {
-            tokens[ops_index][0] = expression[i];
-            ops_index += 2;
+StringArray expression_to_string_list(char *expression) {
+    //printf("%s\n", expression);
+    char *sub_string = NULL;
+    int sub_string_length;
+    char current_character;
+
+    int length = strlen(expression);
+    // definitely a memory issue
+    char **tokens = malloc(sizeof(char*) * length);
+    int token_count = 0;
+
+    for(int i = 0; i < length; i++) {
+        current_character = expression[i];
+        //printf("%c\n", current_character);
+
+        if(is_character_operator(current_character)) {
+            if(sub_string == NULL){
+                fprintf(stderr, "Error: invalid expression\n");
+                return NULL;
+            }
+            // three operands in a row
+            else if(is_character_operator(sub_string[0]) && strlen(sub_string) > 1) {
+                fprintf(stderr, "Error: invalid expression\n");
+                return NULL;
+            }
+            // handles two character operands
+            else if(is_character_operator(sub_string[0])) {
+                sub_string_length = strlen(sub_string);
+                sub_string = realloc(sub_string, sub_string_length + 2);
+                sub_string[sub_string_length] = current_character;
+
+                if(get_conditional(sub_string) == -1) {
+                    fprintf(stderr, "Error: invalid expression\n");
+                    return NULL;
+                }
+            }
+            else {
+                tokens[token_count] = sub_string;
+                token_count++;
+                sub_string = malloc(sizeof(char) + 1);
+                sub_string[0] = current_character;
+            }
+        }
+        else if(current_character != ' ') {
+            if(sub_string == NULL){
+                sub_string = malloc(sizeof(char) + 1);
+                sub_string_length = strlen(sub_string);
+            }
+            else if(is_character_operator(sub_string[0])) {
+                tokens[token_count] = sub_string;
+                token_count++;
+                sub_string = malloc(sizeof(char) + 1);
+                sub_string_length = strlen(sub_string);
+            }
+            else {
+                sub_string_length = strlen(sub_string);
+                sub_string = realloc(sub_string, sub_string_length + 2);
+            }
+
+            sub_string[sub_string_length] = current_character;
+
+            // add last substring
+            if(i == length - 1) {
+                tokens[token_count] = sub_string;
+                token_count++;
+            }
         }
     }
 
     StringArray strings = malloc(sizeof(struct StringArray));
     strings->array = tokens;
-    strings->size = token_index - 1;
+    strings->size = token_count;
 
     return strings;
 }
