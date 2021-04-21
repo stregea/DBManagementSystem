@@ -3,13 +3,15 @@
 #ifndef DBMANAGEMENTSYSTEM_SHUNTING_YARD_PARSER_H
 #define DBMANAGEMENTSYSTEM_SHUNTING_YARD_PARSER_H
 /**
- * Build a parse tree from a string in post-fix notation.
- * @param string - The post-fix notation string.
+ * Build a parse tree from an expression.
+ * @param expression - The expression to convert to a tree.
  * @return a tree.
  */
-OperationTree build_tree(StringArray string);
+OperationTree build_tree(char *expression);
 
-double eval(Node node);
+double evaluate_tree(Node node);
+
+bool determine_conditional(Node node);
 
 int precedence(char *operation);
 StringArray expression_to_string_list(char *expression);

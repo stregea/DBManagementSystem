@@ -22,19 +22,20 @@ void treeprint(Node root, int level) {
 }
 
 int main() {
-    char *expression = "21*34+1/2";
-    char *string = malloc(strlen(expression) + 1);
-    strcpy(string, expression);
-    StringArray strings = expression_to_string_list(string);
-    strings = infix_to_postfix(strings);
+    char *expression = "21*34+5*2*2";
 
-    for (int i = 0; i < strings->size; i++) {
-        printf("%s ", strings->array[i]);
-    }
-    printf("\n");
-    OperationTree tree = build_tree(strings);
+
+    OperationTree tree = build_tree(expression);
 
     treeprint(tree->root, 0);
-//    printf("%d\n", tree->root->operation);
+
+    double d = evaluate_tree(tree->root);
+    printf("%f\n", d);
+
+//    bool test = determine_conditional(tree->root);
+//    printf("%s\n", test == true ? "true" : "false");
+
+    freeOperationTree(tree);
+
     return 0;
 }
