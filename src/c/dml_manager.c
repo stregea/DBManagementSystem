@@ -702,9 +702,29 @@ int parse_select_statement(char *statement) {
         // TODO: Create a reallocable record set to hold final result set.
         // Ideally this should be returned
 
+        //TODO get multiple table names
         char *from_token;
+        char **table_names = calloc(3, sizeof(char *));
         char *table_name = strtok_r(from_clause, ",", &from_token);
-        if (table_name != NULL) { //turn this into a while loop to get multiple tables.
+        table_names[0] = table_name;
+        int names_length = 3;
+        int name_index = 1;
+
+        while((table_name = strtok_r(NULL, ",", &from_token)) != NULL) {
+            if (name_index >= names_length) {
+                realloc(table_names, names_length * 2 * sizeof(char *));
+                names_length *= 2;
+            }
+            table_names[name_index] = table_name;
+            name_index++;
+        }
+
+        for (int i = 0; i < name_index; i++) {
+            printf("%s ", table_names[i]);
+        }
+        printf("\n");
+
+        if (table_names[0] != NULL) {
             Table table = get_table_by_name(table_name);
 
             if (table != NULL) {
