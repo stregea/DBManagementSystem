@@ -271,7 +271,6 @@ StringArray expression_to_string_list(char *expression) {
                 sub_string[0] = 0;
                 sub_string[1] = 0;
                 sub_string_length = strlen(sub_string);
-                printf("substring_length: %d\n", sub_string_length);
             } else if (is_character_operator(sub_string[0])) {
                 tokens[token_count] = strdup(sub_string);
                 token_count++;
