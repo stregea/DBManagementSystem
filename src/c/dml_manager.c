@@ -8,7 +8,6 @@
 #include <string.h>
 #include <limits.h>
 
-
 char* record_item_to_string(Type type, union record_item item){
     char* ret = NULL;
     switch(type->type_num){
@@ -687,27 +686,30 @@ int parse_delete_from_statement(char *statement) {
         return 0;
     }
 
-    /**
-    for(int i = 0; i < prim)
-
-    
-    Unique primary = get_primary_key(table);
-    int primary_key_size = primary->attrs_size;
-    union record_item **cur_records = malloc(sizeof(union record_item *) * primary_key_size);
+    union record_item *primary_key;
+    union record_item *current_record;
+    int primary_key_size;
     int position;
+    Unique primary;
+    int remove_result;
 
-    for(int i = 0; i < primary_key_size; i++) {
-        position = get_attr_position(primary->attrs[i]);
-        selected_records[i] = records
-    }
+    for(int i = 0; i < selected_records_size; i++) {
+        current_record = selected_records[i];
+        primary = get_primary_key(table);
+        primary_key_size = primary->attrs_size;
+        primary_key = malloc(sizeof(union record_item *) * primary_key_size);
+
+        for(int j = 0; j < primary_key_size; j++) {
+            position = get_attr_position(primary->attrs[j]);
+            primary_key[j] = current_record[position];    
+        }
+        
+        remove_result = remove_record(table->num, primary_key);
     
-    int remove_result = remove_record(table->num, key_values);
-    */
-
-    return 0; 
+    }
+    return remove_result; 
  }
-
-// TODO
+ 
 int parse_select_statement(char *statement) {
     char *temp_statement = malloc(strlen(statement) + 1);
     strcpy(temp_statement, statement);
