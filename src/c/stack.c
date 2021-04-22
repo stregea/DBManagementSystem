@@ -28,7 +28,7 @@ Stack create_stack() {
 
 // Utility function to return the size of the stack
 int size(Stack stack) {
-    return stack->size;
+    return stack->top + 1;
 }
 
 // Utility function to check if the stack is empty or not
@@ -66,7 +66,7 @@ void *pop(Stack stack) {
 }
 
 void free_stack(Stack stack){
-    for(int i = 0; i < stack->top; i++){
+    for(int i = 0; i < size(stack); i++){
         free_stack_data(stack->items[i]);
     }
     free(stack->items);
