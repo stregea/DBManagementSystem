@@ -8,10 +8,6 @@
 #include <string.h>
 #include <limits.h>
 
-char* record_item_to_string(Type type, union record_item item){
-    char* ret = NULL;
-    switch(type->type_num){
-
 char *record_item_to_string(Type type, union record_item item) {
     char *ret = NULL;
     switch (type->type_num) {
@@ -809,13 +805,13 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
 StringArray condition_to_expression(union record_item *record, char *condition, Table table) {
     char *temp = strdup(condition);
     char *attribute_name = strtok(temp, " ");
-    printf("attribute_name: \"%s\"\n", attribute_name);
+//    printf("attribute_name: \"%s\"\n", attribute_name);
 
     Attr attribute = get_attr_by_name(table, attribute_name);
     int data_position = get_attr_position(attribute);
     Type data_type = get_attr_type(attribute);
-    fprintf(stdout, "%d\n", data_position);
-    fprintf(stdout, "%s\n", condition);
+//    fprintf(stdout, "%d\n", data_position);
+//    fprintf(stdout, "%s\n", condition);
     union record_item item = record[data_position];
 
     StringArray expression = expression_to_string_list(condition);
