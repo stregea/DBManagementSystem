@@ -810,6 +810,20 @@ int parse_select_statement(char *statement) {
                 }
             } else {
                 // could be a unique name or could be an error
+                int found_col = 0;
+                for (int k = 0; k < name_index; k++) {
+                    for (int l = 0; l < table_list[k]->attrs_size; l++) {
+                        if (strcasecmp(columns[j], table_list[k]->attrs[l]->name) == 0) {
+                            // Found one
+                            found_col++;
+                            if (found_col > 1) {
+                                // Found the name twice, so they need to specify which one belongs to which table
+                                fprintf(stderr, "Error: attributes in different tables with the same name must be individually identified\n");
+                                return -1;
+                            }
+                        }
+                    }
+                }
             }
         }
 
