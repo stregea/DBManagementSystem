@@ -717,6 +717,7 @@ int parse_select_statement(char *statement) {
             }
             table_names[name_index] = table_name;
             name_index++;
+            printf("name_index: %d\n", name_index);
         }
 
         for (int i = 0; i < name_index; i++) {
@@ -738,6 +739,80 @@ int parse_select_statement(char *statement) {
         // Store all the returned lists of records first, then cartesian product them later
         union record_item ***record_lists = calloc(name_index, sizeof(union record_item *));
 
+        char *select_clause = NULL;
+        char *where_clause = NULL;
+        Clause select = NULL;
+        Clause where = NULL;
+
+        // Build the select clause
+        // this c
+        select_clause = array_of_tokens_to_string(statement_array, "select", "from", false);
+
+        // TODO: determine selected columns
+        // check for correct syntax
+        char * column_token;
+        // Assume that we'll have at least one column from every table
+        char ** columns = calloc(names_length, sizeof(char *));
+        char *column_name = strtok_r(select_clause, ", ", &column_token);
+        columns[0] = column_name;
+        int column_index = 1;
+        int columns_length = names_length;
+
+        bool found_star;
+        if (strcmp(column_name, "*") == 0) {
+            found_star = true;
+        } else {
+            found_star = false;
+        }
+
+        while ((column_name = strtok_r(NULL, ", ", &column_token)) != NULL) {
+            if (found_star) {
+                fprintf(stderr, "Error: cannot specify additional columns alongside a *\n");
+                return -1;
+            }
+            if (column_index >= columns_length) {
+                realloc(columns, columns_length * 2 * sizeof(char *));
+                columns_length *= 2;
+            }
+            columns[column_index] = column_name;
+            if (strcmp(column_name, "*") == 0) {
+                fprintf(stderr, "Error: cannot specify additional columns alongside a *\n");
+                return -1;
+            }
+            column_index++;
+        }
+
+        for (int j = 0; j < column_index; j++) {
+            printf("%s ", columns[j]);
+        }
+        printf("\n");
+
+        for (int j = 0; j < column_index; j++) {
+            if (strstr(columns[j], ".")) {
+                // table.column syntax
+                // check through the tables to see if one matches the first part
+                for (int k = 0; k < name_index; k++) {
+                    if (strncasecmp(columns[j], table_list[k]->name, strstr(columns[j], ".") - columns[j] - 1) == 0) {
+                        // got a table that matches
+                        int found_col = 0;
+                        for (int l = 0; l < table_list[k]->attrs_size; l++) { // Four loops deep!
+                            if (strcasecmp(strstr(columns[j], ".") + 1, table_list[k]->attrs[l]->name) == 0) {
+                                // Got it!
+                                found_col = 1;
+                                break;
+                            }
+                        }
+                        if (!found_col) {
+                            fprintf(stderr, "Error: could not find column %s\n", columns[j]);
+                            return -1;
+                        }
+                    }
+                }
+            } else {
+                // could be a unique name or could be an error
+            }
+        }
+
         // All of this will need to support multiple tables
         for (int i = 0; i < name_index; i++) {
 
@@ -747,11 +822,6 @@ int parse_select_statement(char *statement) {
             // TODO: Get the whole of the records
             // if result set isn't empty. cartesian product these records with result set (Do this after fetching)
 
-            char *select_clause = NULL;
-            char *where_clause = NULL;
-            Clause select = NULL;
-            Clause where = NULL;
-
             // Determine if a where clause exists.
 
             union record_item **storagemanager_table = NULL;
@@ -759,54 +829,13 @@ int parse_select_statement(char *statement) {
             int table_size = get_records(table->num, &storagemanager_table);
 
 
-            // Build the select clause
-            // this c
-            select_clause = array_of_tokens_to_string(statement_array, "select", "from", false);
-
             for (int j = 0; j < table_size; j++) {
                 //testing. this could be repurposed into nested for loops for cartesian product
                 union record_item *record = storagemanager_table[j]; // todo: may need to free this
                 print_record(table, record);
             }
 
-            // TODO: determine selected columns
-            // check for correct syntax
-            char * column_token;
-            // Assume that we'll have at least one column from every table
-            char ** columns = calloc(names_length, sizeof(char *));
-            char *column_name = strtok_r(select_clause, ", ", &column_token);
-            columns[0] = column_name;
-            int column_index = 1;
-            int columns_length = names_length;
 
-            bool found_star;
-            if (strcmp(column_name, "*") == 0) {
-                found_star = true;
-            } else {
-                found_star = false;
-            }
-
-            while ((column_name = strtok_r(NULL, ", ", &column_token)) != NULL) {
-                if (found_star) {
-                    fprintf(stderr, "Error: cannot specify additional columns alongside a *\n");
-                    return -1;
-                }
-                if (column_index >= columns_length) {
-                    realloc(columns, columns_length * 2 * sizeof(char *));
-                    columns_length *= 2;
-                }
-                columns[column_index] = column_name;
-                if (strcmp(column_name, "*") == 0) {
-                    fprintf(stderr, "Error: cannot specify additional columns alongside a *\n");
-                    return -1;
-                }
-                column_index++;
-            }
-
-            for (int j = 0; j < column_index; j++) {
-                printf("%s ", columns[j]);
-            }
-            printf("\n");
             // something something strtok
             // get list of columns as strings
             // parse column names to check for periods separating table and column NOTE: not quite how that works
@@ -814,7 +843,13 @@ int parse_select_statement(char *statement) {
             for (int col = 0; col < column_index; col++) {
                 if (strstr(columns[col], ".")) {
                     // table.column syntax
-                    // get each table and check name to see if it matches
+
+                    // Check the part before the period compared to the name of the table
+                    if (strncasecmp(columns[col], table->name, strstr(columns[col], ".") - columns[col] - 1) == 0) {
+                        // column comes from this table
+                    }
+
+
                     // if yes, check if the column exists in the table
                     // if not, remove it from the list of records (
                 } else {
@@ -832,12 +867,11 @@ int parse_select_statement(char *statement) {
                 //TODO: where clause logic
             }
 
-            free(columns);
-            free(from_clause);
-            free(select_clause);
-            free_string_array(statement_array);
-            return 0;
+            //return 0;
         }
+        free(columns);
+        free(from_clause);
+        free(select_clause);
     }
     free_string_array(statement_array);
     // bad keyword
