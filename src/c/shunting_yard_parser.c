@@ -240,8 +240,6 @@ StringArray expression_to_string_list(char *expression) {
             }
                 // three operands in a row
             else if (is_character_operator(sub_string[0]) && strlen(sub_string) > 1) {
-                printf("%s\n", sub_string);
-                printf("%d\n", strlen(sub_string));
                 fprintf(stderr, "Error: invalid expression\n");
                 return NULL;
             }
