@@ -863,18 +863,12 @@ int parse_select_statement(char *statement) {
 
                     // Check the part before the period compared to the name of the table
                     if (strncasecmp(columns[col], table->name, strstr(columns[col], ".") - columns[col] - 1) == 0) {
-                        // column comes from this table
+                        // column should come from this table
+                        // loop through attributes to verify, error if not found
                     }
 
-
-                    // if yes, check if the column exists in the table
-                    // if not, remove it from the list of records (
                 } else {
-                    // could be a unique name or could be an error
-                    // if you find it once, mark that down
-                    // if you find it again, then that's an error, report that
-                    // if it's only once, that's fine
-                    // if it's no times, that's an error, report that
+
                 }
             }
             // check each table name to see if it exists and is part of the former list of columns
@@ -886,6 +880,50 @@ int parse_select_statement(char *statement) {
 
             //return 0;
         }
+
+        // Time for cartesian product if we have more than one table
+        // variable for current cartesian product (starts as just the first set of records)
+        union record_item ** product;
+        // variable to store the result of the cartesian product (copy into first var after calculation)
+        union record_item **result;
+        // variable for size of the starting cartesian product (starts at size of first record set)
+        // TODO change this to how many tuples were returned
+        int product_size = table_list[0]->attrs_size;
+
+        // keep track of how many attrs are in the tuple so far
+
+        // shared variable somewhere for index of result array
+
+        //TODO all of this needs to reference an array of filtered record set lengths
+
+        if (name_index > 1) {
+            for (int i = 1; i < name_index; i++) {
+                // Cartesian product the first set with all subsequent sets in order (no optimization)
+                // Loop through all records in current cartesian product result
+                // set result index to 0
+                // find out how many attrs were requested from next table add to amount of attrs total
+                // malloc the result array to be product_size * table's records * total attrs
+                for (int j = 0; j < product_size; j++) {
+
+                    // Loop through every attribute in the record
+                    // TODO change this to how many tuples were returned
+                    // will need to get that when getting record lists
+
+                    for (int k = 0; k < table_list[i]->attrs_size; k++) {
+                        // malloc a new tuple that can store all the old records plus the new ones
+                        // memcpy the records from loop j into the first part, memcpy the records from loop k into the second
+                        // Put that new record at the next spot in the result array
+                        // increment the index
+                    }
+                }
+                // free the product array
+                // malloc a new one that's the new larger size
+                // memcpy the result array into the product array
+                // free the result array
+            }
+        }
+        // Print that big product array somehow
+        // free the product array
         free(columns);
         free(from_clause);
         free(select_clause);
