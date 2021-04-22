@@ -1,15 +1,38 @@
 #include "../headers/dml_manager.h"
 #include "../headers/Enums.h"
 #include "../headers/catalog.h"
-#include "../headers/clause_parser.h"
-#include "../headers/storagemanager.h"
-#include "../headers/arrays.h"
 #include "../headers/tuple.h"
 #include <stdio.h>
 #include <float.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+
+
+char* record_item_to_string(Type type, union record_item item){
+    char* ret = NULL;
+    switch(type->type_num){
+        case INTEGER:
+            ret = malloc(sizeof(char*)*(item.i + 1));
+            snprintf(ret, (item.i + 1), "%d", item.i);
+            return ret;
+        case DOUBLE:
+            ret = malloc(sizeof(char*)* (unsigned long long)(item.d + 1));
+            snprintf(ret, (item.d + 1), "%f", item.d);
+            return ret;
+        case BOOL:
+            return  item.b[0] == true ? "true" : (item.b[0] == false ? "false" : "null");
+        case CHAR:
+            ret = malloc(strlen(item.c)+1);
+            strcpy(ret, item.c);
+            return ret;
+        case VARCHAR:
+            ret = malloc(strlen(item.v)+1);
+            strcpy(ret, item.v);
+            return ret;
+    }
+    return ret;
+}
 
 /**
  * Retrieve the index of the first occurrence of a word within a string.
