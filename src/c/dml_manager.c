@@ -669,33 +669,32 @@ int parse_delete_from_statement(char *statement) {
     // parse where clause
     Clause where_clause = parse_where_clause(condition);
 
-    printf("clauses: %s\n", where_clause->clauses->array[1]);
+    union record_item **selected_records;
+    int selected_records_size = get_records_where_clause(where_clause, selected_records);
 
-    free(where_clause);
-
-    /**
     if(selected_records == NULL) {
         // do not consider this an error
         printf("Unable to find records that satisfy condition: %s\n", condition);
         return 0;
     }
 
+    /**
+    for(int i = 0; i < prim)
+
     
-    union record_item *record = records[0];
-    union record_item *key_values = malloc(table->key_indices_count * sizeof(union record_item*));
-    
-    int key_index;
-    for(int i = 0; i < table->key_indices_count; i++) {
-        key_index = table->key_indices[i];
-        key_values[i] = record[i];
+    Unique primary = get_primary_key(table);
+    int primary_key_size = primary->attrs_size;
+    union record_item **cur_records = malloc(sizeof(union record_item *) * primary_key_size);
+    int position;
+
+    for(int i = 0; i < primary_key_size; i++) {
+        position = get_attr_position(primary->attrs[i]);
+        selected_records[i] = records
     }
     
-    int remove_result = remove_record(table->tableId, key_values);
-    // print all records
-    for(int i = 0; i < table_size; i++) {
-        print_record(table, records[i]);
-    }
+    int remove_result = remove_record(table->num, key_values);
     */
+
     return 0; 
  }
 
@@ -755,7 +754,7 @@ int parse_select_statement(char *statement) {
     return -1;
 }
 
-union record_item** get_records_where_clause(Clause where_clause) {
+int get_records_where_clause(Clause where_clause, union record_item **selected_records) {
     StringArray conditions = where_clause->clauses;
     StringArray operators = where_clause->operators;
     Table table = where_clause->table;
@@ -769,7 +768,7 @@ union record_item** get_records_where_clause(Clause where_clause) {
 
     if(table_size == -1) {
         fprintf(stderr, "Error: unable to get records from table \n");
-        return NULL;
+        return -1;
     }
 
     // store the boolean result of each condition
@@ -794,7 +793,7 @@ union record_item** get_records_where_clause(Clause where_clause) {
             }
             else {
                 fprintf(stderr, "Error: Invalid operator %s\n", operators->array[j]);
-                return NULL;
+                return -1;
             }
         }
 
@@ -802,16 +801,16 @@ union record_item** get_records_where_clause(Clause where_clause) {
         if(result) {
             record_count++;
             if(record_count == 1) {
-                records = malloc(sizeof(union record_item *) * record_count);
+                selected_records = malloc(sizeof(union record_item *) * record_count);
             }
             else {
-                records = realloc(records, record_count);
+                selected_records = realloc(records, record_count);
             }
-            records[record_count - 1] = record;
+            selected_records[record_count - 1] = record;
         }
 
     }
-    return records;
+    return record_count;
 }
 
 StringArray condition_to_expression(union record_item *record, char *condition, Table table) {
@@ -836,6 +835,5 @@ bool does_record_satisfy_condition(union record_item *record, char *condition, T
     OperationTree tree = build_tree(expression);
     bool condition_satisfied = determine_conditional(tree->root);
     freeOperationTree(tree);
-    free_string_array(expression);
     return condition_satisfied;
 }
