@@ -357,6 +357,15 @@ int parse_update_statement(char *statement) {
                         }
 
                         if (includes_where) {
+                            printf("clauses: %d\n", where->clauses->size);
+                            for (int i = 0; i < table_size; i++) {
+                                union record_item *record = storagemanager_table[i];
+                                for(int j = 0; j < where->clauses->size; j++){
+                                    bool test = does_record_satisfy_condition(record, where->clauses->array[j], table);
+                                    printf("%s\n", test == true ? "true" : (test == false ? "false" : "null"));
+                                }
+                            }
+
 //                            where->
                             // grab all records that follow pertain to the clause
                             // iterate through all records then update values based on set clause
