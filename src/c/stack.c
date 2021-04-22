@@ -60,7 +60,7 @@ void *pop(Stack stack) {
 }
 
 void free_stack(Stack stack){
-    for(int i = 0; i < size(stack); i++){
+    for(int i = 0; i < stack->size; i++){
         if(stack->items[i] != NULL){
             free(stack->items[i]);
         }

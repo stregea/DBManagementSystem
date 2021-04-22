@@ -83,6 +83,7 @@ OperationTree build_tree(char *expression) {
     }
 
     tree->root = (Node) peek(stack);
+    free(exp_dup);
     free_stack(stack);
     free_string_array(string);
     free_string_array(expression_list);
