@@ -723,8 +723,7 @@ int parse_select_statement(char *statement) {
     return -1;
 }
 
-// todo
-union record_item ** get_records_where_clause(Clause where_clause) {
+union record_item** get_records_where_clause(Clause where_clause) {
     StringArray conditions = where_clause->clauses;
     StringArray operators = where_clause->operators;
     Table table = where_clause->table;
@@ -783,23 +782,26 @@ union record_item ** get_records_where_clause(Clause where_clause) {
     return records;
 }
 
-// todo
-char* condition_to_expression(union record_item *record, char *condition, Table table) {
+StringArray condition_to_expression(union record_item *record, char *condition, Table table) {
     char *temp = strdup(condition);
-    char *attribute_name = strtok(condition, " ");
-    char *expression = NULL;
+    char *attribute_name = strtok(temp, " ");
     printf("attribute_name: \"%s\"\n", attribute_name);
 
     Attr attribute = get_attr_by_name(table, attribute_name);
     int data_position = get_attr_position(attribute);
     Type data_type = get_attr_type(attribute);
+    union record_item item = record[data_position];
+
+    StringArray expression = expression_to_string_list(condition);
+    expression->array[0] = record_item_to_string(data_type, item);
 
     free(temp);
     return expression;
 }
 
-// todo
 bool does_record_satisfy_condition(union record_item *record, char *condition, Table table) {
-    char *expression = condition_to_expression(record, condition, table);
-    return true;
+    StringArray expression = condition_to_expression(record, condition, table);
+    OperationTree tree = build_tree(expression->array);
+
+    return determine_conditional(tree->root);
 }
