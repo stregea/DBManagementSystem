@@ -253,6 +253,7 @@ StringArray expression_to_string_list(char *expression) {
             else if(is_character_operator(sub_string[0])) {
                 sub_string_length = strlen(sub_string);
                 sub_string = realloc(sub_string, sub_string_length + 2);
+                sub_string[sub_string_length + 1] = 0;
                 sub_string[sub_string_length] = current_character;
 
                 if(get_conditional(sub_string) == -1) {
@@ -272,6 +273,7 @@ StringArray expression_to_string_list(char *expression) {
                 sub_string = malloc(sizeof(char) + 1);
                 // initial null terminator
                 sub_string[0] = 0;
+                sub_string[1] = 0;
                 sub_string_length = strlen(sub_string);
                 printf("substring_length: %d\n", sub_string_length);
             }
@@ -280,11 +282,13 @@ StringArray expression_to_string_list(char *expression) {
                 token_count++;
                 sub_string = malloc(sizeof(char) + 1);
                 sub_string[0] = 0;
+                sub_string[1] = 0;
                 sub_string_length = strlen(sub_string);
             }
             else {
                 sub_string_length = strlen(sub_string);
                 sub_string = realloc(sub_string, sub_string_length + 2);
+                sub_string[sub_string_length + 1] = 0;
             }
 
             sub_string[sub_string_length] = current_character;
