@@ -11,6 +11,12 @@ StackData create_stack_data(void *data) {
     return stackData;
 }
 
+void free_stack_data(StackData data){
+    if(data != NULL){
+        free(data);
+    }
+}
+
 // Utility function to initialize the stack
 Stack create_stack() {
     Stack stack = (Stack) malloc(sizeof(struct Stack));
@@ -52,18 +58,16 @@ void *peek(Stack stack) {
 void *pop(Stack stack) {
     // check for stack underflow
     if (!isEmpty(stack)) {
-        // decrement stack size by 1 and (optionally) return the popped element
-//        stack->size--;
-        return stack->items[stack->top--]->data;
+        void* data = stack->items[stack->top]->data;
+        free_stack_data(stack->items[stack->top--]);
+        return data;
     }
     return NULL;
 }
 
 void free_stack(Stack stack){
     for(int i = 0; i < stack->size; i++){
-        if(stack->items[i] != NULL){
-            free(stack->items[i]);
-        }
+        free_stack_data(stack->items[i]);
     }
     free(stack->items);
     free(stack);
