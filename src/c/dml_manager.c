@@ -824,7 +824,7 @@ StringArray condition_to_expression(union record_item *record, char *condition, 
 
 bool does_record_satisfy_condition(union record_item *record, char *condition, Table table) {
     StringArray expression = condition_to_expression(record, condition, table);
-    OperationTree tree = build_tree(expression->array);
+    OperationTree tree = build_tree(expression);
 
     return determine_conditional(tree->root);
 }

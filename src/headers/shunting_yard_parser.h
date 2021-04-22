@@ -7,7 +7,7 @@
  * @param expression - The expression to convert to a tree.
  * @return a tree.
  */
-OperationTree build_tree(char *expression);
+OperationTree build_tree(StringArray expression);
 
 double evaluate_tree(Node node);
 

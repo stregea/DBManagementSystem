@@ -43,10 +43,8 @@ int get_data_type(char *value) {
 }
 
 //todo
-OperationTree build_tree(char *expression) {
-    char *exp_dup = strdup(expression);
-    StringArray expression_list = expression_to_string_list(exp_dup);
-    StringArray string = infix_to_postfix(expression_list);
+OperationTree build_tree(StringArray expression) {
+    StringArray string = infix_to_postfix(expression);
 
     OperationTree tree = create_operation_tree();
     Stack stack = create_stack();
@@ -83,10 +81,9 @@ OperationTree build_tree(char *expression) {
     }
 
     tree->root = (Node) peek(stack);
-    free(exp_dup);
     free_stack(stack);
     free_string_array(string);
-    free_string_array(expression_list);
+    free_string_array(expression);
     return tree;
 }
 
