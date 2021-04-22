@@ -366,10 +366,11 @@ int parse_update_statement(char *statement) {
 //                                    printf("%s\n", test == true ? "true" : (test == false ? "false" : "null"));
 //                                }
 //                            }
-                            union record_item** blah = get_records_where_clause(where);
+                            union record_item **selected_records = NULL;
+                            int selected_records_size = get_records_where_clause(where, selected_records);
                             int record_counter = 0;
-                            while(blah[record_counter] != NULL){
-                                print_record(where->table, blah[record_counter]);
+                            while(selected_records[record_counter] != NULL){
+                                print_record(where->table, selected_records[record_counter]);
                             }
 //                            where->
                             // grab all records that follow pertain to the clause
