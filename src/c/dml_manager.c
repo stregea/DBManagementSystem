@@ -358,14 +358,19 @@ int parse_update_statement(char *statement) {
 
                         if (includes_where) {
                             printf("clauses: %d\n", where->clauses->size);
-                            for (int i = 0; i < table_size; i++) {
-                                union record_item *record = storagemanager_table[i];
-                                for(int j = 0; j < where->clauses->size; j++){
-                                    bool test = does_record_satisfy_condition(record, where->clauses->array[j], table);
-                                    printf("%s\n", test == true ? "true" : (test == false ? "false" : "null"));
-                                }
+//                            for (int i = 0; i < table_size; i++) {
+//                                union record_item *record = storagemanager_table[i];
+//                                for(int j = 0; j < where->clauses->size; j++){
+//                                    // how does this know what operations to use?
+//                                    bool test = does_record_satisfy_condition(record, where->clauses->array[j], table);
+//                                    printf("%s\n", test == true ? "true" : (test == false ? "false" : "null"));
+//                                }
+//                            }
+                            union record_item** blah = get_records_where_clause(where);
+                            int record_counter = 0;
+                            while(blah[record_counter] != NULL){
+                                print_record(where->table, blah[record_counter]);
                             }
-
 //                            where->
                             // grab all records that follow pertain to the clause
                             // iterate through all records then update values based on set clause
@@ -780,6 +785,7 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
 
         // set the result of checking if the record passes the condition into the condition results array
         for(int j = 0; j < conditions->size; j++) {
+            printf("%d\n", table_size);
             condition_results[j] = does_record_satisfy_condition(record, conditions->array[j], table);
         }
 
@@ -821,6 +827,8 @@ StringArray condition_to_expression(union record_item *record, char *condition, 
     Attr attribute = get_attr_by_name(table, attribute_name);
     int data_position = get_attr_position(attribute);
     Type data_type = get_attr_type(attribute);
+    fprintf(stdout, "%d\n", data_position);
+    fprintf(stdout, "%s\n", condition);
     union record_item item = record[data_position];
 
     StringArray expression = expression_to_string_list(condition);
