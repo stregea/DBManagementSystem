@@ -4,6 +4,7 @@
 #include "storagemanager.h"
 #include "table.h"
 #include "clause_parser.h"
+#include "shunting_yard_parser.h"
 
 /**
  * Parse the 'insert' dml query.
