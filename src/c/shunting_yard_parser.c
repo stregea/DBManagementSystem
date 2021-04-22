@@ -239,8 +239,9 @@ StringArray expression_to_string_list(char *expression) {
         //printf("%c\n", current_character);
 
         if(is_character_operator(current_character)) {
+            // does the expression start with an operator
             if(sub_string == NULL){
-                fprintf(stderr, "Error: invalid expression\n");
+                fprintf(stderr, "Error: invalid expression starts with operator\n");
                 return NULL;
             }
             // three operands in a row
@@ -269,12 +270,16 @@ StringArray expression_to_string_list(char *expression) {
         else if(current_character != ' ') {
             if(sub_string == NULL){
                 sub_string = malloc(sizeof(char) + 1);
+                // initial null terminator
+                sub_string[0] = 0;
                 sub_string_length = strlen(sub_string);
+                printf("substring_length: %d\n", sub_string_length);
             }
             else if(is_character_operator(sub_string[0])) {
                 tokens[token_count] = sub_string;
                 token_count++;
                 sub_string = malloc(sizeof(char) + 1);
+                sub_string[0] = 0;
                 sub_string_length = strlen(sub_string);
             }
             else {
