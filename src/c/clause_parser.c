@@ -161,12 +161,12 @@ Clause parse_set_clause(char *clauses) {
 
 // todo
 Clause parse_where_clause(char *clauses) {
-    // accepted keywords: AND, OR, NOT
+    // accepted keywords: AND, OR
     printf("***************************** PARSE WHERE CLAUSE *****************************\n");
 
     Clause where_clause = create_clause();
     where_clause->operators = create_string_array();
-
+    where_clause->clauses = create_string_array();
     char* condition = strdup(clauses);
 
     char* token = strtok(condition, " ");
@@ -182,53 +182,53 @@ Clause parse_where_clause(char *clauses) {
         }
         token = strtok(NULL, " ");
     }
-    //printf("logical_operator_size: %d\n", where_clause->operators->size);
 
-    //printf("line hit\n");
 
     free(condition);
     condition = strdup(clauses);
-    //printf("condition: %s\n", condition);
 
     // build the where clause
-    for(int i = 0; i < where_clause->operators->size; i++){
-
-        if(i != 0){
-            condition = token;
-        }
-
-        token = strstr(condition, where_clause->operators->array[i]);
-
-        if (token == NULL){
-            free(condition);
-            return NULL;
-        }
-
-        *token = '\0';
-        token = token + strlen(where_clause->operators->array[i]);
-        //printf("op: [%s]\n", where_clause->operators->array[i]);
-
+    if(where_clause->operators->size == 0){ // if only one condition.
         condition = clean_clause(condition);
-        //printf("condition: [%s]\n", condition);
+
         where_clause->clauses->array = realloc(where_clause->clauses->array, sizeof(char*) * (where_clause->clauses->size + 1));
-        where_clause->clauses->array[where_clause->clauses->size] = malloc(strlen(condition) + 1);
+        where_clause->clauses->array[where_clause->clauses->size++] = strdup(condition);
+    }else{
+        for(int i = 0; i < where_clause->operators->size; i++){
 
-        strcpy(where_clause->clauses->array[where_clause->clauses->size], condition);
-        where_clause->clauses->size++;
+            if(i != 0){
+                condition = token;
+            }
 
-        if(i == where_clause->operators->size - 1){ // strstr makes us do this
-            token = clean_clause(token);
+            token = strstr(condition, where_clause->operators->array[i]);
 
-            //printf("condition: [%s]\n", token);
+            if (token == NULL){
+                free(condition);
+                return NULL;
+            }
+
+            *token = '\0';
+            token = token + strlen(where_clause->operators->array[i]);
+            //printf("op: [%s]\n", where_clause->operators->array[i]);
+
+            condition = clean_clause(condition);
+            //printf("condition: [%s]\n", condition);
             where_clause->clauses->array = realloc(where_clause->clauses->array, sizeof(char*) * (where_clause->clauses->size + 1));
-            where_clause->clauses->array[where_clause->clauses->size] = malloc(strlen(token) + 1);
+            where_clause->clauses->array[where_clause->clauses->size++] = strdup(condition);
 
-            strcpy(where_clause->clauses->array[where_clause->clauses->size], token);
-            where_clause->clauses->size++;
+            if(i == where_clause->operators->size - 1){ // strstr makes us do this
+                token = clean_clause(token);
+
+                //printf("condition: [%s]\n", token);
+                where_clause->clauses->array = realloc(where_clause->clauses->array, sizeof(char*) * (where_clause->clauses->size + 1));
+                where_clause->clauses->array[where_clause->clauses->size] = malloc(strlen(token) + 1);
+
+                strcpy(where_clause->clauses->array[where_clause->clauses->size], token);
+                where_clause->clauses->size++;
+            }
         }
-
     }
-    
+
     free(condition);
     return where_clause;
 }
