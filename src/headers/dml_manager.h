@@ -65,7 +65,8 @@ void freeRecord(union record_item *record);
 union record_item * create_record_from_statement(Table table, char *tuple);
 
 // todo
-union record_item** get_records_where_clause(Clause where_clause);
+int get_records_where_clause(Clause where_clause, union record_item **selected_records);
 bool does_record_satisfy_condition(union record_item *record, char *condition, Table table);
+StringArray condition_to_expression(union record_item *record, char *condition, Table table);
 
 #endif
