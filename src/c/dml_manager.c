@@ -723,52 +723,83 @@ int parse_select_statement(char *statement) {
     return -1;
 }
 
-bool does_record_satisfy_condition(union record_item *record, char *condition, Table table) {
-
-    size_t condition_length = strlen(condition);
-    char *condition_formatted = malloc(condition_length + 2);
-    strcpy(condition_formatted, condition);
-    condition_formatted[condition_length + 1] = ';';
-    condition_formatted[condition_length + 2] = '0';
-
-    char *attribute_name = strtok(condition, " ");
-    printf("attribute_name: \"%s\"\n", attribute_name);
-    union record_item item;
-    for(int i = 0; i < table->attrs_size; i++) {
-        if(strcasecmp(table->attrs[i]->name, attribute_name) == 0) {
-            item = record[i];
-        }
-    }
-
-    /*
-    if(item == NULL) {
-        fprintf(stderr, "Error: no attribute \"%s\" in table\n", attribute_name);
-        return false;
-    }
-    */
-
-    char *operator =  strtok(NULL, " ");
-    char *value = strtok(NULL, ";");
-    printf("operator: \"%s\"\n", operator);
-    printf("value: \"%s\"\n", value);
-
-    int type = get_conditional(operator);
+// todo
+union record_item ** get_records_where_clause(Clause where_clause) {
+    StringArray conditions = where_clause->clauses;
+    StringArray operators = where_clause->operators;
+    Table table = where_clause->table;
+    union record_item **records = NULL;
+    int record_count = 0;
+    bool result;
     
-    switch(type) {
-      case EQUALS :
-        break;
-      case GREATER_THAN :
-        break;
-      case GREATER_THAN_OR_EQUAL_TO :
-        break;
-      case LESS_THAN :
-        break;
-      case LESS_THAN_OR_EQUAL_TO :
-        break;
-      case NOT_EQUALS:
-        break;
-      default :
-        fprintf(stderr, "Error: no operator \"%s\" in table\n", operator);
+    // get num the tables id?
+    int table_id = get_num(table);
+    int table_size = get_records(table_id, &records);
+
+    if(table_size == -1) {
+        fprintf(stderr, "Error: unable to get records from table \n");
+        return NULL;
     }
+
+    // store the boolean result of each condition
+    bool *condition_results = malloc(conditions->size * sizeof(bool));
+    union record_item *record;
+ 
+    for(int i = 0; i < table_size; i++) {
+        record = records[i];
+
+        // set the result of checking if the record passes the condition into the condition results array
+        for(int j = 0; j < conditions->size; j++) {
+            condition_results[j] = does_record_satisfy_condition(record, conditions->array[j], table);
+        }
+
+        // using the condition results array preform the boolean logic to get the result being the last index in array 
+        for(int j = 0; j < operators->size; i++) {
+            if(strcasecmp(operators->array[j], "or") == 0) {
+                condition_results[j + 1] = condition_results[j] || condition_results[j + 1];
+            }
+            else if(strcasecmp(operators->array[j], "and") == 0) {
+                condition_results[j + 1] = condition_results[j] && condition_results[j + 1];
+            }
+            else {
+                fprintf(stderr, "Error: Invalid operator %s\n", operators->array[j]);
+                return NULL;
+            }
+        }
+
+        result = condition_results[conditions->size - 1];
+        if(result) {
+            record_count++;
+            if(record_count == 1) {
+                records = malloc(sizeof(union record_item *) * record_count);
+            }
+            else {
+                records = realloc(records, record_count);
+            }
+            records[record_count - 1] = record;
+        }
+
+    }
+    return records;
+}
+
+// todo
+char* condition_to_expression(union record_item *record, char *condition, Table table) {
+    char *temp = strdup(condition);
+    char *attribute_name = strtok(condition, " ");
+    char *expression = NULL;
+    printf("attribute_name: \"%s\"\n", attribute_name);
+
+    Attr attribute = get_attr_by_name(table, attribute_name);
+    int data_position = get_attr_position(attribute);
+    Type data_type = get_attr_type(attribute);
+
+    free(temp);
+    return expression;
+}
+
+// todo
+bool does_record_satisfy_condition(union record_item *record, char *condition, Table table) {
+    char *expression = condition_to_expression(record, condition, table);
     return true;
 }
