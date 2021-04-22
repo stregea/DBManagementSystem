@@ -823,6 +823,9 @@ int parse_select_statement(char *statement) {
                             }
                         }
                     }
+                    if (!found_col) {
+                        fprintf(stderr, "Error: could not find column %s\n", columns[j]);
+                    }
                 }
             }
         }
