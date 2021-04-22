@@ -22,7 +22,7 @@ void treeprint(Node root, int level) {
 }
 
 int main() {
-    char *expression = "21*34>=5*2*2";
+    char *expression = "21254*34>=5*2*2";
 
 
     OperationTree tree = build_tree(expression);
