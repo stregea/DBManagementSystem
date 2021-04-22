@@ -258,25 +258,25 @@ StringArray expression_to_string_list(char *expression) {
             } else {
                 tokens[token_count] = strdup(sub_string);
                 token_count++;
-                sub_string = malloc(sizeof(char));
+                sub_string = malloc(sizeof(char)*1);
                 strcpy(sub_string, " ");
                 sub_string[0] = current_character;
             }
         } else if (current_character != ' ') {
             if (sub_string == NULL) {
-                sub_string = malloc(sizeof(char));
+                sub_string = malloc(sizeof(char)*1);
                 strcpy(sub_string, " ");
                 // initial null terminator
                 sub_string[0] = 0;
-                sub_string[1] = 0;
+//                sub_string[1] = 0;
                 sub_string_length = strlen(sub_string);
             } else if (is_character_operator(sub_string[0])) {
                 tokens[token_count] = strdup(sub_string);
                 token_count++;
-                sub_string = malloc(sizeof(char));
+                sub_string = malloc(sizeof(char)*1);
                 strcpy(sub_string, " ");
                 sub_string[0] = 0;
-                sub_string[1] = 0;
+//                sub_string[1] = 0;
                 sub_string_length = strlen(sub_string);
             } else {
                 sub_string_length = strlen(sub_string);
