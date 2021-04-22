@@ -357,14 +357,23 @@ int parse_update_statement(char *statement) {
 
                         if (includes_where) {
                             printf("clauses: %d\n", where->clauses->size);
-                            for (int i = 0; i < table_size; i++) {
-                                union record_item *record = storagemanager_table[i];
-                                for(int j = 0; j < where->clauses->size; j++){
-                                    bool test = does_record_satisfy_condition(record, where->clauses->array[j], table);
-                                    printf("%s\n", test == true ? "true" : (test == false ? "false" : "null"));
+//                            for (int i = 0; i < table_size; i++) {
+//                                union record_item *record = storagemanager_table[i];
+//                                for(int j = 0; j < where->clauses->size; j++){
+//                                    // how does this know what operations to use?
+//                                    bool test = does_record_satisfy_condition(record, where->clauses->array[j], table);
+//                                    printf("%s\n", test == true ? "true" : (test == false ? "false" : "null"));
+//                                }
+//                            }
+//                            union record_item **selected_records = NULL;
+//                            int selected_records_size = get_records_where_clause(where, selected_records);
+                            int record_counter = 0;
+                            while(storagemanager_table[record_counter] != NULL){
+                                if(record_satisfies_where(where, storagemanager_table[record_counter])){
+                                    print_record(where->table, storagemanager_table[record_counter]);
                                 }
+                                record_counter++;
                             }
-
 //                            where->
                             // grab all records that follow pertain to the clause
                             // iterate through all records then update values based on set clause
@@ -756,17 +765,40 @@ int parse_select_statement(char *statement) {
     return -1;
 }
 
-int get_records_where_clause(Clause where_clause, union record_item **selected_records) {
+bool record_satisfies_where(Clause where_clause, union record_item *record){
     StringArray conditions = where_clause->clauses;
     StringArray operators = where_clause->operators;
-    Table table = where_clause->table;
+    bool *condition_results = malloc(conditions->size * sizeof(bool));
+
+    for(int i = 0; i < conditions->size; i++) {
+        condition_results[i] = does_record_satisfy_condition(record, conditions->array[i], where_clause->table);
+    }
+
+    // using the condition results array preform the boolean logic to get the result being the last index in array
+    for(int i = 0; i < operators->size; i++) {
+        if(strcasecmp(operators->array[i], "or") == 0) {
+            condition_results[i + 1] = condition_results[i] || condition_results[i + 1];
+        }
+        else if(strcasecmp(operators->array[i], "and") == 0) {
+            condition_results[i + 1] = condition_results[i] && condition_results[i + 1];
+        }
+        else {
+            fprintf(stderr, "Error: Invalid operator %s\n", operators->array[i]);
+            return -1;
+        }
+    }
+    bool result = condition_results[conditions->size - 1];
+    free(condition_results);
+    return result;
+}
+
+int get_records_where_clause(Clause where_clause, union record_item **selected_records) {
     union record_item **records = NULL;
     int record_count = 0;
     bool result;
     
     // get num the tables id?
-    int table_id = get_num(table);
-    int table_size = get_records(table_id, &records);
+    int table_size = get_records(where_clause->table->num, &records);
 
     if(table_size == -1) {
         fprintf(stderr, "Error: unable to get records from table \n");
@@ -774,33 +806,13 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
     }
 
     // store the boolean result of each condition
-    bool *condition_results = malloc(conditions->size * sizeof(bool));
     union record_item *record;
  
     for(int i = 0; i < table_size; i++) {
         record = records[i];
 
         // set the result of checking if the record passes the condition into the condition results array
-        for(int j = 0; j < conditions->size; j++) {
-            condition_results[j] = does_record_satisfy_condition(record, conditions->array[j], table);
-        }
-
-        // using the condition results array preform the boolean logic to get the result being the last index in array 
-        for(int j = 0; j < operators->size; j++) {
-            if(strcasecmp(operators->array[j], "or") == 0) {
-                condition_results[j + 1] = condition_results[j] || condition_results[j + 1];
-            }
-            else if(strcasecmp(operators->array[j], "and") == 0) {
-                condition_results[j + 1] = condition_results[j] && condition_results[j + 1];
-            }
-            else {
-                fprintf(stderr, "Error: Invalid operator %s\n", operators->array[j]);
-                return -1;
-            }
-        }
-
-        result = condition_results[conditions->size - 1];
-        if(result) {
+        if(record_satisfies_where(where_clause, record)) {
             record_count++;
             if(record_count == 1) {
                 selected_records = malloc(sizeof(union record_item *) * record_count);
@@ -823,6 +835,8 @@ StringArray condition_to_expression(union record_item *record, char *condition, 
     Attr attribute = get_attr_by_name(table, attribute_name);
     int data_position = get_attr_position(attribute);
     Type data_type = get_attr_type(attribute);
+    fprintf(stdout, "%d\n", data_position);
+    fprintf(stdout, "%s\n", condition);
     union record_item item = record[data_position];
 
     StringArray expression = expression_to_string_list(condition);
