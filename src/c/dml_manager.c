@@ -11,22 +11,26 @@
 char* record_item_to_string(Type type, union record_item item){
     char* ret = NULL;
     switch(type->type_num){
+
+char *record_item_to_string(Type type, union record_item item) {
+    char *ret = NULL;
+    switch (type->type_num) {
         case INTEGER:
-            ret = malloc(sizeof(char*)*(item.i + 1));
+            ret = malloc(sizeof(char *) * (item.i + 1));
             snprintf(ret, (item.i + 1), "%d", item.i);
             return ret;
         case DOUBLE:
-            ret = malloc(sizeof(char*)* (unsigned long long)(item.d + 1));
+            ret = malloc(sizeof(char *) * (unsigned long long) (item.d + 1));
             snprintf(ret, (item.d + 1), "%f", item.d);
             return ret;
         case BOOL:
-            return  item.b[0] == true ? "true" : (item.b[0] == false ? "false" : "null");
+            return item.b[0] == true ? "true" : (item.b[0] == false ? "false" : "null");
         case CHAR:
-            ret = malloc(strlen(item.c)+1);
+            ret = malloc(strlen(item.c) + 1);
             strcpy(ret, item.c);
             return ret;
         case VARCHAR:
-            ret = malloc(strlen(item.v)+1);
+            ret = malloc(strlen(item.v) + 1);
             strcpy(ret, item.v);
             return ret;
     }
@@ -93,7 +97,8 @@ void print_record(Table table, union record_item *record) {
                 printf("%f%s", record[i].d, extra_space);
                 break;
             case BOOL:
-                printf("%s%s", (record[i].b[0] == 1) ? "true" : "false", extra_space); // not to sure by bool is an array
+                printf("%s%s", (record[i].b[0] == 1) ? "true" : "false",
+                       extra_space); // not to sure by bool is an array
                 break;
             case CHAR:
                 printf("%s%s", record[i].c, extra_space);
@@ -344,6 +349,7 @@ int parse_update_statement(char *statement) {
                         union record_item **storagemanager_table = NULL;
 
                         int table_size = get_records(table->num, &storagemanager_table);
+
                         if (table_size == -1) {
                             if (includes_where) {
                                 free(where_clause);
@@ -355,52 +361,19 @@ int parse_update_statement(char *statement) {
                             return -1;
                         }
 
-                        if (includes_where) {
-                            printf("clauses: %d\n", where->clauses->size);
-//                            for (int i = 0; i < table_size; i++) {
-//                                union record_item *record = storagemanager_table[i];
-//                                for(int j = 0; j < where->clauses->size; j++){
-//                                    // how does this know what operations to use?
-//                                    bool test = does_record_satisfy_condition(record, where->clauses->array[j], table);
-//                                    printf("%s\n", test == true ? "true" : (test == false ? "false" : "null"));
-//                                }
-//                            }
-//                            union record_item **selected_records = NULL;
-//                            int selected_records_size = get_records_where_clause(where, selected_records);
-                            int record_counter = 0;
-                            while(storagemanager_table[record_counter] != NULL){
-                                if(record_satisfies_where(where, storagemanager_table[record_counter])){
-                                    print_record(where->table, storagemanager_table[record_counter]);
-                                }
-                                record_counter++;
-                            }
-//                            where->
-                            // grab all records that follow pertain to the clause
-                            // iterate through all records then update values based on set clause
-//                            for(int i = 0; i < table_size; i++){
-//                                bool flags[where->clause_count];
-//                                for(int j = 0; j < where->clause_count; j++){
-//                                    char ** tmp_clause = string_to_array(where->clauses[i]);
-//
-//                                    int tmp_clause_index = 0;
-//                                    // get records that are in accordance with the clauses.
-//                                    while(tmp_clause[tmp_clause_index]){
-//                                        // check if record follows where clause
-//                                        // if it does, set flag to true
-//                                    }
-//
-//
-//                                    free_string_array(tmp_clause);
-//                                }
-//                                // if flags array is true at each index, leave record,
-//                                // otherwise null record in table since we don't need it.
-//                            }
-                        } else {
-                            // todo
-                            // iterate through all records then update values based on set clause
-                            for (int i = 0; i < table_size; i++) {
-                                union record_item *record = storagemanager_table[i]; // todo: may need to free this
+                        // iterate through all records then update values based on set clause
+                        for (int i = 0; i < table_size; i++) {
+                            union record_item *record = storagemanager_table[i];
+                            bool can_update = true;
 
+                            if (includes_where) {
+                                can_update = record_satisfies_where(where, record);
+                            }
+
+                            if (can_update) {
+                                print_record(table, record);
+
+                                // Modify the record based on the set clause.
                                 for (int j = 0; j < set->clauses->size; j++) {
                                     StringArray tmp_clause = string_to_array(set->clauses->array[j]);
                                     char *attribute_name = tmp_clause->array[0];
@@ -420,8 +393,10 @@ int parse_update_statement(char *statement) {
                                             return -1;
                                         }
 
-                                        if(strcasecmp(tmp_clause->array[2], "null") == 0 && attribute->notnull){
-                                            fprintf(stderr,"Error: Cannot insert null into attribute %s since notnull was specified.\n", attribute_name);
+                                        if (strcasecmp(tmp_clause->array[2], "null") == 0 && attribute->notnull) {
+                                            fprintf(stderr,
+                                                    "Error: Cannot insert null into attribute %s since notnull was specified.\n",
+                                                    attribute_name);
                                             free_string_array(tmp_clause);
                                             free_clause(set);
                                             free(set_clause);
@@ -434,7 +409,7 @@ int parse_update_statement(char *statement) {
                                             string_size = (int) attribute->type->num_chars;
                                             // If '"' is on both ends of the string, add 2 to the allowed size of the string
                                             // since, they don't technically count towards the total size of the string.
-                                            char* value = tmp_clause->array[2];
+                                            char *value = tmp_clause->array[2];
                                             if (value[0] == '"' && value[strlen(value) - 1] == '"') {
                                                 string_size += 2;
                                             }
@@ -457,7 +432,7 @@ int parse_update_statement(char *statement) {
                                             case DOUBLE:
                                                 res = calculate_value(set, tmp_clause, record);
                                                 record[record_index].d = res;
-                                                if (res == DBL_MAX ) {
+                                                if (res == DBL_MAX) {
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
@@ -471,24 +446,23 @@ int parse_update_statement(char *statement) {
 
                                                 // check to see if another column value
                                                 attribute2 = get_attr_by_name(table, tmp_clause->array[2]);
-                                                if(attribute2 != 0 && attribute2->type->type_num == BOOL){
+                                                if (attribute2 != 0 && attribute2->type->type_num == BOOL) {
                                                     record[record_index].b[0] = record[attribute2->position].b[0];
-                                                }
-                                                else if(strcasecmp(tmp_clause->array[2], "true") == 0
-                                                    || strcasecmp(tmp_clause->array[2], "false") == 0
-                                                    || strcasecmp(tmp_clause->array[2], "null") == 0 ){
+                                                } else if (strcasecmp(tmp_clause->array[2], "true") == 0
+                                                           || strcasecmp(tmp_clause->array[2], "false") == 0
+                                                           || strcasecmp(tmp_clause->array[2], "null") == 0) {
 
-                                                    if(strcasecmp(tmp_clause->array[2], "true") == 0){
+                                                    if (strcasecmp(tmp_clause->array[2], "true") == 0) {
                                                         record[record_index].b[0] = true;
                                                     }
-                                                    if(strcasecmp(tmp_clause->array[2], "false") == 0){
+                                                    if (strcasecmp(tmp_clause->array[2], "false") == 0) {
                                                         record[record_index].b[0] = NULL;
-                                                    }
-                                                    else{
+                                                    } else {
                                                         record[record_index].b[0] = false;
                                                     }
-                                                }else{
-                                                    fprintf(stderr, "Error: Invalid value for %s.\n", tmp_clause->array[2]);
+                                                } else {
+                                                    fprintf(stderr, "Error: Invalid value for %s.\n",
+                                                            tmp_clause->array[2]);
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
@@ -500,34 +474,38 @@ int parse_update_statement(char *statement) {
                                             case CHAR:
                                                 // check to see if another column value
                                                 attribute2 = get_attr_by_name(table, tmp_clause->array[2]);
-                                                if(attribute2 != 0 && attribute2->type->type_num == CHAR){
+                                                if (attribute2 != 0 && attribute2->type->type_num == CHAR) {
 
                                                     string_size_attribute2 = attribute2->type->num_chars;
 
                                                     // If '"' is on both ends of the string, add 2 to the allowed size of the string
                                                     // since, they don't technically count towards the total size of the string.
-                                                    char* value2 = record[attribute2->position].c;
+                                                    char *value2 = record[attribute2->position].c;
                                                     if (value2[0] == '"' && value2[strlen(value2) - 1] == '"') {
                                                         string_size_attribute2 += 2;
                                                     }
 
                                                     // determine if attribute 2 meets the size constraints for attribute 1
-                                                    if(strlen(record[attribute2->position].c) != string_size_attribute2){
-                                                        fprintf(stderr, "Error: %s's length must be equal to %d.\n", attribute2->name, attribute->type->num_chars);
+                                                    if (strlen(record[attribute2->position].c) !=
+                                                        string_size_attribute2) {
+                                                        fprintf(stderr, "Error: %s's length must be equal to %d.\n",
+                                                                attribute2->name, attribute->type->num_chars);
                                                         free_string_array(tmp_clause);
                                                         free_clause(set);
                                                         free(set_clause);
                                                         free_string_array(statement_array);
-                                                        free_table_from_storagemanager(table_size, storagemanager_table);
+                                                        free_table_from_storagemanager(table_size,
+                                                                                       storagemanager_table);
                                                         return -1;
                                                     }
 
                                                     strcpy(record[record_index].c, record[attribute2->position].c);
-                                                }
-                                                else if (strcasecmp(tmp_clause->array[2], "null") == 0 || strlen(tmp_clause->array[2]) == string_size) {
+                                                } else if (strcasecmp(tmp_clause->array[2], "null") == 0 ||
+                                                           strlen(tmp_clause->array[2]) == string_size) {
                                                     strcpy(record[record_index].c, tmp_clause->array[2]);
                                                 } else { // error
-                                                    fprintf(stderr, "Error: %s's length must be equal to %d.\n", tmp_clause->array[2], attribute->type->num_chars);
+                                                    fprintf(stderr, "Error: %s's length must be equal to %d.\n",
+                                                            tmp_clause->array[2], attribute->type->num_chars);
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
@@ -540,34 +518,39 @@ int parse_update_statement(char *statement) {
                                                 // check to see if another column value
                                                 attribute2 = get_attr_by_name(table, tmp_clause->array[2]);
 
-                                                if(attribute2 != 0 && attribute2->type->type_num == VARCHAR){
+                                                if (attribute2 != 0 && attribute2->type->type_num == VARCHAR) {
 
                                                     string_size_attribute2 = attribute2->type->num_chars;
 
                                                     // If '"' is on both ends of the string, add 2 to the allowed size of the string
                                                     // since, they don't technically count towards the total size of the string.
-                                                    char* value2 = record[attribute2->position].c;
+                                                    char *value2 = record[attribute2->position].c;
                                                     if (value2[0] == '"' && value2[strlen(value2) - 1] == '"') {
                                                         string_size_attribute2 += 2;
                                                     }
 
                                                     // determine if attribute 2 meets the size constraints for attribute 1
-                                                    if(strlen(record[attribute2->position].c) > string_size_attribute2){
-                                                        fprintf(stderr, "Error: %s's length must be equal to %d.\n", attribute2->name, attribute->type->num_chars);
+                                                    if (strlen(record[attribute2->position].c) >
+                                                        string_size_attribute2) {
+                                                        fprintf(stderr, "Error: %s's length must be equal to %d.\n",
+                                                                attribute2->name, attribute->type->num_chars);
                                                         free_string_array(tmp_clause);
                                                         free_clause(set);
                                                         free(set_clause);
                                                         free_string_array(statement_array);
-                                                        free_table_from_storagemanager(table_size, storagemanager_table);
+                                                        free_table_from_storagemanager(table_size,
+                                                                                       storagemanager_table);
                                                         return -1;
                                                     }
 
                                                     strcpy(record[record_index].c, record[attribute2->position].c);
-                                                }
-                                                else if (strcasecmp(tmp_clause->array[2], "null") == 0 || strlen(tmp_clause->array[2]) <= string_size) {
+                                                } else if (strcasecmp(tmp_clause->array[2], "null") == 0 ||
+                                                           strlen(tmp_clause->array[2]) <= string_size) {
                                                     strcpy(record[record_index].v, tmp_clause->array[2]);
                                                 } else { // string size isn't correct
-                                                    fprintf(stderr, "Error: %s's length must be less than or equal to %d.\n", tmp_clause->array[2], attribute->type->num_chars);
+                                                    fprintf(stderr,
+                                                            "Error: %s's length must be less than or equal to %d.\n",
+                                                            tmp_clause->array[2], attribute->type->num_chars);
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
@@ -576,17 +559,6 @@ int parse_update_statement(char *statement) {
                                                     return -1;
                                                 }
                                                 break;
-                                        }
-
-                                        // update the record and check for any errors while updating
-                                        if(update_record(table->num, record) == -1) {
-                                            fprintf(stderr, "An error has occurred in an attempt to update a record.\n");
-                                            free_string_array(tmp_clause);
-                                            free_clause(set);
-                                            free(set_clause);
-                                            free_string_array(statement_array);
-                                            free_table_from_storagemanager(table_size, storagemanager_table);
-                                            return -1;
                                         }
 
                                     } else {
@@ -600,7 +572,17 @@ int parse_update_statement(char *statement) {
                                         free_table_from_storagemanager(table_size, storagemanager_table);
                                         return -1;
                                     }
+
                                     free_string_array(tmp_clause);
+                                }
+
+                                if (update_record(table->num, record) == -1) {
+                                    fprintf(stderr, "An error has occurred in an attempt to update a record.\n");
+                                    free_clause(set);
+                                    free(set_clause);
+                                    free_string_array(statement_array);
+                                    free_table_from_storagemanager(table_size, storagemanager_table);
+                                    return -1;
                                 }
                             }
                         }
@@ -628,8 +610,8 @@ int parse_update_statement(char *statement) {
 }
 
 // TODO
-int parse_delete_from_statement(char *statement) { 
-    
+int parse_delete_from_statement(char *statement) {
+
     // delete token
     char *token = strtok(statement, " ");
     //printf("delete token: %s\n", token);
@@ -638,7 +620,7 @@ int parse_delete_from_statement(char *statement) {
     token = strtok(NULL, " ");
     //printf("from token: %s\n", token);
 
-    if(token == NULL && strcasecmp(token, "from") != 0) {
+    if (token == NULL && strcasecmp(token, "from") != 0) {
         fprintf(stderr, "Error: expected \"from\" got %s\n", token);
         return -1;
     }
@@ -657,7 +639,7 @@ int parse_delete_from_statement(char *statement) {
     token = strtok(NULL, " ");
     //printf("where token: %s\n", token);
 
-    if(token == NULL && strcasecmp(token, "where") != 0) {
+    if (token == NULL && strcasecmp(token, "where") != 0) {
         fprintf(stderr, "Error: expected \"where\" got %s\n", token);
         return -1;
     }
@@ -665,7 +647,7 @@ int parse_delete_from_statement(char *statement) {
     union record_item **records = NULL;
     int table_size = get_records(table->num, &records);
 
-    if(table_size == -1) {
+    if (table_size == -1) {
         fprintf(stderr, "Error: unable to records from table %s\n", table_name);
         return -1;
     }
@@ -673,14 +655,14 @@ int parse_delete_from_statement(char *statement) {
     // conditionals
     char *condition = strtok(NULL, ";");
     printf("condition: %s\n", condition);
-    
+
     // parse where clause
     Clause where_clause = parse_where_clause(condition);
 
     union record_item **selected_records;
     int selected_records_size = get_records_where_clause(where_clause, selected_records);
 
-    if(selected_records == NULL) {
+    if (selected_records == NULL) {
         // do not consider this an error
         printf("Unable to find records that satisfy condition: %s\n", condition);
         return 0;
@@ -701,15 +683,15 @@ int parse_delete_from_statement(char *statement) {
 
         for(int j = 0; j < primary_key_size; j++) {
             position = get_attr_position(primary->attrs[j]);
-            primary_key[j] = current_record[position];    
+            primary_key[j] = current_record[position];
         }
-        
+
         remove_result = remove_record(table->num, primary_key);
-    
+
     }
-    return remove_result; 
+    return remove_result;
  }
- 
+
 int parse_select_statement(char *statement) {
     char *temp_statement = malloc(strlen(statement) + 1);
     strcpy(temp_statement, statement);
@@ -754,7 +736,7 @@ int parse_select_statement(char *statement) {
 
                 // TODO: determine selected rows
 
-                if (includes_where){
+                if (includes_where) {
                     //TODO: where clause logic
                 }
             }
@@ -765,24 +747,22 @@ int parse_select_statement(char *statement) {
     return -1;
 }
 
-bool record_satisfies_where(Clause where_clause, union record_item *record){
+bool record_satisfies_where(Clause where_clause, union record_item *record) {
     StringArray conditions = where_clause->clauses;
     StringArray operators = where_clause->operators;
     bool *condition_results = malloc(conditions->size * sizeof(bool));
 
-    for(int i = 0; i < conditions->size; i++) {
+    for (int i = 0; i < conditions->size; i++) {
         condition_results[i] = does_record_satisfy_condition(record, conditions->array[i], where_clause->table);
     }
 
     // using the condition results array preform the boolean logic to get the result being the last index in array
-    for(int i = 0; i < operators->size; i++) {
-        if(strcasecmp(operators->array[i], "or") == 0) {
+    for (int i = 0; i < operators->size; i++) {
+        if (strcasecmp(operators->array[i], "or") == 0) {
             condition_results[i + 1] = condition_results[i] || condition_results[i + 1];
-        }
-        else if(strcasecmp(operators->array[i], "and") == 0) {
+        } else if (strcasecmp(operators->array[i], "and") == 0) {
             condition_results[i + 1] = condition_results[i] && condition_results[i + 1];
-        }
-        else {
+        } else {
             fprintf(stderr, "Error: Invalid operator %s\n", operators->array[i]);
             return -1;
         }
@@ -796,28 +776,27 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
     union record_item **records = NULL;
     int record_count = 0;
     bool result;
-    
+
     // get num the tables id?
     int table_size = get_records(where_clause->table->num, &records);
 
-    if(table_size == -1) {
+    if (table_size == -1) {
         fprintf(stderr, "Error: unable to get records from table \n");
         return -1;
     }
 
     // store the boolean result of each condition
     union record_item *record;
- 
-    for(int i = 0; i < table_size; i++) {
+
+    for (int i = 0; i < table_size; i++) {
         record = records[i];
 
         // set the result of checking if the record passes the condition into the condition results array
-        if(record_satisfies_where(where_clause, record)) {
+        if (record_satisfies_where(where_clause, record)) {
             record_count++;
-            if(record_count == 1) {
+            if (record_count == 1) {
                 selected_records = malloc(sizeof(union record_item *) * record_count);
-            }
-            else {
+            } else {
                 selected_records = realloc(records, record_count);
             }
             selected_records[record_count - 1] = record;
