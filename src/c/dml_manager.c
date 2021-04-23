@@ -829,6 +829,12 @@ int parse_select_statement(char *statement) {
 
         union record_item ***record_lists = calloc(name_index, sizeof(union record_item *));
 
+        int *attrs_per_table = malloc(name_index * sizeof(int));
+        int table_attrs_index = 0;
+
+        int *records_per_table = malloc(name_index * sizeof(int));
+        int table_records_index = 0;
+
         // All of this will need to support multiple tables
         for (int i = 0; i < name_index; i++) {
             // These will all be non-null at this point
@@ -864,7 +870,15 @@ int parse_select_statement(char *statement) {
                         }
                     }
                 }
-                
+
+                // Store how many attributes total this table had
+                attrs_per_table[table_attrs_index] = num_cols_in_table;
+                table_attrs_index++;
+
+                // Store how many tuples this table had
+                records_per_table[table_records_index] = table_size;
+                table_records_index++;
+
                 union record_item **filtered_records = malloc(table_size * num_cols_in_table * sizeof(union record_item));
 
                 for (int j = 0; j < table_size; j++) {
@@ -895,43 +909,65 @@ int parse_select_statement(char *statement) {
 
         // Time for cartesian product if we have more than one table
         // variable for current cartesian product (starts as just the first set of records)
-        union record_item ** product;
+        union record_item ** product = record_lists[0];
         // variable to store the result of the cartesian product (copy into first var after calculation)
         union record_item **result;
         // variable for size of the starting cartesian product (starts at size of first record set)
         // TODO change this to how many tuples were returned
-        int product_size = table_list[0]->attrs_size;
+        int product_size = attrs_per_table[0];
 
         // keep track of how many attrs are in the tuple so far
+        int total_attrs = product_size;
 
         // shared variable somewhere for index of result array
+        int result_index;
 
         //TODO all of this needs to reference an array of filtered record set lengths
 
         if (name_index > 1) {
             for (int i = 1; i < name_index; i++) {
                 // Cartesian product the first set with all subsequent sets in order (no optimization)
-                // Loop through all records in current cartesian product result
+
                 // set result index to 0
+                result_index = 0;
+
                 // find out how many attrs were requested from next table add to amount of attrs total
-                // malloc the result array to be product_size * table's records * total attrs
+                int new_total_attrs = total_attrs + attrs_per_table[i];
+
+                // malloc the result array to be product_size * table's records * new total attrs
+                result = malloc(product_size * records_per_table[i] * new_total_attrs * sizeof(union record_item));
+
+                // Loop through all records in current cartesian product result
                 for (int j = 0; j < product_size; j++) {
 
                     // Loop through every attribute in the record
-                    // TODO change this to how many tuples were returned
-                    // will need to get that when getting record lists
-
-                    for (int k = 0; k < table_list[i]->attrs_size; k++) {
+                    for (int k = 0; k < attrs_per_table[i]; k++) {
                         // malloc a new tuple that can store all the old records plus the new ones
+                        union record_item *new_tuple = malloc(new_total_attrs * sizeof(union record_item));
+
                         // memcpy the records from loop j into the first part, memcpy the records from loop k into the second
+                        for (int l = 0; l < total_attrs; l++) {
+                            printf("new_tuple's addresss: %ld\n", new_tuple);
+                            printf("address we're putting at: %ld\n", &new_tuple[l]);
+                            memcpy(&new_tuple[l], &product[k][l], sizeof(union record_item));
+                        }
+
+                        for (int l = 0; l < attrs_per_table[i]; l++) {
+                            memcpy(&new_tuple[l + total_attrs], &product[k][l + total_attrs], sizeof(union record_item));
+                        }
+
+                        result[result_index] = new_tuple;
+                        result_index++;
                         // Put that new record at the next spot in the result array
                         // increment the index
                     }
                 }
                 // free the product array
-                // malloc a new one that's the new larger size
-                // memcpy the result array into the product array
-                // free the result array
+                free(product);
+                // set product to point to the result array
+                product = result;
+                // null out the result pointer
+                result = NULL;
             }
         }
         // Print that big product array somehow
