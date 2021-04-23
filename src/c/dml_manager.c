@@ -643,9 +643,6 @@ int parse_delete_from_statement(char *statement) {
 
     union record_item **records = NULL;
     int table_size = get_records(table->num, &records);
-    //for(int i = 0; i < table_size; i++) {
-    //    print_record(table, records[i]);
-   // }
 
     if (table_size == -1) {
         fprintf(stderr, "Error: unable to records from table %s\n", table_name);
@@ -659,45 +656,32 @@ int parse_delete_from_statement(char *statement) {
     // parse where clause
     Clause where_clause = parse_where_clause(condition);
     where_clause->table = table;
-    
-
-    union record_item **selected_records;
-    int selected_records_size = get_records_where_clause(where_clause, selected_records);
-    printf("line hit %d\n", selected_records_size);
-
-    if (selected_records == NULL) {
-        // do not consider this an error
-        printf("Unable to find records that satisfy condition: %s\n", condition);
-        return 0;
-    }
-
-    for(int i = 0; i < selected_records_size; i++) {
-        print_record(table, selected_records[i]);
-    }
 
     union record_item *primary_key;
     union record_item *current_record;
     int primary_key_size;
     int position;
     Unique primary;
-    int remove_result;
+    int remove_result = 0;
 
-    for(int i = 0; i < selected_records_size; i++) {
-        current_record = selected_records[i];
-        primary = get_primary_key(table);
-        primary_key_size = primary->attrs_size;
-        primary_key = malloc(sizeof(union record_item *) * primary_key_size);
+    for(int i = 0; i < table_size; i++) {
+        current_record = records[i];
 
-        for(int j = 0; j < primary_key_size; j++) {
-            position = get_attr_position(primary->attrs[j]);
-            primary_key[j] = current_record[position];
+        if(record_satisfies_where(where_clause, current_record)) {
+            primary = get_primary_key(where_clause->table);
+            primary_key_size = get_unique_attrs_size(primary);
+            primary_key = malloc(sizeof(union record_item) * primary_key_size);
+
+            for(int j = 0; j < primary_key_size; j++) {
+                position = get_attr_position(primary->attrs[j]);
+                primary_key[j] = current_record[position];
+            }
+            remove_result = remove_record(table->num, primary_key);
         }
-
-        remove_result = remove_record(table->num, primary_key);
-
     }
+
     return remove_result;
- }
+}
 
 int parse_select_statement(char *statement) {
     char *temp_statement = malloc(strlen(statement) + 1);
@@ -787,6 +771,7 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
 
     // get num the tables id?
     int table_size = get_records(where_clause->table->num, &records);
+    printf("records_size: %d\n", table_size);
 
     if (table_size == -1) {
         fprintf(stderr, "Error: unable to get records from table \n");
@@ -801,16 +786,22 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
 
         // set the result of checking if the record passes the condition into the condition results array
         if (record_satisfies_where(where_clause, record)) {
+            print_record(where_clause->table, record);
             record_count++;
             if (record_count == 1) {
                 selected_records = malloc(sizeof(union record_item *) * record_count);
-            } else {
-                selected_records = realloc(records, record_count);
+            } 
+            else {
+                selected_records = realloc(selected_records, sizeof(union record_item *) * record_count);
             }
             selected_records[record_count - 1] = record;
         }
 
     }
+    printf("\n");
+    print_record(where_clause->table, selected_records[0]);
+    print_record(where_clause->table, selected_records[1]);
+    print_record(where_clause->table, selected_records[2]);
     return record_count;
 }
 
