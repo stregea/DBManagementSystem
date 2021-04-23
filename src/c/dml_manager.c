@@ -736,13 +736,8 @@ int parse_select_statement(char *statement) {
             }
         }
 
-        // Store all the returned lists of records first, then cartesian product them later
-        union record_item ***record_lists = calloc(name_index, sizeof(union record_item *));
-
         char *select_clause = NULL;
         char *where_clause = NULL;
-        Clause select = NULL;
-        Clause where = NULL;
 
         // Build the select clause
         // this c
@@ -830,55 +825,53 @@ int parse_select_statement(char *statement) {
             }
         }
 
+        union record_item ***record_lists = calloc(name_index, sizeof(union record_item *));
+
         // All of this will need to support multiple tables
         for (int i = 0; i < name_index; i++) {
-
             // These will all be non-null at this point
             Table table = table_list[i];
-
-            // TODO: Get the whole of the records
-            // if result set isn't empty. cartesian product these records with result set (Do this after fetching)
-
-            // Determine if a where clause exists.
 
             union record_item **storagemanager_table = NULL;
 
             int table_size = get_records(table->num, &storagemanager_table);
 
-
-            for (int j = 0; j < table_size; j++) {
-                //testing. this could be repurposed into nested for loops for cartesian product
-                union record_item *record = storagemanager_table[j]; // todo: may need to free this
-                print_record(table, record);
+            if(found_star){
+                record_lists[i] = storagemanager_table;
             }
+            else {
+                record_lists[i] = calloc(table_size, sizeof(union record_item *));
+                int *attr_idx = NULL; //array that would hold the indexes of attr from this table
+                for (int col = 0; col < column_index; col++) {
+                    int num_cols_in_table = 0;
+                    if (strstr(columns[col], ".")) {
+                        if (strncasecmp(columns[col], table->name, strstr(columns[col], ".") - columns[col] - 1) == 0) {
+                            for (int l = 0; l < table->attrs_size; l++) {
+                                if (strcasecmp(strstr(columns[col], ".") + 1, table->attrs[l]->name) == 0) {
+                                    num_cols_in_table++;
+                                }
+                            }
+                        }
 
-
-            // something something strtok
-            // get list of columns as strings
-            // parse column names to check for periods separating table and column NOTE: not quite how that works
-
-            for (int col = 0; col < column_index; col++) {
-                if (strstr(columns[col], ".")) {
-                    // table.column syntax
-
-                    // Check the part before the period compared to the name of the table
-                    if (strncasecmp(columns[col], table->name, strstr(columns[col], ".") - columns[col] - 1) == 0) {
-                        // column should come from this table
-                        // loop through attributes to verify, error if not found
+                    } else {
+                        for (int l = 0; l < table->attrs_size; l++) {
+                            if (strcasecmp(columns[col], table->attrs[l]->name) == 0) {
+                                num_cols_in_table++;
+                            }
+                        }
                     }
-
-                } else {
+                }
+                for (int j = 0; j < table_size; j++) {
+                    //for each record from the og table only transfer the wanted attr to record_lists
+                    //Check through attr_idx?
+                    union record_item *record = storagemanager_table[j];
 
                 }
             }
-            // check each table name to see if it exists and is part of the former list of columns
-            // check each column name to see if the table has that column
+        }
 
-            if (includes_where){
-                //TODO: where clause logic
-            }
-
-            //return 0;
+        if (includes_where){
+            //TODO: where clause logic
         }
 
         // Time for cartesian product if we have more than one table
