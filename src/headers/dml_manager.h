@@ -3,6 +3,8 @@
 
 #include "storagemanager.h"
 #include "table.h"
+#include "clause_parser.h"
+#include "shunting_yard_parser.h"
 
 /**
  * Parse the 'insert' dml query.
@@ -61,4 +63,10 @@ void freeRecord(union record_item *record);
  * @return an array of record items.
  */
 union record_item * create_record_from_statement(Table table, char *tuple);
+
+// todo
+int get_records_where_clause(Clause where_clause, union record_item **selected_records);
+bool does_record_satisfy_condition(union record_item *record, char *condition, Table table);
+StringArray condition_to_expression(union record_item *record, char *condition, Table table);
+
 #endif

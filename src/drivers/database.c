@@ -55,6 +55,11 @@ int execute_query(char *query, union record_item ***result) {
  * @return 0 on success, -1 on error.
  */
 int parse_statement(char *statement) {
+
+    if (strcasecmp(statement, "quit;") == 0){
+        return 0;
+    }
+
     char *tmp_statement = malloc(strlen(statement) + 1);
     strcpy(tmp_statement, statement);
 
@@ -76,10 +81,13 @@ int parse_statement(char *statement) {
  */
 int shutdown_database() {
     int result = 0;
+    //TODO add shutdown to catalog
+    /*
     if (shutdown_catalog() == -1) {
         fprintf(stderr, "%s", "Error shutting down the catalog.\n");
         result = -1;
     }
+    */
     if (terminate_database() == -1) {
         fprintf(stderr, "%s", "Error shutting down the storage manager.\n");
         result = -1;
@@ -121,7 +129,7 @@ int main(int argc, char *argv[]) {
         restart = true;
     }
 
-    initialize_catalog(databasePath, restart);
+    create_catalog(databasePath, pageSize, bufferSize);
     create_database(databasePath, pageSize, bufferSize, restart);
     free(catalog_path);
 
