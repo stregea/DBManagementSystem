@@ -2,6 +2,7 @@
 #include "../headers/Enums.h"
 #include "../headers/catalog.h"
 #include "../headers/tuple.h"
+#include "../headers/utils.h"
 #include <stdio.h>
 #include <float.h>
 #include <stdlib.h>
@@ -642,6 +643,9 @@ int parse_delete_from_statement(char *statement) {
 
     union record_item **records = NULL;
     int table_size = get_records(table->num, &records);
+    //for(int i = 0; i < table_size; i++) {
+    //    print_record(table, records[i]);
+   // }
 
     if (table_size == -1) {
         fprintf(stderr, "Error: unable to records from table %s\n", table_name);
@@ -654,14 +658,21 @@ int parse_delete_from_statement(char *statement) {
 
     // parse where clause
     Clause where_clause = parse_where_clause(condition);
+    where_clause->table = table;
+    
 
     union record_item **selected_records;
     int selected_records_size = get_records_where_clause(where_clause, selected_records);
+    printf("line hit %d\n", selected_records_size);
 
     if (selected_records == NULL) {
         // do not consider this an error
         printf("Unable to find records that satisfy condition: %s\n", condition);
         return 0;
+    }
+
+    for(int i = 0; i < selected_records_size; i++) {
+        print_record(table, selected_records[i]);
     }
 
     union record_item *primary_key;
@@ -749,7 +760,9 @@ bool record_satisfies_where(Clause where_clause, union record_item *record) {
     bool *condition_results = malloc(conditions->size * sizeof(bool));
 
     for (int i = 0; i < conditions->size; i++) {
+        UpdateRecord
         condition_results[i] = does_record_satisfy_condition(record, conditions->array[i], where_clause->table);
+        //printf("result: %d\n", condition_results[i]);
     }
 
     // using the condition results array preform the boolean logic to get the result being the last index in array
@@ -805,17 +818,21 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
 StringArray condition_to_expression(union record_item *record, char *condition, Table table) {
     char *temp = strdup(condition);
     char *attribute_name = strtok(temp, " ");
-//    printf("attribute_name: \"%s\"\n", attribute_name);
+    //printf("attribute_name: \"%s\"\n", attribute_name);
 
     Attr attribute = get_attr_by_name(table, attribute_name);
     int data_position = get_attr_position(attribute);
     Type data_type = get_attr_type(attribute);
-//    fprintf(stdout, "%d\n", data_position);
-//    fprintf(stdout, "%s\n", condition);
+
+    //fprintf(stdout, "%d\n", data_position);
+    //fprintf(stdout, "%s\n", condition);
+  
     union record_item item = record[data_position];
 
     StringArray expression = expression_to_string_list(condition);
-    expression->array[0] = record_item_to_string(data_type, item);
+    char* string_record_item = record_item_to_string(data_type, item);
+    remove_spaces(string_record_item);
+    expression->array[0] = string_record_item;
 
     free(temp);
     return expression;
@@ -823,8 +840,16 @@ StringArray condition_to_expression(union record_item *record, char *condition, 
 
 bool does_record_satisfy_condition(union record_item *record, char *condition, Table table) {
     StringArray expression = condition_to_expression(record, condition, table);
+    
+    /*
+    for(int i = 0; i < expression->size; i++) {
+        printf("%s\n", expression->array[i]);
+    }
+    */
+
     OperationTree tree = build_tree(expression);
     bool condition_satisfied = determine_conditional(tree->root);
+
     freeOperationTree(tree);
     return condition_satisfied;
 }

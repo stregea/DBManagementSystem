@@ -21,6 +21,15 @@ char *trimwhitespace( char *str ){
   return str;
 }
 
+void remove_spaces(char* str) {
+    int count = 0;
+  
+    for (int i = 0; str[i]; i++)
+        if (str[i] != ' ')
+            str[count++] = str[i];
+    str[count] = '\0';
+}
+
 bool prefix(const char *pre, const char *str)
 {
     return strncmp(pre, str, strlen(pre)) == 0;
