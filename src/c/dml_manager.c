@@ -760,7 +760,6 @@ bool record_satisfies_where(Clause where_clause, union record_item *record) {
     bool *condition_results = malloc(conditions->size * sizeof(bool));
 
     for (int i = 0; i < conditions->size; i++) {
-        UpdateRecord
         condition_results[i] = does_record_satisfy_condition(record, conditions->array[i], where_clause->table);
         //printf("result: %d\n", condition_results[i]);
     }
