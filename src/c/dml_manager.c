@@ -11,14 +11,17 @@
 
 char *record_item_to_string(Type type, union record_item item) {
     char *ret = NULL;
+    size_t size;
     switch (type->type_num) {
         case INTEGER:
-            ret = malloc(sizeof(char *) * (item.i + 1));
+            size = sizeof(item.i + 1);
+            ret = malloc(sizeof(char *) * size);
             snprintf(ret, (item.i + 1), "%d", item.i);
             return ret;
         case DOUBLE:
-            ret = malloc(sizeof(char *) * (unsigned long long) (item.d + 1));
-            snprintf(ret, (item.d + 1), "%f", item.d);
+            size = sizeof(item.d + 1);
+            ret = malloc(sizeof(char *)* size);
+            snprintf(ret, size, "%lf", item.d);
             return ret;
         case BOOL:
             return item.b[0] == true ? "true" : (item.b[0] == false ? "false" : "null");
