@@ -720,6 +720,7 @@ int parse_select_statement(char *statement) {
             printf("name_index: %d\n", name_index);
         }
 
+        printf("table names: ");
         for (int i = 0; i < name_index; i++) {
             printf("%s ", table_names[i]);
         }
@@ -777,6 +778,7 @@ int parse_select_statement(char *statement) {
             column_index++;
         }
 
+        printf("column names: ");
         for (int j = 0; j < column_index; j++) {
             printf("%s ", columns[j]);
         }
@@ -818,7 +820,7 @@ int parse_select_statement(char *statement) {
                             }
                         }
                     }
-                    if (!found_col) {
+                    if (!found_col && strcmp(columns[j], "*") != 0) {
                         fprintf(stderr, "Error: could not find column %s\n", columns[j]);
                     }
                 }
@@ -832,22 +834,22 @@ int parse_select_statement(char *statement) {
             // These will all be non-null at this point
             Table table = table_list[i];
 
-            union record_item **storagemanager_table = NULL;
+            union record_item **storagemanager_table;
 
             int table_size = get_records(table->num, &storagemanager_table);
 
-            if(found_star){
+            if (found_star){
                 record_lists[i] = storagemanager_table;
-            }
-            else {
-                record_lists[i] = calloc(table_size, sizeof(union record_item *));
-                int *attr_idx = NULL; //array that would hold the indexes of attr from this table
+            } else {
+                //array that would hold the indexes of attr from this table
+                int *attr_indexes = calloc(table->attrs_size, sizeof(int)); // Might be less, won't be more
+                int num_cols_in_table = 0;
                 for (int col = 0; col < column_index; col++) {
-                    int num_cols_in_table = 0;
                     if (strstr(columns[col], ".")) {
                         if (strncasecmp(columns[col], table->name, strstr(columns[col], ".") - columns[col] - 1) == 0) {
                             for (int l = 0; l < table->attrs_size; l++) {
                                 if (strcasecmp(strstr(columns[col], ".") + 1, table->attrs[l]->name) == 0) {
+                                    attr_indexes[num_cols_in_table] = l;
                                     num_cols_in_table++;
                                 }
                             }
@@ -856,19 +858,36 @@ int parse_select_statement(char *statement) {
                     } else {
                         for (int l = 0; l < table->attrs_size; l++) {
                             if (strcasecmp(columns[col], table->attrs[l]->name) == 0) {
+                                attr_indexes[num_cols_in_table] = l;
                                 num_cols_in_table++;
                             }
                         }
                     }
                 }
-                for (int j = 0; j < table_size; j++) {
-                    //for each record from the og table only transfer the wanted attr to record_lists
-                    //Check through attr_idx?
-                    union record_item *record = storagemanager_table[j];
+                
+                union record_item **filtered_records = malloc(table_size * num_cols_in_table * sizeof(union record_item));
 
+                for (int j = 0; j < table_size; j++) {
+                    union record_item *filtered_tuple = malloc(sizeof(union record_item) * num_cols_in_table);
+                    for (int k = 0; k < num_cols_in_table; k++) {
+                        union record_item *copy = malloc(sizeof(union record_item));
+                        memcpy(copy, &(storagemanager_table[j][attr_indexes[k]]), sizeof(union record_item));
+                        filtered_tuple[k] = *copy;
+                    }
+                    filtered_records[j] = filtered_tuple;
                 }
+                record_lists[i] = filtered_records;
+                // If we're not using the entire record set as returned, we've already copied the data, so free this
+                free(storagemanager_table);
             }
         }
+
+        //TODO manual test, remove
+        printf("got: ");
+        for (int i = 0; i < 3; i++) {
+            printf("%d ", record_lists[0][i][0].i);
+        }
+        printf("\n");
 
         if (includes_where){
             //TODO: where clause logic
