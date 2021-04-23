@@ -669,6 +669,7 @@ int parse_delete_from_statement(char *statement) {
 
 // TODO
 int parse_select_statement(char *statement) {
+    printf("Going!\n");
     char *temp_statement = malloc(strlen(statement) + 1);
     strcpy(temp_statement, statement);
 
@@ -785,6 +786,7 @@ int parse_select_statement(char *statement) {
         printf("\n");
 
         for (int j = 0; j < column_index; j++) {
+            printf("looking for column %s\n", columns[j]);
             if (strstr(columns[j], ".")) {
                 // table.column syntax
                 // check through the tables to see if one matches the first part
@@ -820,12 +822,15 @@ int parse_select_statement(char *statement) {
                             }
                         }
                     }
-                    if (!found_col && strcmp(columns[j], "*") != 0) {
-                        fprintf(stderr, "Error: could not find column %s\n", columns[j]);
-                    }
+                }
+                if (found_col != 1 && (strcmp(columns[j], "*") != 0)) {
+                    fprintf(stderr, "Error: could not find column %s\n", columns[j]);
+                    return -1;
                 }
             }
         }
+
+        printf("done checking columns\n");
 
         union record_item ***record_lists = calloc(name_index, sizeof(union record_item *));
 
@@ -897,6 +902,7 @@ int parse_select_statement(char *statement) {
         }
 
         //TODO manual test, remove
+        /*
         printf("got: ");
         for (int i = 0; i < 3; i++) {
             printf("%d ", record_lists[0][i][0].i);
@@ -906,6 +912,7 @@ int parse_select_statement(char *statement) {
         if (includes_where){
             //TODO: where clause logic
         }
+        */
 
         // Time for cartesian product if we have more than one table
         // variable for current cartesian product (starts as just the first set of records)
@@ -914,10 +921,14 @@ int parse_select_statement(char *statement) {
         union record_item **result;
         // variable for size of the starting cartesian product (starts at size of first record set)
         // TODO change this to how many tuples were returned
-        int product_size = attrs_per_table[0];
+        int product_size = records_per_table[0];
 
         // keep track of how many attrs are in the tuple so far
-        int total_attrs = product_size;
+        for (int i = 0; i < table_attrs_index; i++) {
+            printf("%d ", attrs_per_table[i]);
+        }
+        printf("\n");
+        int total_attrs = attrs_per_table[0];
 
         // shared variable somewhere for index of result array
         int result_index;
@@ -940,23 +951,29 @@ int parse_select_statement(char *statement) {
                 // Loop through all records in current cartesian product result
                 for (int j = 0; j < product_size; j++) {
 
-                    // Loop through every attribute in the record
-                    for (int k = 0; k < attrs_per_table[i]; k++) {
+                    // Loop through every attribute in the new record
+                    for (int k = 0; k < records_per_table[i]; k++) {
                         // malloc a new tuple that can store all the old records plus the new ones
                         union record_item *new_tuple = malloc(new_total_attrs * sizeof(union record_item));
+                        printf("new tuple number %d\n", result_index);
 
                         // memcpy the records from loop j into the first part, memcpy the records from loop k into the second
                         for (int l = 0; l < total_attrs; l++) {
-                            printf("new_tuple's addresss: %ld\n", new_tuple);
-                            printf("address we're putting at: %ld\n", &new_tuple[l]);
-                            memcpy(&new_tuple[l], &product[k][l], sizeof(union record_item));
+                            printf("putting %d at %d\n", product[j][l].i, l);
+                            memcpy(&new_tuple[l], &product[j][l], sizeof(union record_item));
                         }
 
                         for (int l = 0; l < attrs_per_table[i]; l++) {
-                            memcpy(&new_tuple[l + total_attrs], &product[k][l + total_attrs], sizeof(union record_item));
+                            printf("putting %d at %d\n", record_lists[i][k][l].i, l + total_attrs);
+                            memcpy(&new_tuple[l + total_attrs], &record_lists[i][k][l], sizeof(union record_item));
                         }
 
                         result[result_index] = new_tuple;
+                        printf("contents of new tuple: ");
+                        for (int bleh = 0; bleh < new_total_attrs; bleh++) {
+                            printf("%d ", new_tuple[bleh].i);
+                        }
+                        printf("\n");
                         result_index++;
                         // Put that new record at the next spot in the result array
                         // increment the index
@@ -968,13 +985,28 @@ int parse_select_statement(char *statement) {
                 product = result;
                 // null out the result pointer
                 result = NULL;
+                printf("total_attrs was %d and is now %d\n", total_attrs, new_total_attrs);
+                total_attrs = new_total_attrs;
+                product_size *= records_per_table[i];
             }
+        }
+        printf("product size: %d\n", product_size);
+        printf("total attrs: %d\n", total_attrs);
+        //TODO for manually debugging, remove
+        for (int i = 0; i < product_size; i++) {
+            for (int j = 0; j < total_attrs; j++) {
+                printf("%d ", product[i][j].i);
+            }
+            printf("\n");
         }
         // Print that big product array somehow
         // free the product array
         free(columns);
         free(from_clause);
         free(select_clause);
+        printf("done\n");
+        fflush(stdout);
+        return 0;
     }
     free_string_array(statement_array);
     // bad keyword
