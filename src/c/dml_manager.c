@@ -751,28 +751,39 @@ int parse_select_statement(char *statement) {
 bool record_satisfies_where(Clause where_clause, union record_item *record) {
     StringArray conditions = where_clause->clauses;
     StringArray operators = where_clause->operators;
-    bool *condition_results = malloc(conditions->size * sizeof(bool));
+    char *condition_results = malloc(conditions->size * sizeof(char));
     printf("\n");
     print_record(where_clause->table, record);
 
-    for (int i = 0; i < conditions->size; i++) {
-        condition_results[i] = does_record_satisfy_condition(record, conditions->array[i], where_clause->table);
+    char *boolean_string = malloc(sizeof(char) * (conditions->size + operators->size) + 1);
+    boolean_string[conditions->size + operators->size] = 0;
+
+    for (int i = 0; i < conditions->size * 2; i+=2) {
+        boolean_string[i] = does_record_satisfy_condition(record, conditions->array[i/2], where_clause->table) +'0';
     }
 
-    // using the condition results array preform the boolean logic to get the result being the last index in array
-    for (int i = 0; i < operators->size; i++) {
-        if (strcasecmp(operators->array[i], "or") == 0) {
-            condition_results[i + 1] = condition_results[i] || condition_results[i + 1];
-        } else if (strcasecmp(operators->array[i], "and") == 0) {
-            condition_results[i + 1] = condition_results[i] && condition_results[i + 1];
+    for (int i = 1; i < operators->size * 2; i+=2) {
+        // using the condition results array preform the boolean logic to get the result being the last index in array
+        if (strcasecmp(operators->array[(i - 1)/2], "or") == 0) {
+            boolean_string[i] = '+';
+        } else if (strcasecmp(operators->array[(i - 1)/2], "and") == 0) {
+            boolean_string[i] = '*';
         } else {
             fprintf(stderr, "Error: Invalid operator %s\n", operators->array[i]);
             return -1;
         }
     }
-    bool result = condition_results[conditions->size - 1];
+
+    printf("boolean_String: %s\n", boolean_string);
+
+    StringArray boolean_expression = expression_to_string_list(boolean_string);
+
+    OperationTree boolean_tree = build_tree(boolean_expression);
+    bool result = (bool)evaluate_boolean_tree(boolean_tree->root);
+    
     printf("logical_result: %d\n", result);
     free(condition_results);
+    free(boolean_string);
     return result;
 }
 

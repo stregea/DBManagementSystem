@@ -120,6 +120,48 @@ int calculate_string_value(char *value) {
     return ret;
 }
 
+int evaluate_boolean_tree(Node node) {
+
+    if (!node) {
+        return 0;
+    }
+
+    // if a leaf node
+    if (!node->left && !node->right) {
+
+        // determine type of value (int, double, bool, char, varchar)
+        switch (node->type) {
+            case INTEGER: // or bool
+                return toInt(node->value) - 48;
+            case BOOL:
+                return toBool(node->value) - 48;
+            case DOUBLE:
+                return toDouble(node->value);
+            case CHAR:
+            case VARCHAR:
+                return calculate_string_value(node->value);
+        }
+    }
+
+    int left_value = evaluate_boolean_tree(node->left) - 48;
+    int right_value = evaluate_boolean_tree(node->right) - 48;
+    int result;
+
+    if (node->is_operation) {
+        switch (node->operation) {
+            case ADDITION:
+                result = left_value + right_value;
+                if(result == 2) {
+                    return 1;
+                }
+                return result;
+            case MULTIPLICATION:
+                return left_value * right_value;
+        }
+    }
+    return -1;
+}
+
 double evaluate_tree(Node node) {
 
     if (!node) {
@@ -220,7 +262,8 @@ bool is_character_operator(char character) {
 }
 
 StringArray expression_to_string_list(char *expression) {
-    //printf("%s\n", expression);
+    
+    printf("expression unformatted %s\n", expression);
     char *sub_string = NULL;
     int sub_string_length;
     char current_character;
