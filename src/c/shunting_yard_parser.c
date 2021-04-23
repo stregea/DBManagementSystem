@@ -262,8 +262,10 @@ bool is_character_operator(char character) {
 }
 
 StringArray expression_to_string_list(char *expression) {
-    
-    printf("expression unformatted %s\n", expression);
+
+    if(DEBUG == 1){
+        printf("expression unformatted %s\n", expression);
+    }
     char *sub_string = NULL;
     int sub_string_length;
     char current_character;

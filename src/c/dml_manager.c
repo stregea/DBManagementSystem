@@ -251,17 +251,17 @@ int parse_insert_statement(char *statement) {
 
                     if (record != NULL) {
                         // NOTE: THIS IS FOR TESTING ONLY. Do not include this line for Phase3 submission.
-                        print_record(table, record);
 
                         // insert the tuple into the storage manager
                         if (insert_record(table->num, record) == -1) {
-                            fprintf(stderr, "Error: Cannot insert:\n\t");
+                            fprintf(stderr, "Error: Cannot insert:\t");
                             print_record(table, record);
                             free(tuples);
                             freeRecord(record);
                             return -1;
                         }
-
+                        print_record(table, record);
+                        printf("has been inserted.\n\n");
                         freeRecord(record);
                     } else {
                         // is null -> error, don't read any more tuples.
@@ -584,6 +584,8 @@ int parse_update_statement(char *statement) {
                                     free_table_from_storagemanager(table_size, storagemanager_table);
                                     return -1;
                                 }
+                                printf("has been updated to: ");
+                                print_record(table, record);
                             }
                         }
 
@@ -654,7 +656,10 @@ int parse_delete_from_statement(char *statement) {
 
     // conditionals
     char *condition = strtok(NULL, ";");
-    printf("condition: %s\n", condition);
+
+    if(DEBUG == 1){
+        printf("condition: %s\n", condition);
+    }
 
     // parse where clause
     Clause where_clause = parse_where_clause(condition);
@@ -686,10 +691,13 @@ int parse_delete_from_statement(char *statement) {
     records = NULL;
     table_size = get_records(table->num, &records);
 
-    printf("\n after delete:\n");
-    for(int i = 0; i < table_size; i++) {
-        print_record(table, records[i]);
+    if(DEBUG == 1){
+        printf("\n after delete:\n");
+        for(int i = 0; i < table_size; i++) {
+            print_record(table, records[i]);
+        }
     }
+
     return remove_result;
 }
 
@@ -752,8 +760,10 @@ bool record_satisfies_where(Clause where_clause, union record_item *record) {
     StringArray conditions = where_clause->clauses;
     StringArray operators = where_clause->operators;
     char *condition_results = malloc(conditions->size * sizeof(char));
-    printf("\n");
-    print_record(where_clause->table, record);
+    if(DEBUG == 1){
+        printf("\n");
+        print_record(where_clause->table, record);
+    }
 
     char *boolean_string = malloc(sizeof(char) * (conditions->size + operators->size) + 1);
     boolean_string[conditions->size + operators->size] = 0;
@@ -782,14 +792,20 @@ bool record_satisfies_where(Clause where_clause, union record_item *record) {
         }
     }
 
-    printf("boolean_String: %s\n", boolean_string);
+    if(DEBUG == 1){
+        printf("boolean_String: %s\n", boolean_string);
+    }
 
     StringArray boolean_expression = expression_to_string_list(boolean_string);
 
     OperationTree boolean_tree = build_tree(boolean_expression);
     bool result = (bool)evaluate_boolean_tree(boolean_tree->root);
-    
-    printf("logical_result: %d\n", result);
+
+    if(DEBUG == 1){
+        printf("logical_result: %d\n", result);
+    }
+
+    freeOperationTree(boolean_tree);
     free(condition_results);
     free(boolean_string);
     return result;
@@ -802,7 +818,10 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
 
     // get num the tables id?
     int table_size = get_records(where_clause->table->num, &records);
-    printf("records_size: %d\n", table_size);
+
+    if(DEBUG == 1){
+        printf("records_size: %d\n", table_size);
+    }
 
     if (table_size == -1) {
         fprintf(stderr, "Error: unable to get records from table \n");
@@ -829,7 +848,10 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
         }
 
     }
-    printf("\n");
+
+    if(DEBUG == 1){
+        printf("\n");
+    }
     print_record(where_clause->table, selected_records[0]);
     print_record(where_clause->table, selected_records[1]);
     print_record(where_clause->table, selected_records[2]);
@@ -861,21 +883,26 @@ StringArray condition_to_expression(union record_item *record, char *condition, 
 
 bool does_record_satisfy_condition(union record_item *record, char *condition, Table table) {
     StringArray expression = condition_to_expression(record, condition, table);
-    
-    printf("expression: { ");
-    for(int i = 0; i < expression->size; i++) {
-        if(i == expression->size - 1) {
-            printf("%s ", expression->array[i]);
+
+    if(DEBUG == 1){
+        printf("expression: { ");
+        for(int i = 0; i < expression->size; i++) {
+            if(i == expression->size - 1) {
+                printf("%s ", expression->array[i]);
+            }
+            else {
+                printf("%s,", expression->array[i]);
+            }
         }
-        else {
-            printf("%s,", expression->array[i]);
-        }
+        printf("}\n");
     }
-    printf("}\n");
 
     OperationTree tree = build_tree(expression);
     bool condition_satisfied = determine_conditional(tree->root);
-    printf("determine_conditional_result: %d\n", condition_satisfied);
+
+    if(DEBUG == 1){
+        printf("determine_conditional_result: %d\n", condition_satisfied);
+    }
 
     freeOperationTree(tree);
     return condition_satisfied;

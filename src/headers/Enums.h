@@ -20,6 +20,10 @@ enum Conditionals {
     EQUALS = 0, GREATER_THAN = 1, GREATER_THAN_OR_EQUAL_TO = 2, LESS_THAN = 3, LESS_THAN_OR_EQUAL_TO = 4, NOT_EQUALS = 5
 };
 
+enum Debugging{
+    DEBUG = -1
+};
+
 /**
  * Return an integer associated with an attribute type.
  *      0 - Integer
