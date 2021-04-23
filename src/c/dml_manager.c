@@ -14,12 +14,12 @@ char *record_item_to_string(Type type, union record_item item) {
     size_t size;
     switch (type->type_num) {
         case INTEGER:
-            size = sizeof(item.i + 1);
+            size = sizeof(item.i) + 1;
             ret = malloc(sizeof(char *) * size);
             snprintf(ret, (item.i + 1), "%d", item.i);
             return ret;
         case DOUBLE:
-            size = sizeof(item.d + 1);
+            size = sizeof(item.d) + 1;
             ret = malloc(sizeof(char *)* size);
             snprintf(ret, size, "%lf", item.d);
             return ret;
