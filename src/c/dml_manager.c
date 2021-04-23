@@ -680,6 +680,13 @@ int parse_delete_from_statement(char *statement) {
         }
     }
 
+    records = NULL;
+    table_size = get_records(table->num, &records);
+
+    printf("\n after delete:\n");
+    for(int i = 0; i < table_size; i++) {
+        print_record(table, records[i]);
+    }
     return remove_result;
 }
 
@@ -742,10 +749,11 @@ bool record_satisfies_where(Clause where_clause, union record_item *record) {
     StringArray conditions = where_clause->clauses;
     StringArray operators = where_clause->operators;
     bool *condition_results = malloc(conditions->size * sizeof(bool));
+    printf("\n");
+    print_record(where_clause->table, record);
 
     for (int i = 0; i < conditions->size; i++) {
         condition_results[i] = does_record_satisfy_condition(record, conditions->array[i], where_clause->table);
-        //printf("result: %d\n", condition_results[i]);
     }
 
     // using the condition results array preform the boolean logic to get the result being the last index in array
@@ -760,6 +768,7 @@ bool record_satisfies_where(Clause where_clause, union record_item *record) {
         }
     }
     bool result = condition_results[conditions->size - 1];
+    printf("logical_result: %d\n", result);
     free(condition_results);
     return result;
 }
@@ -831,14 +840,20 @@ StringArray condition_to_expression(union record_item *record, char *condition, 
 bool does_record_satisfy_condition(union record_item *record, char *condition, Table table) {
     StringArray expression = condition_to_expression(record, condition, table);
     
-    /*
+    printf("expression: { ");
     for(int i = 0; i < expression->size; i++) {
-        printf("%s\n", expression->array[i]);
+        if(i == expression->size - 1) {
+            printf("%s ", expression->array[i]);
+        }
+        else {
+            printf("%s,", expression->array[i]);
+        }
     }
-    */
+    printf("}\n");
 
     OperationTree tree = build_tree(expression);
     bool condition_satisfied = determine_conditional(tree->root);
+    printf("determine_conditional_result: %d\n", condition_satisfied);
 
     freeOperationTree(tree);
     return condition_satisfied;

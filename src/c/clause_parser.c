@@ -162,7 +162,6 @@ Clause parse_set_clause(char *clauses) {
 // todo
 Clause parse_where_clause(char *clauses) {
     // accepted keywords: AND, OR
-    printf("***************************** PARSE WHERE CLAUSE *****************************\n");
 
     Clause where_clause = create_clause();
     where_clause->operators = create_string_array();
