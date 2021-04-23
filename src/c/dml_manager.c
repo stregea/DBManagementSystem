@@ -758,6 +758,14 @@ bool record_satisfies_where(Clause where_clause, union record_item *record) {
     char *boolean_string = malloc(sizeof(char) * (conditions->size + operators->size) + 1);
     boolean_string[conditions->size + operators->size] = 0;
 
+    if(conditions->size < 1) {
+        fprintf(stderr, "Error: there is zero conditions\n");
+        return 0;
+    }
+    else if(conditions->size == 1) {
+        return does_record_satisfy_condition(record, conditions->array[0], where_clause->table);
+    }
+
     for (int i = 0; i < conditions->size * 2; i+=2) {
         boolean_string[i] = does_record_satisfy_condition(record, conditions->array[i/2], where_clause->table) +'0';
     }
