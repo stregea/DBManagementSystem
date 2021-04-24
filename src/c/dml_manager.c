@@ -1076,10 +1076,23 @@ int parse_select_statement(char *statement, union record_item ***result) {
         for (int l = 0; l < result_table->attrs_size; l++) {
             printf("___________________");
         }
-        printf("|\n");
+        printf("\n");
 
-        if (includes_where){
-            //TODO: where clause logic
+        Clause where = NULL;
+
+        if (includes_where) {
+            where_clause = array_of_tokens_to_string(statement_array, "where", END_OF_ARRAY, false);
+            where = parse_where_clause(where_clause);
+            where->table = result_table;
+
+            for(int i = 0; i < product_size; i++) {
+                if(record_satisfies_where(where, product[i])) {
+                    print_record(result_table, product[i]);
+                    printf("\n");
+                }
+            }
+            free(where_clause);
+            free(where);
         }
         else{ // If there is no where clause, print all the records
             for(int record_idx = 0; record_idx < product_size; record_idx++){
@@ -1105,7 +1118,9 @@ int parse_select_statement(char *statement, union record_item ***result) {
         free(columns);
         free(from_clause);
         free(select_clause);
-        printf("done\n");
+        if(DEBUG == 1) {
+            printf("done\n");
+        }
         fflush(stdout);
         result = &result_product;
         return 0;
