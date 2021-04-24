@@ -706,7 +706,7 @@ int parse_delete_from_statement(char *statement) {
     return remove_result;
 }
 
-int parse_select_statement(char *statement) {
+int parse_select_statement(char *statement, union record_item ***result) {
     printf("Going!\n");
     char *temp_statement = malloc(strlen(statement) + 1);
     strcpy(temp_statement, statement);
@@ -747,6 +747,7 @@ int parse_select_statement(char *statement) {
         int name_index = 1;
 
         while((table_name = strtok_r(NULL, ", ", &from_token)) != NULL) {
+            printf("table name: %s\n", table_name);
             if (name_index >= names_length) {
                 realloc(table_names, names_length * 2 * sizeof(char *)); // double the length every time to reduce calls to realloc
                 names_length *= 2;
@@ -984,7 +985,7 @@ int parse_select_statement(char *statement) {
         // variable for current cartesian product (starts as just the first set of records)
         union record_item ** product = record_lists[0];
         // variable to store the result of the cartesian product (copy into first var after calculation)
-        union record_item **result;
+        union record_item **result_product;
         // variable for size of the starting cartesian product (starts at size of first record set)
         // TODO change this to how many tuples were returned
         int product_size = records_per_table[0];
@@ -1012,7 +1013,7 @@ int parse_select_statement(char *statement) {
                 int new_total_attrs = total_attrs + attrs_per_table[i];
 
                 // malloc the result array to be product_size * table's records * new total attrs
-                result = malloc(product_size * records_per_table[i] * new_total_attrs * sizeof(union record_item));
+                result_product = malloc(product_size * records_per_table[i] * new_total_attrs * sizeof(union record_item));
 
                 // Loop through all records in current cartesian product result
                 for (int j = 0; j < product_size; j++) {
@@ -1034,7 +1035,7 @@ int parse_select_statement(char *statement) {
                             memcpy(&new_tuple[l + total_attrs], &record_lists[i][k][l], sizeof(union record_item));
                         }
 
-                        result[result_index] = new_tuple;
+                        result_product[result_index] = new_tuple;
                         printf("contents of new tuple: ");
                         for (int bleh = 0; bleh < new_total_attrs; bleh++) {
                             printf("%d ", new_tuple[bleh].i);
@@ -1048,9 +1049,9 @@ int parse_select_statement(char *statement) {
                 // free the product array
                 free(product);
                 // set product to point to the result array
-                product = result;
+                product = result_product;
                 // null out the result pointer
-                result = NULL;
+                result_product = NULL;
                 printf("total_attrs was %d and is now %d\n", total_attrs, new_total_attrs);
                 total_attrs = new_total_attrs;
                 product_size *= records_per_table[i];
@@ -1106,6 +1107,7 @@ int parse_select_statement(char *statement) {
         free(select_clause);
         printf("done\n");
         fflush(stdout);
+        result = &result_product;
         return 0;
     }
     free_string_array(statement_array);
