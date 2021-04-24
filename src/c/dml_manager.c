@@ -56,7 +56,7 @@ void freeRecord(union record_item *record) {
  * Print out a record.
  */
 void print_record(Table table, union record_item *record) {
-    printf("(");
+    printf("|");
     for (int i = 0; i < table->attrs_size; i++) {
         char *extra_space = " ";
 
@@ -65,19 +65,19 @@ void print_record(Table table, union record_item *record) {
         }
         switch (table->attrs[i]->type->type_num) {
             case INTEGER:
-                printf("%d%s", record[i].i, extra_space);
+                printf(" %16d |", record[i].i);
                 break;
             case DOUBLE:
-                printf("%f%s", record[i].d, extra_space);
+                printf(" %16f |", record[i].d);
                 break;
             case BOOL:
-                printf("%s%s", (record[i].b[0] == 1) ? "true" : "false", extra_space); // not to sure by bool is an array
+                printf(" %16.15s |", (record[i].b[0] == 1) ? "true" : "false"); // not to sure by bool is an array
                 break;
             case CHAR:
-                printf("%s%s", record[i].c, extra_space);
+                printf(" %16.15s |", record[i].c);
                 break;
             case VARCHAR:
-                printf("%s%s", record[i].v, extra_space);
+                printf(" %16.15s |", record[i].v);
                 break;
         }
     }
@@ -700,10 +700,7 @@ int parse_select_statement(char *statement) {
             from_clause = array_of_tokens_to_string(statement_array, "from", END_OF_ARRAY, false);
         }
 
-        // TODO: Create a reallocable record set to hold final result set.
-        // Ideally this should be returned
-
-        //TODO get multiple table names
+        // get multiple table names
         char *from_token;
         char **table_names = calloc(3, sizeof(char *));
         char *table_name = strtok_r(from_clause, ", ", &from_token);
@@ -840,6 +837,9 @@ int parse_select_statement(char *statement) {
         int *records_per_table = malloc(name_index * sizeof(int));
         int table_records_index = 0;
 
+        // Got to be very careful about freeing this. If found_star = false, must free each attribute and it's name
+        Table result_table = create_table(-1, "Result");
+
         // All of this will need to support multiple tables
         for (int i = 0; i < name_index; i++) {
             // These will all be non-null at this point
@@ -851,16 +851,46 @@ int parse_select_statement(char *statement) {
 
             if (found_star){
                 record_lists[i] = storagemanager_table;
+                for (int l = 0; l < table->attrs_size; l++) {
+                    add_attr(result_table, table->attrs[l]);
+                }
+                records_per_table[table_records_index] = table_size;
+
+                // Store how many attributes total this table had
+                attrs_per_table[table_attrs_index] = table->attrs_size;
+                table_attrs_index++;
+
+                // Store how many tuples this table had
+                records_per_table[table_records_index] = table_size;
+                table_records_index++;
+
+                union record_item **filtered_records = malloc(table_size * table->attrs_size * sizeof(union record_item));
+
+                for (int j = 0; j < table_size; j++) {
+                    union record_item *filtered_tuple = malloc(sizeof(union record_item) * table->attrs_size);
+                    for (int k = 0; k < table->attrs_size; k++) {
+                        union record_item *copy = malloc(sizeof(union record_item));
+                        memcpy(copy, &(storagemanager_table[j][k]), sizeof(union record_item));
+                        filtered_tuple[k] = *copy;
+                    }
+                    filtered_records[j] = filtered_tuple;
+                }
+                record_lists[i] = filtered_records;
+                // If we're not using the entire record set as returned, we've already copied the data, so free this
+                free(storagemanager_table);
             } else {
                 //array that would hold the indexes of attr from this table
                 int *attr_indexes = calloc(table->attrs_size, sizeof(int)); // Might be less, won't be more
                 int num_cols_in_table = 0;
                 for (int col = 0; col < column_index; col++) {
+                    Attr result_attr = NULL;
                     if (strstr(columns[col], ".")) {
                         if (strncasecmp(columns[col], table->name, strstr(columns[col], ".") - columns[col] - 1) == 0) {
                             for (int l = 0; l < table->attrs_size; l++) {
                                 if (strcasecmp(strstr(columns[col], ".") + 1, table->attrs[l]->name) == 0) {
                                     attr_indexes[num_cols_in_table] = l;
+                                    result_attr = create_attr(columns[col], num_cols_in_table, table->attrs[l]->type, table->attrs[l]->notnull);
+                                    add_attr(result_table, result_attr);
                                     num_cols_in_table++;
                                 }
                             }
@@ -870,6 +900,8 @@ int parse_select_statement(char *statement) {
                         for (int l = 0; l < table->attrs_size; l++) {
                             if (strcasecmp(columns[col], table->attrs[l]->name) == 0) {
                                 attr_indexes[num_cols_in_table] = l;
+                                result_attr = create_attr(columns[col], num_cols_in_table, table->attrs[l]->type, table->attrs[l]->notnull);
+                                add_attr(result_table, result_attr);
                                 num_cols_in_table++;
                             }
                         }
@@ -908,10 +940,6 @@ int parse_select_statement(char *statement) {
             printf("%d ", record_lists[0][i][0].i);
         }
         printf("\n");
-
-        if (includes_where){
-            //TODO: where clause logic
-        }
         */
 
         // Time for cartesian product if we have more than one table
@@ -999,8 +1027,31 @@ int parse_select_statement(char *statement) {
             }
             printf("\n");
         }
+
+        // Print the result header
+        printf("|");
+        for (int l = 0; l < result_table->attrs_size; l++) {
+            printf(" %16.15s |", result_table->attrs[l]->name);
+        }
+        printf("\n|");
+        for (int l = 0; l < result_table->attrs_size; l++) {
+            printf("___________________");
+        }
+        printf("|\n");
+
+        if (includes_where){
+            //TODO: where clause logic
+        }
+        else{ // If there is no where clause, print all the records
+            for(int record_idx = 0; record_idx < product_size; record_idx++){
+                print_record(result_table, product[record_idx]);
+                printf("\n");
+            }
+        }
+
         // Print that big product array somehow
         // free the product array
+        // free the result table. Very much depends on whether rows were requested or not.
         free(columns);
         free(from_clause);
         free(select_clause);
