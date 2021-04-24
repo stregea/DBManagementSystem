@@ -127,6 +127,11 @@ union record_item create_record_item(int *flag, Attr attribute, char *value) {
         if (value[0] == '"' && value[strlen(value) - 1] == '"') {
             string_size += 2;
         }
+        else if(value[0] != '"' && value[strlen(value) - 1] != '"'){
+            fprintf(stderr, "Error: string values must be wrapped in quotes.\n");
+            flag[0] = -1;
+            return recordItem;
+        }
     }
 
     switch (attribute->type->type_num) {
