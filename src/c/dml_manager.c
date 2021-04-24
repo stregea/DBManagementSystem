@@ -1052,6 +1052,17 @@ int parse_select_statement(char *statement) {
         // Print that big product array somehow
         // free the product array
         // free the result table. Very much depends on whether rows were requested or not.
+        free(result_table->name);
+
+        if(!found_star){
+            for (int l = 0; l < result_table->attrs_size; l++) {
+                free(result_table->attrs[l]->name);
+                free(result_table->attrs[l]);
+            }
+        }
+        free(result_table->attrs);
+        free(result_table);
+
         free(columns);
         free(from_clause);
         free(select_clause);
