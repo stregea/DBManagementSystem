@@ -1,5 +1,5 @@
 
-#include "utils.h"
+#include "../headers/utils.h"
 #include <string.h>
 
 char *trimwhitespace( char *str ){
@@ -19,6 +19,15 @@ char *trimwhitespace( char *str ){
   end[1] = '\0';
 
   return str;
+}
+
+void remove_spaces(char* str) {
+    int count = 0;
+  
+    for (int i = 0; str[i]; i++)
+        if (str[i] != ' ')
+            str[count++] = str[i];
+    str[count] = '\0';
 }
 
 bool prefix(const char *pre, const char *str)

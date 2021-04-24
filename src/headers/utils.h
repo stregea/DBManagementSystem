@@ -12,4 +12,6 @@ bool is_keyword( char * word );
 
 bool is_data_type( char * t_str );
 
+void remove_spaces(char* s);
+
 #endif

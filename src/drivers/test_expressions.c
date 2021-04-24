@@ -22,18 +22,18 @@ void treeprint(Node root, int level) {
 }
 
 int main() {
-    char *expression = "21*34+5*2*2";
+    char *expression = "3.2>3.0";
 
 
     OperationTree tree = build_tree(expression);
 
     treeprint(tree->root, 0);
 
-    double d = evaluate_tree(tree->root);
-    printf("%f\n", d);
+//    double d = evaluate_tree(tree->root);
+//    printf("%f\n", d);
 
-//    bool test = determine_conditional(tree->root);
-//    printf("%s\n", test == true ? "true" : "false");
+    bool test = determine_conditional(tree->root);
+    printf("%s\n", test == true ? "true" : "false");
 
     freeOperationTree(tree);
 

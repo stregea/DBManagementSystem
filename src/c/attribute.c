@@ -5,11 +5,7 @@ most of these functions are just accessing parts of the
 struct and can be done outside of this file directly, but
 this helps will self-documenting.
 **/
-#include "attribute.h"
-#include "type.h"
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "../headers/attribute.h"
 
 Attr create_attr( char * name, int position,
                   Type type, bool notnull){

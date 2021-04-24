@@ -4,6 +4,9 @@
 
 #include "type.h"
 #include <stdbool.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 typedef struct attr_{
 	char * name;

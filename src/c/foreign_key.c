@@ -1,5 +1,4 @@
-
-#include "foreign_key.h"
+#include "../headers/foreign_key.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

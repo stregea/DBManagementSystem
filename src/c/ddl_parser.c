@@ -1,14 +1,14 @@
-#include "ddl_parser.h"
+#include "../headers/ddl_parser.h"
 #include <stdio.h>
 #include <stdbool.h>
-#include "catalog.h"
+#include "../headers/catalog.h"
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "foreign_key.h"
-#include "unique.h"
-#include "attribute.h"
-#include "utils.h"
+#include "../headers/foreign_key.h"
+#include "../headers/unique.h"
+#include "../headers/attribute.h"
+#include "../headers/utils.h"
 
 int parse_type_str( char * t_str );
 
@@ -188,7 +188,7 @@ int parse_foreignkey( Table table, char * fk_str){
 	}
 	int ref_attrs_size = 1;
 	while( (attr_str = strtok(NULL, " ")) != NULL){
-		ref_attrs = realloc(cur_attrs, sizeof(Attr) * (cur_attrs_size + 1));
+		ref_attrs = realloc(cur_attrs, sizeof(Attr) * (ref_attrs_size + 1));
 		attr = get_attr_by_name( ref_table, attr_str );
 		if(attr == NULL){
 			fprintf(stderr, "ERROR parsing fk: No such attr exits: %s\n", attr_str);
@@ -198,7 +198,7 @@ int parse_foreignkey( Table table, char * fk_str){
 			fprintf(stderr, "ERROR: data types of fk attrs do not match\n");
 			return -1;
 		}
-	    ref_attrs[cur_attrs_size] = attr;
+	    ref_attrs[ref_attrs_size] = attr;
 		ref_attrs_size++;
 	}
 	
