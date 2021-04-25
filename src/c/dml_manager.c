@@ -711,6 +711,8 @@ int parse_delete_from_statement(char *statement) {
         }
     }
 
+    free_clause(where_clause);
+    free_table_from_storagemanager(table_size, records);
     return remove_result;
 }
 
