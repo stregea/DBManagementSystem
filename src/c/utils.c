@@ -1,6 +1,8 @@
 
 #include "../headers/utils.h"
+#include "../headers/Enums.h"
 #include <string.h>
+#include <stdio.h>
 
 char *trimwhitespace( char *str ){
   char *end;
@@ -41,4 +43,30 @@ bool is_keyword( char * word ){
 
 bool is_data_type( char * t_str ){
 	return true;
+}
+
+int get_data_type(char *value) {
+
+    int i;
+    double d;
+    bool is_potentially_double = false;
+
+    // hacky way to differenctiate ints from doubles by checking for a '.'
+    for(int x = 0; x < strlen(value); x++){
+        if(value[x] == '.'){
+            is_potentially_double = true;
+        }
+    }
+
+    if (!is_potentially_double && sscanf(value, "%d", &i) != 0) { // it's an integer
+        return INTEGER;
+    }
+    if (is_potentially_double && sscanf(value, "%lf", &d) != 0) { // it's an float/double
+        return DOUBLE;
+    }
+    if (strcasecmp(value, "true") == 0 || strcasecmp(value, "false") == 0) {
+        return BOOL;
+    }
+
+    return CHAR; // return as a char/varchar.
 }

@@ -7,6 +7,7 @@
 #include "../headers/queue.h"
 #include "../headers/stack.h"
 #include "../headers/Enums.h"
+#include "../headers/utils.h"
 
 bool is_operator(char operator) {
     int operation = get_operation(operator);
@@ -17,33 +18,6 @@ bool is_conditional(char *condition) {
     int conditional = get_conditional(condition);
     return conditional == EQUALS || conditional == GREATER_THAN || conditional == GREATER_THAN_OR_EQUAL_TO ||
            conditional == LESS_THAN || conditional == LESS_THAN_OR_EQUAL_TO || conditional == NOT_EQUALS;
-}
-
-
-int get_data_type(char *value) {
-
-    int i;
-    double d;
-    bool is_potentially_double = false;
-
-    // hacky way to differenctiate ints from doubles by checking for a '.'
-    for(int x = 0; x < strlen(value); x++){
-        if(value[x] == '.'){
-            is_potentially_double = true;
-        }
-    }
-
-    if (!is_potentially_double && scanf(value, "%d", &i) != 0) { // it's an integer
-        return INTEGER;
-    }
-    if (is_potentially_double &&sscanf(value, "%lf", &d) != 0) { // it's an float/double
-        return DOUBLE;
-    }
-    if (strcasecmp(value, "true") == 0 || strcasecmp(value, "false") == 0) {
-        return BOOL;
-    }
-
-    return CHAR; // return as a char/varchar.
 }
 
 //todo

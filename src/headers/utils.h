@@ -14,4 +14,5 @@ bool is_data_type( char * t_str );
 
 void remove_spaces(char* s);
 
+int get_data_type(char *value);
 #endif
