@@ -1114,17 +1114,30 @@ int parse_select_statement(char *statement, union record_item ***result) {
 
         Clause where = NULL;
 
+        union record_item **filtered_result = malloc(product_size * total_attrs * sizeof(union record_item));
+        int filtered_index = 0;
+
         if (includes_where) {
             where_clause = array_of_tokens_to_string(statement_array, "where", END_OF_ARRAY, false);
             where = parse_where_clause(where_clause);
             where->table = result_table;
 
             for(int i = 0; i < product_size; i++) {
+
+                union record_item *new_tuple = malloc(total_attrs * sizeof(union record_item));
+
                 if(record_satisfies_where(where, product[i])) {
                     print_record(result_table, product[i]);
                     printf("\n");
+
+                    for (int j = 0; j < total_attrs; j++) {
+                        memcpy(&new_tuple[j], &product[i][j], sizeof(union record_item));
+                    }
+                    filtered_result[filtered_index] = new_tuple;
+                    filtered_index++;
                 }
             }
+            result = &filtered_result;
             free(where_clause);
             free(where);
         }
@@ -1133,6 +1146,7 @@ int parse_select_statement(char *statement, union record_item ***result) {
                 print_record(result_table, product[record_idx]);
                 printf("\n");
             }
+            result = &product;
         }
 
         // Print that big product array somehow
