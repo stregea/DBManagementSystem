@@ -112,10 +112,13 @@ void print_record(Table table, union record_item *record) {
 union record_item create_record_item(int *flag, Attr attribute, char *value) {
     union record_item recordItem;
 
-    if(get_data_type(value) != attribute->type->type_num){
-        fprintf(stderr, "Error: cannot insert unmatched data types.\n");
-        flag[0] = -1;
-        return recordItem;
+    int data_type = get_data_type(value);
+    if(data_type != attribute->type->type_num && data_type){
+        if(!(data_type == CHAR && attribute->type->type_num == VARCHAR)){
+            fprintf(stderr, "Error: cannot insert unmatched data types.\n");
+            flag[0] = -1;
+            return recordItem;
+        }
     }
 
     if (attribute->notnull == true && strcasecmp(value, "null") == 0) {
