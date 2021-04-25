@@ -112,6 +112,12 @@ void print_record(Table table, union record_item *record) {
 union record_item create_record_item(int *flag, Attr attribute, char *value) {
     union record_item recordItem;
 
+    if(get_data_type(value) != attribute->type->type_num){
+        fprintf(stderr, "Error: cannot insert unmatched data types.\n");
+        flag[0] = -1;
+        return recordItem;
+    }
+
     if (attribute->notnull == true && strcasecmp(value, "null") == 0) {
         fprintf(stderr, "Error: %s cannot be null.\n", attribute->name);
         flag[0] = -1;
@@ -748,7 +754,7 @@ int parse_select_statement(char *statement, union record_item ***result) {
         while((table_name = strtok_r(NULL, ", ", &from_token)) != NULL) {
             printf("table name: %s\n", table_name);
             if (name_index >= names_length) {
-                realloc(table_names, names_length * 2 * sizeof(char *)); // double the length every time to reduce calls to realloc
+                table_names = realloc(table_names, names_length * 2 * sizeof(char *)); // double the length every time to reduce calls to realloc
                 names_length *= 2;
             }
             table_names[name_index] = table_name;
@@ -803,7 +809,7 @@ int parse_select_statement(char *statement, union record_item ***result) {
                 return -1;
             }
             if (column_index >= columns_length) {
-                realloc(columns, columns_length * 2 * sizeof(char *));
+                columns = realloc(columns, columns_length * 2 * sizeof(char *));
                 columns_length *= 2;
             }
             columns[column_index] = column_name;
