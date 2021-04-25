@@ -712,7 +712,9 @@ int parse_delete_from_statement(char *statement) {
 }
 
 int parse_select_statement(char *statement, union record_item ***result) {
-    printf("Going!\n");
+    if(DEBUG == 1) {
+        printf("Going!\n");
+    }
     char *temp_statement = malloc(strlen(statement) + 1);
     strcpy(temp_statement, statement);
 
@@ -752,21 +754,27 @@ int parse_select_statement(char *statement, union record_item ***result) {
         int name_index = 1;
 
         while((table_name = strtok_r(NULL, ", ", &from_token)) != NULL) {
-            printf("table name: %s\n", table_name);
+            if(DEBUG == 1) {
+                printf("table name: %s\n", table_name);
+            }
             if (name_index >= names_length) {
                 table_names = realloc(table_names, names_length * 2 * sizeof(char *)); // double the length every time to reduce calls to realloc
                 names_length *= 2;
             }
             table_names[name_index] = table_name;
             name_index++;
-            printf("name_index: %d\n", name_index);
+            if(DEBUG == 1) {
+                printf("name_index: %d\n", name_index);
+            }
         }
 
-        printf("table names: ");
-        for (int i = 0; i < name_index; i++) {
-            printf("%s ", table_names[i]);
+        if(DEBUG == 1) {
+            printf("table names: ");
+            for (int i = 0; i < name_index; i++) {
+                printf("%s ", table_names[i]);
+            }
+            printf("\n");
         }
-        printf("\n");
 
         Table *table_list = malloc(name_index * sizeof(Table));
         for (int i = 0; i < name_index; i++) {
@@ -820,14 +828,18 @@ int parse_select_statement(char *statement, union record_item ***result) {
             column_index++;
         }
 
-        printf("column names: ");
-        for (int j = 0; j < column_index; j++) {
-            printf("%s ", columns[j]);
+        if(DEBUG == 1) {
+            printf("column names: ");
+            for (int j = 0; j < column_index; j++) {
+                printf("%s ", columns[j]);
+            }
+            printf("\n");
         }
-        printf("\n");
 
         for (int j = 0; j < column_index; j++) {
-            printf("looking for column %s\n", columns[j]);
+            if(DEBUG == 1) {
+                printf("looking for column %s\n", columns[j]);
+            }
             if (strstr(columns[j], ".")) {
                 // table.column syntax
                 // check through the tables to see if one matches the first part
@@ -871,7 +883,9 @@ int parse_select_statement(char *statement, union record_item ***result) {
             }
         }
 
-        printf("done checking columns\n");
+        if(DEBUG == 1) {
+            printf("done checking columns\n");
+        }
 
         union record_item ***record_lists = calloc(name_index, sizeof(union record_item *));
 
@@ -977,7 +991,6 @@ int parse_select_statement(char *statement, union record_item ***result) {
             }
         }
 
-        //TODO manual test, remove
         /*
         printf("got: ");
         for (int i = 0; i < 3; i++) {
@@ -992,20 +1005,19 @@ int parse_select_statement(char *statement, union record_item ***result) {
         // variable to store the result of the cartesian product (copy into first var after calculation)
         union record_item **result_product;
         // variable for size of the starting cartesian product (starts at size of first record set)
-        // TODO change this to how many tuples were returned
         int product_size = records_per_table[0];
 
         // keep track of how many attrs are in the tuple so far
-        for (int i = 0; i < table_attrs_index; i++) {
-            printf("%d ", attrs_per_table[i]);
+        if(DEBUG == 1) {
+            for (int i = 0; i < table_attrs_index; i++) {
+                printf("%d ", attrs_per_table[i]);
+            }
         }
         printf("\n");
         int total_attrs = attrs_per_table[0];
 
         // shared variable somewhere for index of result array
         int result_index;
-
-        //TODO all of this needs to reference an array of filtered record set lengths
 
         if (name_index > 1) {
             for (int i = 1; i < name_index; i++) {
@@ -1027,21 +1039,30 @@ int parse_select_statement(char *statement, union record_item ***result) {
                     for (int k = 0; k < records_per_table[i]; k++) {
                         // malloc a new tuple that can store all the old records plus the new ones
                         union record_item *new_tuple = malloc(new_total_attrs * sizeof(union record_item));
-                        printf("new tuple number %d\n", result_index);
+
+                        if(DEBUG == 1) {
+                            printf("new tuple number %d\n", result_index);
+                        }
 
                         // memcpy the records from loop j into the first part, memcpy the records from loop k into the second
                         for (int l = 0; l < total_attrs; l++) {
-                            printf("putting %d at %d\n", product[j][l].i, l);
+                            if(DEBUG == 1) {
+                                printf("putting %d at %d\n", product[j][l].i, l);
+                            }
                             memcpy(&new_tuple[l], &product[j][l], sizeof(union record_item));
                         }
 
                         for (int l = 0; l < attrs_per_table[i]; l++) {
-                            printf("putting %d at %d\n", record_lists[i][k][l].i, l + total_attrs);
+                            if(DEBUG == 1) {
+                                printf("putting %d at %d\n", record_lists[i][k][l].i, l + total_attrs);
+                            }
                             memcpy(&new_tuple[l + total_attrs], &record_lists[i][k][l], sizeof(union record_item));
                         }
 
                         result_product[result_index] = new_tuple;
-                        printf("contents of new tuple: ");
+                        if(DEBUG == 1) {
+                            printf("contents of new tuple: ");
+                        }
                         for (int bleh = 0; bleh < new_total_attrs; bleh++) {
                             printf("%d ", new_tuple[bleh].i);
                         }
@@ -1057,19 +1078,24 @@ int parse_select_statement(char *statement, union record_item ***result) {
                 product = result_product;
                 // null out the result pointer
                 result_product = NULL;
-                printf("total_attrs was %d and is now %d\n", total_attrs, new_total_attrs);
+                if(DEBUG == 1) {
+                    printf("total_attrs was %d and is now %d\n", total_attrs, new_total_attrs);
+                }
                 total_attrs = new_total_attrs;
                 product_size *= records_per_table[i];
             }
         }
-        printf("product size: %d\n", product_size);
-        printf("total attrs: %d\n", total_attrs);
-        //TODO for manually debugging, remove
-        for (int i = 0; i < product_size; i++) {
-            for (int j = 0; j < total_attrs; j++) {
-                printf("%d ", product[i][j].i);
+        if(DEBUG == 1) {
+            printf("product size: %d\n", product_size);
+            printf("total attrs: %d\n", total_attrs);
+
+            // for manually debugging, remove
+            for (int i = 0; i < product_size; i++) {
+                for (int j = 0; j < total_attrs; j++) {
+                    printf("%d ", product[i][j].i);
+                }
+                printf("\n");
             }
-            printf("\n");
         }
 
         // Print the result header
