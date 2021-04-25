@@ -97,8 +97,7 @@ void print_record(Table table, union record_item *record) {
                 printf(" %16f |", record[i].d);
                 break;
             case BOOL:
-                printf("%s%s", (record[i].b[0] == 1) ? "true" : "false",
-                       extra_space); // not to sure by bool is an array
+                printf(" %16.15s |", (record[i].b[0] == 1) ? "true" : "false"); // not to sure by bool is an array
                 break;
             case CHAR:
                 printf(" %16.15s |", record[i].c);
@@ -1248,7 +1247,9 @@ StringArray condition_to_expression(union record_item *record, char *condition, 
 
     StringArray expression = expression_to_string_list(condition);
     char* string_record_item = record_item_to_string(data_type, item);
-    remove_spaces(string_record_item);
+    if(data_type->type_num == CHAR || data_type->type_num == VARCHAR){
+        remove_spaces(string_record_item);
+    }
     expression->array[0] = string_record_item;
 
     free(temp);

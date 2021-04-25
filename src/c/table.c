@@ -257,7 +257,7 @@ void add_fk_ref( Table table, Table reffering){
 	if(table->ref_fks == NULL)
 		table->ref_fks = malloc(sizeof(char *));
 	else
-		table->ref_fks = realloc(table->fks, sizeof(char *) * (table->ref_fks_size + 1));
+		table->ref_fks = realloc(table->ref_fks, sizeof(char *) * (table->ref_fks_size + 1));
 	table->ref_fks[table->ref_fks_size] = reffering->name;
 	table->ref_fks_size++;
 }
