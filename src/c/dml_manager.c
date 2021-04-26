@@ -20,7 +20,7 @@ char *record_item_to_string(Type type, union record_item item) {
             return ret;
         case DOUBLE:
             size = sizeof(item.d) + 1;
-            ret = malloc(sizeof(char *)* size);
+            ret = malloc(sizeof(char *) * size);
             snprintf(ret, size, "%lf", item.d);
             return ret;
         case BOOL:
@@ -113,8 +113,12 @@ union record_item create_record_item(int *flag, Attr attribute, char *value) {
     union record_item recordItem;
 
     int data_type = get_data_type(value);
-    if(data_type != attribute->type->type_num && data_type){
-        if(!(data_type == CHAR && attribute->type->type_num == VARCHAR)){
+    if (data_type != attribute->type->type_num && data_type) {
+        // don't error if data_type is returned as a char and the attribute is a varchar.
+        // also don't error if either the data type or the attribute type is an integer or double.
+        if (!(data_type == CHAR && attribute->type->type_num == VARCHAR) &&
+            !((data_type == INTEGER && attribute->type->type_num == DOUBLE)
+              || (data_type == DOUBLE && attribute->type->type_num == INTEGER))) {
             fprintf(stderr, "Error: cannot insert unmatched data types.\n");
             flag[0] = -1;
             return recordItem;
@@ -134,8 +138,7 @@ union record_item create_record_item(int *flag, Attr attribute, char *value) {
         // since, they don't technically count towards the total size of the string.
         if (value[0] == '"' && value[strlen(value) - 1] == '"') {
             string_size += 2;
-        }
-        else if(value[0] != '"' && value[strlen(value) - 1] != '"'){
+        } else if (value[0] != '"' && value[strlen(value) - 1] != '"') {
             fprintf(stderr, "Error: string values must be wrapped in quotes.\n");
             flag[0] = -1;
             return recordItem;
@@ -670,7 +673,7 @@ int parse_delete_from_statement(char *statement) {
     // conditionals
     char *condition = strtok(NULL, ";");
 
-    if(DEBUG == 1){
+    if (DEBUG == 1) {
         printf("condition: %s\n", condition);
     }
 
@@ -685,15 +688,15 @@ int parse_delete_from_statement(char *statement) {
     Unique primary;
     int remove_result = 0;
 
-    for(int i = 0; i < table_size; i++) {
+    for (int i = 0; i < table_size; i++) {
         current_record = records[i];
 
-        if(record_satisfies_where(where_clause, current_record)) {
+        if (record_satisfies_where(where_clause, current_record)) {
             primary = get_primary_key(where_clause->table);
             primary_key_size = get_unique_attrs_size(primary);
             primary_key = malloc(sizeof(union record_item) * primary_key_size);
 
-            for(int j = 0; j < primary_key_size; j++) {
+            for (int j = 0; j < primary_key_size; j++) {
                 position = get_attr_position(primary->attrs[j]);
                 primary_key[j] = current_record[position];
             }
@@ -704,9 +707,9 @@ int parse_delete_from_statement(char *statement) {
     records = NULL;
     table_size = get_records(table->num, &records);
 
-    if(DEBUG == 1){
+    if (DEBUG == 1) {
         printf("\n after delete:\n");
-        for(int i = 0; i < table_size; i++) {
+        for (int i = 0; i < table_size; i++) {
             print_record(table, records[i]);
         }
     }
@@ -717,7 +720,7 @@ int parse_delete_from_statement(char *statement) {
 }
 
 int parse_select_statement(char *statement, union record_item ***result) {
-    if(DEBUG == 1) {
+    if (DEBUG == 1) {
         printf("Going!\n");
     }
     char *temp_statement = malloc(strlen(statement) + 1);
@@ -743,10 +746,9 @@ int parse_select_statement(char *statement, union record_item ***result) {
             includes_where = true;
         }
         char *from_clause = NULL;
-        if(includes_where){
+        if (includes_where) {
             from_clause = array_of_tokens_to_string(statement_array, "from", "where", false);
-        }
-        else{
+        } else {
             from_clause = array_of_tokens_to_string(statement_array, "from", END_OF_ARRAY, false);
         }
 
@@ -758,22 +760,23 @@ int parse_select_statement(char *statement, union record_item ***result) {
         int names_length = 3; // start off with a little bit of space
         int name_index = 1;
 
-        while((table_name = strtok_r(NULL, ", ", &from_token)) != NULL) {
-            if(DEBUG == 1) {
+        while ((table_name = strtok_r(NULL, ", ", &from_token)) != NULL) {
+            if (DEBUG == 1) {
                 printf("table name: %s\n", table_name);
             }
             if (name_index >= names_length) {
-                table_names = realloc(table_names, names_length * 2 * sizeof(char *)); // double the length every time to reduce calls to realloc
+                table_names = realloc(table_names, names_length * 2 *
+                                                   sizeof(char *)); // double the length every time to reduce calls to realloc
                 names_length *= 2;
             }
             table_names[name_index] = table_name;
             name_index++;
-            if(DEBUG == 1) {
+            if (DEBUG == 1) {
                 printf("name_index: %d\n", name_index);
             }
         }
 
-        if(DEBUG == 1) {
+        if (DEBUG == 1) {
             printf("table names: ");
             for (int i = 0; i < name_index; i++) {
                 printf("%s ", table_names[i]);
@@ -801,9 +804,9 @@ int parse_select_statement(char *statement, union record_item ***result) {
 
         // TODO: determine selected columns
         // check for correct syntax
-        char * column_token;
+        char *column_token;
         // Assume that we'll have at least one column from every table
-        char ** columns = calloc(names_length, sizeof(char *));
+        char **columns = calloc(names_length, sizeof(char *));
         char *column_name = strtok_r(select_clause, ", ", &column_token);
         columns[0] = column_name;
         int column_index = 1;
@@ -833,7 +836,7 @@ int parse_select_statement(char *statement, union record_item ***result) {
             column_index++;
         }
 
-        if(DEBUG == 1) {
+        if (DEBUG == 1) {
             printf("column names: ");
             for (int j = 0; j < column_index; j++) {
                 printf("%s ", columns[j]);
@@ -842,7 +845,7 @@ int parse_select_statement(char *statement, union record_item ***result) {
         }
 
         for (int j = 0; j < column_index; j++) {
-            if(DEBUG == 1) {
+            if (DEBUG == 1) {
                 printf("looking for column %s\n", columns[j]);
             }
             if (strstr(columns[j], ".")) {
@@ -875,7 +878,8 @@ int parse_select_statement(char *statement, union record_item ***result) {
                             found_col++;
                             if (found_col > 1) {
                                 // Found the name twice, so they need to specify which one belongs to which table
-                                fprintf(stderr, "Error: attributes in different tables with the same name must be individually identified\n");
+                                fprintf(stderr,
+                                        "Error: attributes in different tables with the same name must be individually identified\n");
                                 return -1;
                             }
                         }
@@ -888,7 +892,7 @@ int parse_select_statement(char *statement, union record_item ***result) {
             }
         }
 
-        if(DEBUG == 1) {
+        if (DEBUG == 1) {
             printf("done checking columns\n");
         }
 
@@ -912,7 +916,7 @@ int parse_select_statement(char *statement, union record_item ***result) {
 
             int table_size = get_records(table->num, &storagemanager_table);
 
-            if (found_star){
+            if (found_star) {
                 record_lists[i] = storagemanager_table;
                 for (int l = 0; l < table->attrs_size; l++) {
                     add_attr(result_table, table->attrs[l]);
@@ -927,7 +931,8 @@ int parse_select_statement(char *statement, union record_item ***result) {
                 records_per_table[table_records_index] = table_size;
                 table_records_index++;
 
-                union record_item **filtered_records = malloc(table_size * table->attrs_size * sizeof(union record_item));
+                union record_item **filtered_records = malloc(
+                        table_size * table->attrs_size * sizeof(union record_item));
 
                 for (int j = 0; j < table_size; j++) {
                     union record_item *filtered_tuple = malloc(sizeof(union record_item) * table->attrs_size);
@@ -952,7 +957,8 @@ int parse_select_statement(char *statement, union record_item ***result) {
                             for (int l = 0; l < table->attrs_size; l++) {
                                 if (strcasecmp(strstr(columns[col], ".") + 1, table->attrs[l]->name) == 0) {
                                     attr_indexes[num_cols_in_table] = l;
-                                    result_attr = create_attr(columns[col], num_cols_in_table, table->attrs[l]->type, table->attrs[l]->notnull);
+                                    result_attr = create_attr(columns[col], num_cols_in_table, table->attrs[l]->type,
+                                                              table->attrs[l]->notnull);
                                     add_attr(result_table, result_attr);
                                     num_cols_in_table++;
                                 }
@@ -963,7 +969,8 @@ int parse_select_statement(char *statement, union record_item ***result) {
                         for (int l = 0; l < table->attrs_size; l++) {
                             if (strcasecmp(columns[col], table->attrs[l]->name) == 0) {
                                 attr_indexes[num_cols_in_table] = l;
-                                result_attr = create_attr(columns[col], num_cols_in_table, table->attrs[l]->type, table->attrs[l]->notnull);
+                                result_attr = create_attr(columns[col], num_cols_in_table, table->attrs[l]->type,
+                                                          table->attrs[l]->notnull);
                                 add_attr(result_table, result_attr);
                                 num_cols_in_table++;
                             }
@@ -979,7 +986,8 @@ int parse_select_statement(char *statement, union record_item ***result) {
                 records_per_table[table_records_index] = table_size;
                 table_records_index++;
 
-                union record_item **filtered_records = malloc(table_size * num_cols_in_table * sizeof(union record_item));
+                union record_item **filtered_records = malloc(
+                        table_size * num_cols_in_table * sizeof(union record_item));
 
                 for (int j = 0; j < table_size; j++) {
                     union record_item *filtered_tuple = malloc(sizeof(union record_item) * num_cols_in_table);
@@ -1006,14 +1014,14 @@ int parse_select_statement(char *statement, union record_item ***result) {
 
         // Time for cartesian product if we have more than one table
         // variable for current cartesian product (starts as just the first set of records)
-        union record_item ** product = record_lists[0];
+        union record_item **product = record_lists[0];
         // variable to store the result of the cartesian product (copy into first var after calculation)
         union record_item **result_product;
         // variable for size of the starting cartesian product (starts at size of first record set)
         int product_size = records_per_table[0];
 
         // keep track of how many attrs are in the tuple so far
-        if(DEBUG == 1) {
+        if (DEBUG == 1) {
             for (int i = 0; i < table_attrs_index; i++) {
                 printf("%d ", attrs_per_table[i]);
             }
@@ -1035,7 +1043,8 @@ int parse_select_statement(char *statement, union record_item ***result) {
                 int new_total_attrs = total_attrs + attrs_per_table[i];
 
                 // malloc the result array to be product_size * table's records * new total attrs
-                result_product = malloc(product_size * records_per_table[i] * new_total_attrs * sizeof(union record_item));
+                result_product = malloc(
+                        product_size * records_per_table[i] * new_total_attrs * sizeof(union record_item));
 
                 // Loop through all records in current cartesian product result
                 for (int j = 0; j < product_size; j++) {
@@ -1045,27 +1054,27 @@ int parse_select_statement(char *statement, union record_item ***result) {
                         // malloc a new tuple that can store all the old records plus the new ones
                         union record_item *new_tuple = malloc(new_total_attrs * sizeof(union record_item));
 
-                        if(DEBUG == 1) {
+                        if (DEBUG == 1) {
                             printf("new tuple number %d\n", result_index);
                         }
 
                         // memcpy the records from loop j into the first part, memcpy the records from loop k into the second
                         for (int l = 0; l < total_attrs; l++) {
-                            if(DEBUG == 1) {
+                            if (DEBUG == 1) {
                                 printf("putting %d at %d\n", product[j][l].i, l);
                             }
                             memcpy(&new_tuple[l], &product[j][l], sizeof(union record_item));
                         }
 
                         for (int l = 0; l < attrs_per_table[i]; l++) {
-                            if(DEBUG == 1) {
+                            if (DEBUG == 1) {
                                 printf("putting %d at %d\n", record_lists[i][k][l].i, l + total_attrs);
                             }
                             memcpy(&new_tuple[l + total_attrs], &record_lists[i][k][l], sizeof(union record_item));
                         }
 
                         result_product[result_index] = new_tuple;
-                        if(DEBUG == 1) {
+                        if (DEBUG == 1) {
                             printf("contents of new tuple: ");
                         }
                         for (int bleh = 0; bleh < new_total_attrs; bleh++) {
@@ -1083,14 +1092,14 @@ int parse_select_statement(char *statement, union record_item ***result) {
                 product = result_product;
                 // null out the result pointer
                 result_product = NULL;
-                if(DEBUG == 1) {
+                if (DEBUG == 1) {
                     printf("total_attrs was %d and is now %d\n", total_attrs, new_total_attrs);
                 }
                 total_attrs = new_total_attrs;
                 product_size *= records_per_table[i];
             }
         }
-        if(DEBUG == 1) {
+        if (DEBUG == 1) {
             printf("product size: %d\n", product_size);
             printf("total attrs: %d\n", total_attrs);
 
@@ -1124,11 +1133,11 @@ int parse_select_statement(char *statement, union record_item ***result) {
             where = parse_where_clause(where_clause);
             where->table = result_table;
 
-            for(int i = 0; i < product_size; i++) {
+            for (int i = 0; i < product_size; i++) {
 
                 union record_item *new_tuple = malloc(total_attrs * sizeof(union record_item));
 
-                if(record_satisfies_where(where, product[i])) {
+                if (record_satisfies_where(where, product[i])) {
                     print_record(result_table, product[i]);
                     printf("\n");
 
@@ -1142,9 +1151,8 @@ int parse_select_statement(char *statement, union record_item ***result) {
             result = &filtered_result;
             free(where_clause);
             free(where);
-        }
-        else{ // If there is no where clause, print all the records
-            for(int record_idx = 0; record_idx < product_size; record_idx++){
+        } else { // If there is no where clause, print all the records
+            for (int record_idx = 0; record_idx < product_size; record_idx++) {
                 print_record(result_table, product[record_idx]);
                 printf("\n");
             }
@@ -1156,7 +1164,7 @@ int parse_select_statement(char *statement, union record_item ***result) {
         // free the result table. Very much depends on whether rows were requested or not.
         free(result_table->name);
 
-        if(!found_star){
+        if (!found_star) {
             for (int l = 0; l < result_table->attrs_size; l++) {
                 free(result_table->attrs[l]->name);
                 free(result_table->attrs[l]);
@@ -1168,7 +1176,7 @@ int parse_select_statement(char *statement, union record_item ***result) {
         free(columns);
         free(from_clause);
         free(select_clause);
-        if(DEBUG == 1) {
+        if (DEBUG == 1) {
             printf("done\n");
         }
         fflush(stdout);
@@ -1184,7 +1192,7 @@ bool record_satisfies_where(Clause where_clause, union record_item *record) {
     StringArray conditions = where_clause->clauses;
     StringArray operators = where_clause->operators;
     char *condition_results = malloc(conditions->size * sizeof(char));
-    if(DEBUG == 1){
+    if (DEBUG == 1) {
         printf("\n");
         print_record(where_clause->table, record);
     }
@@ -1192,23 +1200,22 @@ bool record_satisfies_where(Clause where_clause, union record_item *record) {
     char *boolean_string = malloc(sizeof(char) * (conditions->size + operators->size) + 1);
     boolean_string[conditions->size + operators->size] = 0;
 
-    if(conditions->size < 1) {
+    if (conditions->size < 1) {
         fprintf(stderr, "Error: there is zero conditions\n");
         return 0;
-    }
-    else if(conditions->size == 1) {
+    } else if (conditions->size == 1) {
         return does_record_satisfy_condition(record, conditions->array[0], where_clause->table);
     }
 
-    for (int i = 0; i < conditions->size * 2; i+=2) {
-        boolean_string[i] = does_record_satisfy_condition(record, conditions->array[i/2], where_clause->table) +'0';
+    for (int i = 0; i < conditions->size * 2; i += 2) {
+        boolean_string[i] = does_record_satisfy_condition(record, conditions->array[i / 2], where_clause->table) + '0';
     }
 
-    for (int i = 1; i < operators->size * 2; i+=2) {
+    for (int i = 1; i < operators->size * 2; i += 2) {
         // using the condition results array preform the boolean logic to get the result being the last index in array
-        if (strcasecmp(operators->array[(i - 1)/2], "or") == 0) {
+        if (strcasecmp(operators->array[(i - 1) / 2], "or") == 0) {
             boolean_string[i] = '+';
-        } else if (strcasecmp(operators->array[(i - 1)/2], "and") == 0) {
+        } else if (strcasecmp(operators->array[(i - 1) / 2], "and") == 0) {
             boolean_string[i] = '*';
         } else {
             fprintf(stderr, "Error: Invalid operator %s\n", operators->array[i]);
@@ -1216,16 +1223,16 @@ bool record_satisfies_where(Clause where_clause, union record_item *record) {
         }
     }
 
-    if(DEBUG == 1){
+    if (DEBUG == 1) {
         printf("boolean_String: %s\n", boolean_string);
     }
 
     StringArray boolean_expression = expression_to_string_list(boolean_string);
 
     OperationTree boolean_tree = build_tree(boolean_expression);
-    bool result = (bool)evaluate_boolean_tree(boolean_tree->root);
+    bool result = (bool) evaluate_boolean_tree(boolean_tree->root);
 
-    if(DEBUG == 1){
+    if (DEBUG == 1) {
         printf("logical_result: %d\n", result);
     }
 
@@ -1243,7 +1250,7 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
     // get num the tables id?
     int table_size = get_records(where_clause->table->num, &records);
 
-    if(DEBUG == 1){
+    if (DEBUG == 1) {
         printf("records_size: %d\n", table_size);
     }
 
@@ -1264,8 +1271,7 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
             record_count++;
             if (record_count == 1) {
                 selected_records = malloc(sizeof(union record_item *) * record_count);
-            } 
-            else {
+            } else {
                 selected_records = realloc(selected_records, sizeof(union record_item *) * record_count);
             }
             selected_records[record_count - 1] = record;
@@ -1273,7 +1279,7 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
 
     }
 
-    if(DEBUG == 1){
+    if (DEBUG == 1) {
         printf("\n");
     }
     print_record(where_clause->table, selected_records[0]);
@@ -1293,12 +1299,12 @@ StringArray condition_to_expression(union record_item *record, char *condition, 
 
     //fprintf(stdout, "%d\n", data_position);
     //fprintf(stdout, "%s\n", condition);
-  
+
     union record_item item = record[data_position];
 
     StringArray expression = expression_to_string_list(condition);
-    char* string_record_item = record_item_to_string(data_type, item);
-    if(data_type->type_num == CHAR || data_type->type_num == VARCHAR){
+    char *string_record_item = record_item_to_string(data_type, item);
+    if (data_type->type_num == CHAR || data_type->type_num == VARCHAR) {
         remove_spaces(string_record_item);
     }
     expression->array[0] = string_record_item;
@@ -1310,13 +1316,12 @@ StringArray condition_to_expression(union record_item *record, char *condition, 
 bool does_record_satisfy_condition(union record_item *record, char *condition, Table table) {
     StringArray expression = condition_to_expression(record, condition, table);
 
-    if(DEBUG == 1){
+    if (DEBUG == 1) {
         printf("expression: { ");
-        for(int i = 0; i < expression->size; i++) {
-            if(i == expression->size - 1) {
+        for (int i = 0; i < expression->size; i++) {
+            if (i == expression->size - 1) {
                 printf("%s ", expression->array[i]);
-            }
-            else {
+            } else {
                 printf("%s,", expression->array[i]);
             }
         }
@@ -1326,7 +1331,7 @@ bool does_record_satisfy_condition(union record_item *record, char *condition, T
     OperationTree tree = build_tree(expression);
     bool condition_satisfied = determine_conditional(tree->root);
 
-    if(DEBUG == 1){
+    if (DEBUG == 1) {
         printf("determine_conditional_result: %d\n", condition_satisfied);
     }
 
