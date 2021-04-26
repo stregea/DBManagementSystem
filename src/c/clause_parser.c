@@ -40,11 +40,6 @@ double calculate_value(Clause clause, StringArray math_expression, union record_
     char *val1pointer, *val2pointer;
     int operator;
 
-    // ex bar = 3 + bar
-    //    bar = foo
-    //    bar = bar + 3
-    //    bar = foo + bar
-
     // check to see if a column value was passed in
     attribute1 = get_attr_by_name(clause->table, math_expression->array[2]);
     if (attribute1 != NULL) {
@@ -52,6 +47,7 @@ double calculate_value(Clause clause, StringArray math_expression, union record_
             int i = attribute1->position;
 
             if(i == -1){
+                fprintf(stderr, "Error: invalid position in table\n");
                 return DBL_MAX;
             }
 
@@ -63,10 +59,10 @@ double calculate_value(Clause clause, StringArray math_expression, union record_
             }
 
         } else {
+            fprintf(stderr, "Error: invalid value passed in to calculate new value for '%s'\n", attribute1->name);
             return DBL_MAX;
         }
     } else { // couldn't find attribute in table, assume regular value
-        // todo: check if string here    if string -> error?
         value1 = strtod(math_expression->array[2], &val1pointer);
     }
 
@@ -83,6 +79,7 @@ double calculate_value(Clause clause, StringArray math_expression, union record_
             int i = attribute2->position;
 
             if(i == -1){
+                fprintf(stderr, "Error: invalid position in table\n");
                 return DBL_MAX;
             }
 
@@ -93,10 +90,10 @@ double calculate_value(Clause clause, StringArray math_expression, union record_
                 value2 = record[i].d;
             }
         } else {
+            fprintf(stderr, "Error: invalid value passed in to calculate new value for '%s'\n", attribute2->name);
             return DBL_MAX;
         }
     } else {
-        // todo: check if string here    if string -> error?
         value2 = strtod(math_expression->array[4], &val2pointer);
     }
 

@@ -108,6 +108,34 @@ void print_record(Table table, union record_item *record) {
         }
     }
 }
+void print_record_as_tuple(Table table, union record_item *record) {
+    printf("(");
+    for (int i = 0; i < table->attrs_size; i++) {
+        char *extra_space = " ";
+
+        if (i == table->attrs_size - 1) {
+            extra_space = ")\n"; // close the tuple, create new line
+        }
+        switch (table->attrs[i]->type->type_num) {
+            case INTEGER:
+                printf("%d%s", record[i].i, extra_space);
+                break;
+            case DOUBLE:
+                printf("%f%s", record[i].d, extra_space);
+                break;
+            case BOOL:
+                printf("%s%s", (record[i].b[0] == 1) ? "true" : "false",
+                       extra_space); // not to sure by bool is an array
+                break;
+            case CHAR:
+                printf("%s%s", record[i].c, extra_space);
+                break;
+            case VARCHAR:
+                printf("%s%s", record[i].v, extra_space);
+                break;
+        }
+    }
+}
 
 union record_item create_record_item(int *flag, Attr attribute, char *value) {
     union record_item recordItem;
@@ -271,12 +299,12 @@ int parse_insert_statement(char *statement) {
                         // insert the tuple into the storage manager
                         if (insert_record(table->num, record) == -1) {
                             fprintf(stderr, "Error: Cannot insert:\t");
-                            print_record(table, record);
+                            print_record_as_tuple(table, record);
                             free(tuples);
                             freeRecord(record);
                             return -1;
                         }
-                        print_record(table, record);
+                        print_record_as_tuple(table, record);
                         printf("has been inserted.\n\n");
                         freeRecord(record);
                     } else {
@@ -387,7 +415,7 @@ int parse_update_statement(char *statement) {
                             }
 
                             if (can_update) {
-                                print_record(table, record);
+                                print_record_as_tuple(table, record);
 
                                 // Modify the record based on the set clause.
                                 for (int j = 0; j < set->clauses->size; j++) {
@@ -477,8 +505,8 @@ int parse_update_statement(char *statement) {
                                                         record[record_index].b[0] = false;
                                                     }
                                                 } else {
-                                                    fprintf(stderr, "Error: Invalid value for %s.\n",
-                                                            tmp_clause->array[2]);
+                                                    fprintf(stderr, "Error: Invalid value of %s passed in for attribute %s.\n",
+                                                            tmp_clause->array[2], attribute_name);
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
@@ -601,7 +629,7 @@ int parse_update_statement(char *statement) {
                                     return -1;
                                 }
                                 printf("has been updated to: ");
-                                print_record(table, record);
+                                print_record_as_tuple(table, record);
                             }
                         }
 
@@ -710,7 +738,7 @@ int parse_delete_from_statement(char *statement) {
     if (DEBUG == 1) {
         printf("\n after delete:\n");
         for (int i = 0; i < table_size; i++) {
-            print_record(table, records[i]);
+            print_record_as_tuple(table, records[i]);
         }
     }
 
@@ -1194,7 +1222,7 @@ bool record_satisfies_where(Clause where_clause, union record_item *record) {
     char *condition_results = malloc(conditions->size * sizeof(char));
     if (DEBUG == 1) {
         printf("\n");
-        print_record(where_clause->table, record);
+        print_record_as_tuple(where_clause->table, record);
     }
 
     char *boolean_string = malloc(sizeof(char) * (conditions->size + operators->size) + 1);
@@ -1267,7 +1295,7 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
 
         // set the result of checking if the record passes the condition into the condition results array
         if (record_satisfies_where(where_clause, record)) {
-            print_record(where_clause->table, record);
+            print_record_as_tuple(where_clause->table, record);
             record_count++;
             if (record_count == 1) {
                 selected_records = malloc(sizeof(union record_item *) * record_count);
@@ -1282,9 +1310,9 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
     if (DEBUG == 1) {
         printf("\n");
     }
-    print_record(where_clause->table, selected_records[0]);
-    print_record(where_clause->table, selected_records[1]);
-    print_record(where_clause->table, selected_records[2]);
+    print_record_as_tuple(where_clause->table, selected_records[0]);
+    print_record_as_tuple(where_clause->table, selected_records[1]);
+    print_record_as_tuple(where_clause->table, selected_records[2]);
     return record_count;
 }
 
