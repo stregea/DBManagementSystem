@@ -225,6 +225,8 @@ Clause parse_where_clause(char *clauses) {
         }
     }
 
-    free(condition);
+    if(condition != NULL){
+        free(condition);
+    }
     return where_clause;
 }
