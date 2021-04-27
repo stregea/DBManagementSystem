@@ -91,19 +91,19 @@ void print_record(Table table, union record_item *record) {
         }
         switch (table->attrs[i]->type->type_num) {
             case INTEGER:
-                printf(" %16d |", record[i].i);
+                printf(" %10d |", record[i].i);
                 break;
             case DOUBLE:
-                printf(" %16f |", record[i].d);
+                printf(" %10f |", record[i].d);
                 break;
             case BOOL:
-                printf(" %16.15s |", (record[i].b[0] == 1) ? "true" : "false"); // not to sure by bool is an array
+                printf(" %10.10s |", (record[i].b[0] == 1) ? "true" : "false"); // not to sure by bool is an array
                 break;
             case CHAR:
-                printf(" %16.15s |", record[i].c);
+                printf(" %10.10s |", record[i].c);
                 break;
             case VARCHAR:
-                printf(" %16.15s |", record[i].v);
+                printf(" %10.10s |", record[i].v);
                 break;
         }
     }
@@ -499,10 +499,10 @@ int parse_update_statement(char *statement) {
                                                     if (strcasecmp(tmp_clause->array[2], "true") == 0) {
                                                         record[record_index].b[0] = true;
                                                     }
-                                                    if (strcasecmp(tmp_clause->array[2], "false") == 0) {
-                                                        record[record_index].b[0] = NULL;
-                                                    } else {
+                                                    else if (strcasecmp(tmp_clause->array[2], "false") == 0) {
                                                         record[record_index].b[0] = false;
+                                                    } else {
+                                                        record[record_index].b[0] = NULL;
                                                     }
                                                 } else {
                                                     fprintf(stderr, "Error: Invalid value of %s passed in for attribute %s.\n",
@@ -988,7 +988,7 @@ int parse_select_statement(char *statement, union record_item ***result) {
                 for (int col = 0; col < column_index; col++) {
                     Attr result_attr = NULL;
                     if (strstr(columns[col], ".")) {
-                        if (strncasecmp(columns[col], table->name, strstr(columns[col], ".") - columns[col] - 1) == 0) {
+                        if (strncasecmp(columns[col], table->name, strstr(columns[col], ".") - columns[col]) == 0) {
                             for (int l = 0; l < table->attrs_size; l++) {
                                 if (strcasecmp(strstr(columns[col], ".") + 1, table->attrs[l]->name) == 0) {
                                     attr_indexes[num_cols_in_table] = l;
@@ -1116,6 +1116,7 @@ int parse_select_statement(char *statement, union record_item ***result) {
                             }
                             printf("\n");
                         }
+
                         result_index++;
                         // Put that new record at the next spot in the result array
                         // increment the index
@@ -1150,11 +1151,11 @@ int parse_select_statement(char *statement, union record_item ***result) {
         // Print the result header
         printf("|");
         for (int l = 0; l < result_table->attrs_size; l++) {
-            printf(" %16.15s |", result_table->attrs[l]->name);
+            printf(" %10.10s |", result_table->attrs[l]->name);
         }
         printf("\n|");
         for (int l = 0; l < result_table->attrs_size; l++) {
-            printf("___________________");
+            printf("____________|");
         }
         printf("\n");
 
@@ -1215,7 +1216,6 @@ int parse_select_statement(char *statement, union record_item ***result) {
             printf("done\n");
         }
         fflush(stdout);
-        result = &result_product;
         return 0;
     }
     free_string_array(statement_array);
@@ -1265,6 +1265,7 @@ bool record_satisfies_where(Clause where_clause, union record_item *record) {
     StringArray boolean_expression = expression_to_string_list(boolean_string);
 
     OperationTree boolean_tree = build_tree(boolean_expression);
+    free_string_array(boolean_expression);
     bool result = (bool) evaluate_boolean_tree(boolean_tree->root);
 
     if (DEBUG == 1) {
@@ -1325,32 +1326,60 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
 
 StringArray condition_to_expression(union record_item *record, char *condition, Table table) {
     char *temp = strdup(condition);
-    char *attribute_name = strtok(temp, " ");
-    //printf("attribute_name: \"%s\"\n", attribute_name);
-
-    Attr attribute = get_attr_by_name(table, attribute_name);
-    int data_position = get_attr_position(attribute);
-    Type data_type = get_attr_type(attribute);
-
-    //fprintf(stdout, "%d\n", data_position);
-    //fprintf(stdout, "%s\n", condition);
-
-    union record_item item = record[data_position];
-
+    int expression_array_index = 0;
     StringArray expression = expression_to_string_list(condition);
-    char *string_record_item = record_item_to_string(data_type, item);
-    if (data_type->type_num == CHAR || data_type->type_num == VARCHAR) {
-        remove_spaces(string_record_item);
-    }
-    expression->array[0] = string_record_item;
+    bool error = false;
 
+    for(int i = 0; i < expression->size; i++){
+        Attr attribute = get_attr_by_name(table, expression->array[i]);
+        if(attribute != NULL){
+            char* string_record_item = record_item_to_string(get_attr_type(attribute), record[get_attr_position(attribute)]);
+            if (get_attr_type(attribute)->type_num == CHAR || get_attr_type(attribute)->type_num == VARCHAR) {
+                remove_spaces(string_record_item);
+            }
+            expression->array[i] = string_record_item;
+        }
+        // check if number
+        // check if operation
+        // if neither, error.
+//        else{
+//            if(get_operation(*expression->array[i]) == INVALID){
+//                if(!(strcasecmp(expression->array[i], "true") == 0 || strcasecmp(expression->array[i], "false") == 0)){
+//                    char*ptr;
+//                    // if not a number error
+//                    if(!strtol(expression->array[i], &ptr, 10)){
+//                        error = true;
+//                    }
+//                }
+//            }
+//        }
+    }
     free(temp);
+
+    if(error){
+        free_string_array(expression);
+        return NULL;
+    }
+
     return expression;
 }
 
 bool does_record_satisfy_condition(union record_item *record, char *condition, Table table) {
     StringArray expression = condition_to_expression(record, condition, table);
 
+    if(expression == NULL){
+        fprintf(stderr, "Error: Bad conditional arguments\n");
+        return false;
+    }
+//    if(expression->size == 1){
+//        if(strcasecmp(condition[0], "true") == 0){
+//            return true;
+//        }
+//        else{
+//            return false;
+//        }
+//
+//    }
     if (DEBUG == 1) {
         printf("expression: { ");
         for (int i = 0; i < expression->size; i++) {
@@ -1364,6 +1393,10 @@ bool does_record_satisfy_condition(union record_item *record, char *condition, T
     }
 
     OperationTree tree = build_tree(expression);
+
+    free(expression->array); // freeing this array like this doesn't break.
+    free(expression);
+    //    free_string_array(expression); // this segfaults on CS machine for some reason.
     bool condition_satisfied = determine_conditional(tree->root);
 
     if (DEBUG == 1) {

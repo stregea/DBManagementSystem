@@ -8,6 +8,18 @@
 #include "../headers/stack.h"
 #include "../headers/Enums.h"
 #include "../headers/utils.h"
+#include <ctype.h>
+
+void treeprint(Node root, int level) {
+    if (root == NULL)
+        return;
+    for (int i = 0; i < level; i++)
+        printf(i == level - 1 ? "- " : "  ");
+
+    printf("%s\n", root->value);
+    treeprint(root->left, level + 1);
+    treeprint(root->right, level + 1);
+}
 
 bool is_operator(char operator) {
     int operation = get_operation(operator);
@@ -61,7 +73,6 @@ OperationTree build_tree(StringArray expression) {
     tree->root = (Node) peek(stack);
     free_stack(stack);
     free_string_array(string);
-    free_string_array(expression);
     return tree;
 }
 
@@ -89,7 +100,7 @@ double toDouble(char *value) {
 int calculate_string_value(char *value) {
     int ret = 0;
     for (int i = 0; i < strlen(value); i++) {
-        ret += value[i];
+        ret += tolower(value[i]);
     }
     return ret;
 }
@@ -106,9 +117,9 @@ int evaluate_boolean_tree(Node node) {
         // determine type of value (int, double, bool, char, varchar)
         switch (node->type) {
             case INTEGER: // or bool
-                return toInt(node->value) - 48;
+                return toInt(node->value);
             case BOOL:
-                return toBool(node->value) - 48;
+                return toBool(node->value);
             case DOUBLE:
                 return toDouble(node->value);
             case CHAR:
@@ -117,15 +128,15 @@ int evaluate_boolean_tree(Node node) {
         }
     }
 
-    int left_value = evaluate_boolean_tree(node->left) - 48;
-    int right_value = evaluate_boolean_tree(node->right) - 48;
+    int left_value = evaluate_boolean_tree(node->left);
+    int right_value = evaluate_boolean_tree(node->right);
     int result;
 
     if (node->is_operation) {
         switch (node->operation) {
             case ADDITION:
                 result = left_value + right_value;
-                if(result == 2) {
+                if (result == 2) {
                     return 1;
                 }
                 return result;
@@ -177,13 +188,18 @@ double evaluate_tree(Node node) {
     return DBL_MAX;
 }
 
+bool node_is_string(Node node){
+    return node->type == CHAR || node->type == VARCHAR;
+}
 bool determine_conditional(Node node) {
 
     // evaluate left side of tree
     double left_branch = evaluate_tree(node->left);
 
+//    treeprint(node->left, 0);
     // evaluate right side of tree.
     double right_branch = evaluate_tree(node->right);
+//    treeprint(node->right, 0);
 
     // conditional at the top of the tree
     switch (node->conditional) {
@@ -196,11 +212,21 @@ bool determine_conditional(Node node) {
         case GREATER_THAN_OR_EQUAL_TO:
             return left_branch >= right_branch;
         case EQUALS:
+            if(left_branch == right_branch){
+                // need to perform this check since there is a slight chance that the sum of ascii values
+                // are equal, so if both ascii values are equal, perform a string comparison.
+                if(node_is_string(node->left) && node_is_string(node->right)){
+                    return strcmp(node->left->value, node->right->value) == 0; // don't want string case sensitivity.
+                }
+            }
             return left_branch == right_branch;
         case NOT_EQUALS:
             return left_branch != right_branch;
     }
 
+    if (strcasecmp(node->value, "true") == 0) {
+        return true;
+    }
     return false;
 }
 
@@ -237,7 +263,7 @@ bool is_character_operator(char character) {
 
 StringArray expression_to_string_list(char *expression) {
 
-    if(DEBUG == 1){
+    if (DEBUG == 1) {
         printf("expression unformatted %s\n", expression);
     }
     char *sub_string = NULL;
@@ -246,8 +272,9 @@ StringArray expression_to_string_list(char *expression) {
 
     int length = strlen(expression);
     // definitely a memory issue
-    char **tokens = malloc(sizeof(char *) * length);
-    int token_count = 0;
+    StringArray strings = malloc(sizeof(struct StringArray));
+    strings->array = malloc(sizeof(char *));
+    strings->size = 0;
 
     for (int i = 0; i < length; i++) {
         current_character = expression[i];
@@ -276,26 +303,26 @@ StringArray expression_to_string_list(char *expression) {
                     return NULL;
                 }
             } else {
-                tokens[token_count] = strdup(sub_string);
+                strings->array = realloc(strings->array, sizeof(char*)*(strings->size + 1));
+                strings->array[strings->size++] = strdup(sub_string);
                 free(sub_string);
-                token_count++;
-                sub_string = malloc(sizeof(char*)*1);
+                sub_string = malloc(sizeof(char *) * 1);
                 strcpy(sub_string, " ");
                 sub_string[0] = current_character;
             }
         } else if (current_character != ' ') {
             if (sub_string == NULL) {
-                sub_string = malloc(sizeof(char*)*1);
+                sub_string = malloc(sizeof(char *) * 1);
                 strcpy(sub_string, " ");
                 // initial null terminator
                 sub_string[0] = 0;
 //                sub_string[1] = 0;
                 sub_string_length = strlen(sub_string);
             } else if (is_character_operator(sub_string[0])) {
-                tokens[token_count] = strdup(sub_string);
+                strings->array = realloc(strings->array, sizeof(char*)*(strings->size + 1));
+                strings->array[strings->size++] = strdup(sub_string);
                 free(sub_string);
-                token_count++;
-                sub_string = malloc(sizeof(char*)*1);
+                sub_string = malloc(sizeof(char *) * 1);
                 strcpy(sub_string, " ");
                 sub_string[0] = 0;
 //                sub_string[1] = 0;
@@ -310,8 +337,8 @@ StringArray expression_to_string_list(char *expression) {
 
             // add last substring
             if (i == length - 1) {
-                tokens[token_count] = strdup(sub_string);
-                token_count++;
+                strings->array = realloc(strings->array, sizeof(char*)*(strings->size + 1));
+                strings->array[strings->size++] = strdup(sub_string);
             }
         }
     }
@@ -319,9 +346,7 @@ StringArray expression_to_string_list(char *expression) {
     if (sub_string != NULL) {
         free(sub_string);
     }
-    StringArray strings = malloc(sizeof(struct StringArray));
-    strings->array = tokens;
-    strings->size = token_count;
+
 
     return strings;
 }
