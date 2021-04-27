@@ -166,10 +166,13 @@ Clause parse_where_clause(char *clauses) {
     char* condition = strdup(clauses);
 
     char* token = strtok(condition, " ");
+    const char *or = " or ";
+    const char *and = " and ";
 
-    // determine the difference kinds of logical operators found in string
+    // determine the different kinds of logical operators found in string
     while(token != NULL){
         if(strcasecmp(token, "and") == 0 || strcasecmp(token, "or") == 0){
+            where_clause->operators->array = realloc(where_clause->operators->array, sizeof(char *) * (where_clause->operators->size + 1));
             where_clause->operators->array = realloc(where_clause->operators->array, sizeof(char *) * (where_clause->operators->size + 1));
             where_clause->operators->array[where_clause->operators->size++] = strdup(token);
         }
@@ -193,7 +196,13 @@ Clause parse_where_clause(char *clauses) {
                 condition = token;
             }
 
-            token = strstr(condition, where_clause->operators->array[i]);
+            // currently splitting on "or" and "and" needs to be " or " and " and "
+            if(strcasecmp(where_clause->operators->array[i], "and") == 0) {
+                token = strstr(condition, and);
+            }
+            else if(strcasecmp(where_clause->operators->array[i], "or") == 0) {
+                token = strstr(condition, or);
+            }
 
             if (token == NULL){
                 free(condition);
@@ -201,7 +210,7 @@ Clause parse_where_clause(char *clauses) {
             }
 
             *token = '\0';
-            token = token + strlen(where_clause->operators->array[i]);
+            token = token + strlen(where_clause->operators->array[i]) + 2;
             //printf("op: [%s]\n", where_clause->operators->array[i]);
 
             condition = clean_clause(condition);
@@ -219,7 +228,8 @@ Clause parse_where_clause(char *clauses) {
     }
 
     if(condition != NULL){
-        free(condition);
+        //free(condition);
     }
+
     return where_clause;
 }
