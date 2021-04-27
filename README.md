@@ -10,6 +10,18 @@ gcc -std=gnu99 src/drivers/database.c src/c/*.c -o database
 Once the executable is created enter:
 usage: ./database <db_loc> <page_size> <buffer_size>
 
+# Known Problems
+The implementation of "where" clauses in our solution has some known problems that may not 
+completely fufill the requirements for Phase 3. One known problem is that when two tables
+that have an attribute with an identical name, you may only reference that attribute if you
+project it in the "select" clause. For example:
+> select foo.baz, bar.baz from foo, bar where foo.baz = bar.baz;
+works, where:
+> select bar.baz from foo, bar where foo.baz = bar.baz;
+will not.
+
+Attributes that do not exist in tables may not be recognized as such in the "where" clause.
+
 ## Example Run:
 ./database ~/Desktop/db/ 4096 10
 
