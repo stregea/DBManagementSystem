@@ -214,6 +214,9 @@ bool determine_conditional(Node node) {
             return left_branch != right_branch;
     }
 
+    if(strcasecmp(node->value, "true") == 0){
+        return true;
+    }
     return false;
 }
 

@@ -1318,30 +1318,60 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
 
 StringArray condition_to_expression(union record_item *record, char *condition, Table table) {
     char *temp = strdup(condition);
-    char * attribute_name = strtok(temp,"=+/-* ");
     int expression_array_index = 0;
     StringArray expression = expression_to_string_list(condition);
+    bool error = false;
 
-    while(attribute_name != NULL){
-        Attr attribute = get_attr_by_name(table, attribute_name);
+    for(int i = 0; i < expression->size; i++){
+        Attr attribute = get_attr_by_name(table, expression->array[i]);
         if(attribute != NULL){
             char* string_record_item = record_item_to_string(get_attr_type(attribute), record[get_attr_position(attribute)]);
             if (get_attr_type(attribute)->type_num == CHAR || get_attr_type(attribute)->type_num == VARCHAR) {
                 remove_spaces(string_record_item);
             }
-            expression->array[expression_array_index] = string_record_item;
-            expression_array_index += 2;
+            expression->array[i] = string_record_item;
         }
-        attribute_name = strtok(NULL,"=+/-* ");
+        // check if number
+        // check if operation
+        // if neither, error.
+//        else{
+//            if(get_operation(*expression->array[i]) == INVALID){
+//                if(!(strcasecmp(expression->array[i], "true") == 0 || strcasecmp(expression->array[i], "false") == 0)){
+//                    char*ptr;
+//                    // if not a number error
+//                    if(!strtol(expression->array[i], &ptr, 10)){
+//                        error = true;
+//                    }
+//                }
+//            }
+//        }
+    }
+    free(temp);
+
+    if(error){
+        free_string_array(expression);
+        return NULL;
     }
 
-    free(temp);
     return expression;
 }
 
 bool does_record_satisfy_condition(union record_item *record, char *condition, Table table) {
     StringArray expression = condition_to_expression(record, condition, table);
 
+    if(expression == NULL){
+        fprintf(stderr, "Error: Bad conditional arguments\n");
+        return false;
+    }
+//    if(expression->size == 1){
+//        if(strcasecmp(condition[0], "true") == 0){
+//            return true;
+//        }
+//        else{
+//            return false;
+//        }
+//
+//    }
     if (DEBUG == 1) {
         printf("expression: { ");
         for (int i = 0; i < expression->size; i++) {
