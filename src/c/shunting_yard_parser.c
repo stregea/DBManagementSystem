@@ -73,7 +73,6 @@ OperationTree build_tree(StringArray expression) {
     tree->root = (Node) peek(stack);
     free_stack(stack);
     free_string_array(string);
-    free_string_array(expression);
     return tree;
 }
 
