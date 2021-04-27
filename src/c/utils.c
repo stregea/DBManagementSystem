@@ -2,7 +2,10 @@
 #include "../headers/utils.h"
 #include "../headers/Enums.h"
 #include <string.h>
+#include <stdbool.h>
 #include <stdio.h>
+#define keywords_size 9
+char keywords[keywords_size][256] = {"and", "or", "insert", "update", "select", "from", "set", "where", "into"};
 
 char *trimwhitespace( char *str ){
   char *end;
@@ -38,7 +41,13 @@ bool prefix(const char *pre, const char *str)
 }
 
 bool is_keyword( char * word ){
-	return false;
+    bool keyword_flag = false;
+    for(int i = 0; i < keywords_size;i++){
+        if(strcasecmp(word, keywords[i]) == 0){
+            keyword_flag = true;
+        }
+    }
+    return keyword_flag;
 }
 
 bool is_data_type( char * t_str ){
@@ -51,7 +60,7 @@ int get_data_type(char *value) {
     double d;
     bool is_potentially_double = false;
 
-    // hacky way to differenctiate ints from doubles by checking for a '.'
+    // hacky way to differentiate ints from doubles by checking for a '.'
     for(int x = 0; x < strlen(value); x++){
         if(value[x] == '.'){
             is_potentially_double = true;
