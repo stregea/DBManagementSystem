@@ -117,9 +117,9 @@ int evaluate_boolean_tree(Node node) {
         // determine type of value (int, double, bool, char, varchar)
         switch (node->type) {
             case INTEGER: // or bool
-                return toInt(node->value) - 48;
+                return toInt(node->value);
             case BOOL:
-                return toBool(node->value) - 48;
+                return toBool(node->value);
             case DOUBLE:
                 return toDouble(node->value);
             case CHAR:
@@ -128,8 +128,8 @@ int evaluate_boolean_tree(Node node) {
         }
     }
 
-    int left_value = evaluate_boolean_tree(node->left) - 48;
-    int right_value = evaluate_boolean_tree(node->right) - 48;
+    int left_value = evaluate_boolean_tree(node->left);
+    int right_value = evaluate_boolean_tree(node->right);
     int result;
 
     if (node->is_operation) {
