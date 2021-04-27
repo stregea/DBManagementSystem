@@ -1053,8 +1053,8 @@ int parse_select_statement(char *statement, union record_item ***result) {
             for (int i = 0; i < table_attrs_index; i++) {
                 printf("%d ", attrs_per_table[i]);
             }
+            printf("\n");
         }
-        printf("\n");
         int total_attrs = attrs_per_table[0];
 
         // shared variable somewhere for index of result array
@@ -1104,11 +1104,11 @@ int parse_select_statement(char *statement, union record_item ***result) {
                         result_product[result_index] = new_tuple;
                         if (DEBUG == 1) {
                             printf("contents of new tuple: ");
+                            for (int bleh = 0; bleh < new_total_attrs; bleh++) {
+                                printf("%d ", new_tuple[bleh].i);
+                            }
+                            printf("\n");
                         }
-                        for (int bleh = 0; bleh < new_total_attrs; bleh++) {
-                            printf("%d ", new_tuple[bleh].i);
-                        }
-                        printf("\n");
                         result_index++;
                         // Put that new record at the next spot in the result array
                         // increment the index
