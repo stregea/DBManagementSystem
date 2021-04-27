@@ -1209,7 +1209,6 @@ int parse_select_statement(char *statement, union record_item ***result) {
             printf("done\n");
         }
         fflush(stdout);
-        result = &result_product;
         return 0;
     }
     free_string_array(statement_array);
