@@ -728,7 +728,14 @@ int parse_delete_from_statement(char *statement) {
                 position = get_attr_position(primary->attrs[j]);
                 primary_key[j] = current_record[position];
             }
-            remove_result = remove_record(table->num, primary_key);
+
+            if(remove_record(table->num, primary_key) == -1){
+                fprintf(stderr, "Error: An error has occurred in attempt to remove a record\n");
+                free(primary_key);
+                free_clause(where_clause);
+                return -1;
+            }
+            free(primary_key);
         }
     }
 
