@@ -181,25 +181,25 @@ Clause parse_where_clause(char *clauses) {
 
 
     free(condition);
-    condition = strdup(clauses);
+    char* test = strdup(clauses);
 
     // build the where clause
     if(where_clause->operators->size == 0){ // if only one condition.
-        condition = clean_clause(condition);
+        test = clean_clause(test);
 
         where_clause->clauses->array = realloc(where_clause->clauses->array, sizeof(char*) * (where_clause->clauses->size + 1));
-        where_clause->clauses->array[where_clause->clauses->size++] = strdup(condition);
+        where_clause->clauses->array[where_clause->clauses->size++] = strdup(test);
     }else{
         for(int i = 0; i < where_clause->operators->size; i++){
 
             if(i != 0){
-                condition = token;
+                test = token;
             }
 
-            token = strstr(condition, where_clause->operators->array[i]);
+            token = strstr(test, where_clause->operators->array[i]);
 
             if (token == NULL){
-                free(condition);
+                free(test);
                 return NULL;
             }
 
@@ -207,10 +207,10 @@ Clause parse_where_clause(char *clauses) {
             token = token + strlen(where_clause->operators->array[i]);
             //printf("op: [%s]\n", where_clause->operators->array[i]);
 
-            condition = clean_clause(condition);
+            condition = clean_clause(test);
             //printf("condition: [%s]\n", condition);
             where_clause->clauses->array = realloc(where_clause->clauses->array, sizeof(char*) * (where_clause->clauses->size + 1));
-            where_clause->clauses->array[where_clause->clauses->size++] = strdup(condition);
+            where_clause->clauses->array[where_clause->clauses->size++] = strdup(test);
 
             if(i == where_clause->operators->size - 1){ // strstr makes us do this
                 token = clean_clause(token);
@@ -225,8 +225,8 @@ Clause parse_where_clause(char *clauses) {
         }
     }
 
-    if(condition != NULL){
-        free(condition);
+    if(test != NULL){
+        free(test);
     }
     return where_clause;
 }
