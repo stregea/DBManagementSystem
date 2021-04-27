@@ -273,7 +273,7 @@ StringArray expression_to_string_list(char *expression) {
     int length = strlen(expression);
     // definitely a memory issue
     StringArray strings = malloc(sizeof(struct StringArray));
-    strings->array = malloc(sizeof(char *) * length);
+    strings->array = malloc(sizeof(char *));
     strings->size = 0;
 
     for (int i = 0; i < length; i++) {
@@ -303,6 +303,7 @@ StringArray expression_to_string_list(char *expression) {
                     return NULL;
                 }
             } else {
+                strings->array = realloc(strings->array, sizeof(char*)*(strings->size + 1));
                 strings->array[strings->size++] = strdup(sub_string);
                 free(sub_string);
                 sub_string = malloc(sizeof(char *) * 1);
@@ -318,6 +319,7 @@ StringArray expression_to_string_list(char *expression) {
 //                sub_string[1] = 0;
                 sub_string_length = strlen(sub_string);
             } else if (is_character_operator(sub_string[0])) {
+                strings->array = realloc(strings->array, sizeof(char*)*(strings->size + 1));
                 strings->array[strings->size++] = strdup(sub_string);
                 free(sub_string);
                 sub_string = malloc(sizeof(char *) * 1);
@@ -335,6 +337,7 @@ StringArray expression_to_string_list(char *expression) {
 
             // add last substring
             if (i == length - 1) {
+                strings->array = realloc(strings->array, sizeof(char*)*(strings->size + 1));
                 strings->array[strings->size++] = strdup(sub_string);
             }
         }
