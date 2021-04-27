@@ -8,6 +8,7 @@
 #include "../headers/stack.h"
 #include "../headers/Enums.h"
 #include "../headers/utils.h"
+#include <ctype.h>
 
 void treeprint(Node root, int level) {
     if (root == NULL)
@@ -100,7 +101,7 @@ double toDouble(char *value) {
 int calculate_string_value(char *value) {
     int ret = 0;
     for (int i = 0; i < strlen(value); i++) {
-        ret += value[i];
+        ret += tolower(value[i]);
     }
     return ret;
 }
@@ -136,7 +137,7 @@ int evaluate_boolean_tree(Node node) {
         switch (node->operation) {
             case ADDITION:
                 result = left_value + right_value;
-                if(result == 2) {
+                if (result == 2) {
                     return 1;
                 }
                 return result;
@@ -188,6 +189,9 @@ double evaluate_tree(Node node) {
     return DBL_MAX;
 }
 
+bool node_is_string(Node node){
+    return node->type == CHAR || node->type == VARCHAR;
+}
 bool determine_conditional(Node node) {
 
     // evaluate left side of tree
@@ -209,12 +213,19 @@ bool determine_conditional(Node node) {
         case GREATER_THAN_OR_EQUAL_TO:
             return left_branch >= right_branch;
         case EQUALS:
+            if(left_branch == right_branch){
+                // need to perform this check since there is a slight chance that the sum of ascii values
+                // are equal, so if both ascii values are equal, perform a string comparison.
+                if(node_is_string(node->left) && node_is_string(node->right)){
+                    return strcmp(node->left->value, node->right->value) == 0; // don't want string case sensitivity.
+                }
+            }
             return left_branch == right_branch;
         case NOT_EQUALS:
             return left_branch != right_branch;
     }
 
-    if(strcasecmp(node->value, "true") == 0){
+    if (strcasecmp(node->value, "true") == 0) {
         return true;
     }
     return false;
@@ -253,7 +264,7 @@ bool is_character_operator(char character) {
 
 StringArray expression_to_string_list(char *expression) {
 
-    if(DEBUG == 1){
+    if (DEBUG == 1) {
         printf("expression unformatted %s\n", expression);
     }
     char *sub_string = NULL;
@@ -295,13 +306,13 @@ StringArray expression_to_string_list(char *expression) {
                 tokens[token_count] = strdup(sub_string);
                 free(sub_string);
                 token_count++;
-                sub_string = malloc(sizeof(char*)*1);
+                sub_string = malloc(sizeof(char *) * 1);
                 strcpy(sub_string, " ");
                 sub_string[0] = current_character;
             }
         } else if (current_character != ' ') {
             if (sub_string == NULL) {
-                sub_string = malloc(sizeof(char*)*1);
+                sub_string = malloc(sizeof(char *) * 1);
                 strcpy(sub_string, " ");
                 // initial null terminator
                 sub_string[0] = 0;
@@ -311,7 +322,7 @@ StringArray expression_to_string_list(char *expression) {
                 tokens[token_count] = strdup(sub_string);
                 free(sub_string);
                 token_count++;
-                sub_string = malloc(sizeof(char*)*1);
+                sub_string = malloc(sizeof(char *) * 1);
                 strcpy(sub_string, " ");
                 sub_string[0] = 0;
 //                sub_string[1] = 0;
