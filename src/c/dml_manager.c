@@ -1338,6 +1338,18 @@ StringArray condition_to_expression(union record_item *record, char *condition, 
     }
     expression->array[0] = string_record_item;
 
+    char * atrribute2_name = strtok(NULL,"= ");
+    Attr attribute2 = get_attr_by_name(table, atrribute2_name);
+
+    if(attribute2 != NULL){
+        char* string_record_item2 = record_item_to_string(get_attr_type(attribute2), record[get_attr_position(attribute2)]);
+        if (data_type->type_num == CHAR || data_type->type_num == VARCHAR) {
+            remove_spaces(string_record_item2);
+        }
+        expression->array[2] = string_record_item2;
+//        expression->array[]
+    }
+
     free(temp);
     return expression;
 }
