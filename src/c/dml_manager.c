@@ -499,10 +499,10 @@ int parse_update_statement(char *statement) {
                                                     if (strcasecmp(tmp_clause->array[2], "true") == 0) {
                                                         record[record_index].b[0] = true;
                                                     }
-                                                    if (strcasecmp(tmp_clause->array[2], "false") == 0) {
-                                                        record[record_index].b[0] = NULL;
-                                                    } else {
+                                                    else if (strcasecmp(tmp_clause->array[2], "false") == 0) {
                                                         record[record_index].b[0] = false;
+                                                    } else {
+                                                        record[record_index].b[0] = NULL;
                                                     }
                                                 } else {
                                                     fprintf(stderr, "Error: Invalid value of %s passed in for attribute %s.\n",
