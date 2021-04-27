@@ -16,8 +16,10 @@ completely fufill the requirements for Phase 3. One known problem is that when t
 that have an attribute with an identical name, you may only reference that attribute if you
 project it in the "select" clause. For example:
 > select foo.baz, bar.baz from foo, bar where foo.baz = bar.baz;
+
 works, where:
 > select bar.baz from foo, bar where foo.baz = bar.baz;
+
 will not.
 
 Attributes that do not exist in tables may not be recognized as such in the "where" clause.
