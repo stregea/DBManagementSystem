@@ -91,19 +91,19 @@ void print_record(Table table, union record_item *record) {
         }
         switch (table->attrs[i]->type->type_num) {
             case INTEGER:
-                printf(" %16d |", record[i].i);
+                printf(" %10d |", record[i].i);
                 break;
             case DOUBLE:
-                printf(" %16f |", record[i].d);
+                printf(" %10f |", record[i].d);
                 break;
             case BOOL:
-                printf(" %16.15s |", (record[i].b[0] == 1) ? "true" : "false"); // not to sure by bool is an array
+                printf(" %10.10s |", (record[i].b[0] == 1) ? "true" : "false"); // not to sure by bool is an array
                 break;
             case CHAR:
-                printf(" %16.15s |", record[i].c);
+                printf(" %10.10s |", record[i].c);
                 break;
             case VARCHAR:
-                printf(" %16.15s |", record[i].v);
+                printf(" %10.10s |", record[i].v);
                 break;
         }
     }
@@ -981,7 +981,7 @@ int parse_select_statement(char *statement, union record_item ***result) {
                 for (int col = 0; col < column_index; col++) {
                     Attr result_attr = NULL;
                     if (strstr(columns[col], ".")) {
-                        if (strncasecmp(columns[col], table->name, strstr(columns[col], ".") - columns[col] - 1) == 0) {
+                        if (strncasecmp(columns[col], table->name, strstr(columns[col], ".") - columns[col]) == 0) {
                             for (int l = 0; l < table->attrs_size; l++) {
                                 if (strcasecmp(strstr(columns[col], ".") + 1, table->attrs[l]->name) == 0) {
                                     attr_indexes[num_cols_in_table] = l;
@@ -1109,6 +1109,7 @@ int parse_select_statement(char *statement, union record_item ***result) {
                             }
                             printf("\n");
                         }
+
                         result_index++;
                         // Put that new record at the next spot in the result array
                         // increment the index
@@ -1143,11 +1144,11 @@ int parse_select_statement(char *statement, union record_item ***result) {
         // Print the result header
         printf("|");
         for (int l = 0; l < result_table->attrs_size; l++) {
-            printf(" %16.15s |", result_table->attrs[l]->name);
+            printf(" %10.10s |", result_table->attrs[l]->name);
         }
         printf("\n|");
         for (int l = 0; l < result_table->attrs_size; l++) {
-            printf("___________________");
+            printf("____________|");
         }
         printf("\n");
 
