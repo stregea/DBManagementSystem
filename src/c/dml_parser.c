@@ -48,5 +48,5 @@ int parse_dml_statement( char * statement ){
  * @return the number of tuples in the result, -1 if upon error.
  */
 int parse_dml_query(char * query, union record_item *** result){
-    return parse_select_statement(query); // TODO
+    return parse_select_statement(query, result);
 }

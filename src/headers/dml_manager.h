@@ -46,7 +46,7 @@ int parse_delete_from_statement(char *statement);
  * @param statement - The statement to parse.
  * @return 0 if successful, -1 on error.
  */
-int parse_select_statement(char *statement);
+int parse_select_statement(char *statement, union record_item ***result);
 
 /**
  * Free an array of unions.
