@@ -9,6 +9,17 @@
 #include "../headers/Enums.h"
 #include "../headers/utils.h"
 
+void treeprint(Node root, int level) {
+    if (root == NULL)
+        return;
+    for (int i = 0; i < level; i++)
+        printf(i == level - 1 ? "- " : "  ");
+
+    printf("%s\n", root->value);
+    treeprint(root->left, level + 1);
+    treeprint(root->right, level + 1);
+}
+
 bool is_operator(char operator) {
     int operation = get_operation(operator);
     return operation == ADDITION || operation == SUBTRACTION || operation == DIVISION || operation == MULTIPLICATION;
@@ -182,8 +193,10 @@ bool determine_conditional(Node node) {
     // evaluate left side of tree
     double left_branch = evaluate_tree(node->left);
 
+//    treeprint(node->left, 0);
     // evaluate right side of tree.
     double right_branch = evaluate_tree(node->right);
+//    treeprint(node->right, 0);
 
     // conditional at the top of the tree
     switch (node->conditional) {
