@@ -1319,35 +1319,21 @@ int get_records_where_clause(Clause where_clause, union record_item **selected_r
 
 StringArray condition_to_expression(union record_item *record, char *condition, Table table) {
     char *temp = strdup(condition);
-    char *attribute_name = strtok(temp, " ");
-    //printf("attribute_name: \"%s\"\n", attribute_name);
-
-    Attr attribute = get_attr_by_name(table, attribute_name);
-    int data_position = get_attr_position(attribute);
-    Type data_type = get_attr_type(attribute);
-
-    //fprintf(stdout, "%d\n", data_position);
-    //fprintf(stdout, "%s\n", condition);
-
-    union record_item item = record[data_position];
-
+    char * attribute_name = strtok(temp,"=+/-* ");
+    int expression_array_index = 0;
     StringArray expression = expression_to_string_list(condition);
-    char *string_record_item = record_item_to_string(data_type, item);
-    if (data_type->type_num == CHAR || data_type->type_num == VARCHAR) {
-        remove_spaces(string_record_item);
-    }
-    expression->array[0] = string_record_item;
 
-    char * atrribute2_name = strtok(NULL,"= ");
-    Attr attribute2 = get_attr_by_name(table, atrribute2_name);
-
-    if(attribute2 != NULL){
-        char* string_record_item2 = record_item_to_string(get_attr_type(attribute2), record[get_attr_position(attribute2)]);
-        if (data_type->type_num == CHAR || data_type->type_num == VARCHAR) {
-            remove_spaces(string_record_item2);
+    while(attribute_name != NULL){
+        Attr attribute = get_attr_by_name(table, attribute_name);
+        if(attribute != NULL){
+            char* string_record_item = record_item_to_string(get_attr_type(attribute), record[get_attr_position(attribute)]);
+            if (get_attr_type(attribute)->type_num == CHAR || get_attr_type(attribute)->type_num == VARCHAR) {
+                remove_spaces(string_record_item);
+            }
+            expression->array[expression_array_index] = string_record_item;
+            expression_array_index += 2;
         }
-        expression->array[2] = string_record_item2;
-//        expression->array[]
+        attribute_name = strtok(NULL,"=+/-* ");
     }
 
     free(temp);
