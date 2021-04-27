@@ -24,6 +24,10 @@ enum Debugging{
     DEBUG = -1
 };
 
+enum Keywords{
+    KEYWORD_ERROR = 69
+};
+
 /**
  * Return an integer associated with an attribute type.
  *      0 - Integer

@@ -4,8 +4,9 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
-#define keywords_size 9
-char keywords[keywords_size][256] = {"and", "or", "insert", "update", "select", "from", "set", "where", "into"};
+#define keywords_size 16
+char keywords[keywords_size][256] = {"and", "or", "insert", "update", "select", "delete", "default", "add",
+                                     "from", "set", "where", "drop", "create", "alter", "table", "into"};
 
 char *trimwhitespace( char *str ){
   char *end;
