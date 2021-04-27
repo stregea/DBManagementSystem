@@ -1386,7 +1386,10 @@ bool does_record_satisfy_condition(union record_item *record, char *condition, T
     }
 
     OperationTree tree = build_tree(expression);
-    free_string_array(expression);
+
+    free(expression->array); // freeing this array like this doesn't break.
+    free(expression);
+    //    free_string_array(expression); // this segfaults on CS machine for some reason.
     bool condition_satisfied = determine_conditional(tree->root);
 
     if (DEBUG == 1) {
