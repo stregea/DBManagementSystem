@@ -73,7 +73,6 @@ OperationTree build_tree(StringArray expression) {
     tree->root = (Node) peek(stack);
     free_stack(stack);
     free_string_array(string);
-    free_string_array(expression);
     return tree;
 }
 
@@ -273,8 +272,9 @@ StringArray expression_to_string_list(char *expression) {
 
     int length = strlen(expression);
     // definitely a memory issue
-    char **tokens = malloc(sizeof(char *) * length);
-    int token_count = 0;
+    StringArray strings = malloc(sizeof(struct StringArray));
+    strings->array = malloc(sizeof(char *));
+    strings->size = 0;
 
     for (int i = 0; i < length; i++) {
         current_character = expression[i];
@@ -303,9 +303,9 @@ StringArray expression_to_string_list(char *expression) {
                     return NULL;
                 }
             } else {
-                tokens[token_count] = strdup(sub_string);
+                strings->array = realloc(strings->array, sizeof(char*)*(strings->size + 1));
+                strings->array[strings->size++] = strdup(sub_string);
                 free(sub_string);
-                token_count++;
                 sub_string = malloc(sizeof(char *) * 1);
                 strcpy(sub_string, " ");
                 sub_string[0] = current_character;
@@ -319,9 +319,9 @@ StringArray expression_to_string_list(char *expression) {
 //                sub_string[1] = 0;
                 sub_string_length = strlen(sub_string);
             } else if (is_character_operator(sub_string[0])) {
-                tokens[token_count] = strdup(sub_string);
+                strings->array = realloc(strings->array, sizeof(char*)*(strings->size + 1));
+                strings->array[strings->size++] = strdup(sub_string);
                 free(sub_string);
-                token_count++;
                 sub_string = malloc(sizeof(char *) * 1);
                 strcpy(sub_string, " ");
                 sub_string[0] = 0;
@@ -337,8 +337,8 @@ StringArray expression_to_string_list(char *expression) {
 
             // add last substring
             if (i == length - 1) {
-                tokens[token_count] = strdup(sub_string);
-                token_count++;
+                strings->array = realloc(strings->array, sizeof(char*)*(strings->size + 1));
+                strings->array[strings->size++] = strdup(sub_string);
             }
         }
     }
@@ -346,9 +346,7 @@ StringArray expression_to_string_list(char *expression) {
     if (sub_string != NULL) {
         free(sub_string);
     }
-    StringArray strings = malloc(sizeof(struct StringArray));
-    strings->array = tokens;
-    strings->size = token_count;
+
 
     return strings;
 }

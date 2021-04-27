@@ -166,67 +166,70 @@ Clause parse_where_clause(char *clauses) {
     char* condition = strdup(clauses);
 
     char* token = strtok(condition, " ");
+    const char *or = " or ";
+    const char *and = " and ";
 
-    // determine the difference kinds of logical operators found in string
+    // determine the different kinds of logical operators found in string
     while(token != NULL){
         if(strcasecmp(token, "and") == 0 || strcasecmp(token, "or") == 0){
             where_clause->operators->array = realloc(where_clause->operators->array, sizeof(char *) * (where_clause->operators->size + 1));
-            where_clause->operators->array[where_clause->operators->size] = malloc(strlen(token) + 1);
-
-            strcpy(where_clause->operators->array[where_clause->operators->size], token);
-            where_clause->operators->size++;
+            where_clause->operators->array = realloc(where_clause->operators->array, sizeof(char *) * (where_clause->operators->size + 1));
+            where_clause->operators->array[where_clause->operators->size++] = strdup(token);
         }
         token = strtok(NULL, " ");
     }
 
 
     free(condition);
-    char* test = strdup(clauses);
+    condition = strdup(clauses);
 
     // build the where clause
     if(where_clause->operators->size == 0){ // if only one condition.
-        test = clean_clause(test);
+        condition = clean_clause(condition);
 
         where_clause->clauses->array = realloc(where_clause->clauses->array, sizeof(char*) * (where_clause->clauses->size + 1));
-        where_clause->clauses->array[where_clause->clauses->size++] = strdup(test);
+        where_clause->clauses->array[where_clause->clauses->size++] = strdup(condition);
     }else{
         for(int i = 0; i < where_clause->operators->size; i++){
 
             if(i != 0){
-                test = token;
+                condition = token;
             }
 
-            token = strstr(test, where_clause->operators->array[i]);
+            // currently splitting on "or" and "and" needs to be " or " and " and "
+            if(strcasecmp(where_clause->operators->array[i], "and") == 0) {
+                token = strstr(condition, and);
+            }
+            else if(strcasecmp(where_clause->operators->array[i], "or") == 0) {
+                token = strstr(condition, or);
+            }
 
             if (token == NULL){
-                free(test);
+                free(condition);
                 return NULL;
             }
 
             *token = '\0';
-            token = token + strlen(where_clause->operators->array[i]);
+            token = token + strlen(where_clause->operators->array[i]) + 2;
             //printf("op: [%s]\n", where_clause->operators->array[i]);
 
-            condition = clean_clause(test);
+            condition = clean_clause(condition);
             //printf("condition: [%s]\n", condition);
             where_clause->clauses->array = realloc(where_clause->clauses->array, sizeof(char*) * (where_clause->clauses->size + 1));
-            where_clause->clauses->array[where_clause->clauses->size++] = strdup(test);
+            where_clause->clauses->array[where_clause->clauses->size++] = strdup(condition);
 
             if(i == where_clause->operators->size - 1){ // strstr makes us do this
                 token = clean_clause(token);
-
                 //printf("condition: [%s]\n", token);
                 where_clause->clauses->array = realloc(where_clause->clauses->array, sizeof(char*) * (where_clause->clauses->size + 1));
-                where_clause->clauses->array[where_clause->clauses->size] = malloc(strlen(token) + 1);
-
-                strcpy(where_clause->clauses->array[where_clause->clauses->size], token);
-                where_clause->clauses->size++;
+                where_clause->clauses->array[where_clause->clauses->size++] = strdup(token);
             }
         }
     }
 
-    if(test != NULL){
-        free(test);
+    if(condition != NULL){
+        //free(condition);
     }
+
     return where_clause;
 }

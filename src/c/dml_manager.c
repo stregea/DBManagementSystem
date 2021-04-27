@@ -1258,6 +1258,7 @@ bool record_satisfies_where(Clause where_clause, union record_item *record) {
     StringArray boolean_expression = expression_to_string_list(boolean_string);
 
     OperationTree boolean_tree = build_tree(boolean_expression);
+    free_string_array(boolean_expression);
     bool result = (bool) evaluate_boolean_tree(boolean_tree->root);
 
     if (DEBUG == 1) {
@@ -1385,6 +1386,10 @@ bool does_record_satisfy_condition(union record_item *record, char *condition, T
     }
 
     OperationTree tree = build_tree(expression);
+
+    free(expression->array); // freeing this array like this doesn't break.
+    free(expression);
+    //    free_string_array(expression); // this segfaults on CS machine for some reason.
     bool condition_satisfied = determine_conditional(tree->root);
 
     if (DEBUG == 1) {
