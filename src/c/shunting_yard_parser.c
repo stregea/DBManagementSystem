@@ -284,10 +284,12 @@ StringArray expression_to_string_list(char *expression) {
             // does the expression start with an operator
             if (sub_string == NULL) {
                 fprintf(stderr, "Error: invalid expression starts with operator\n");
+                free_string_array(strings);
                 return NULL;
             }
                 // three operands in a row
             else if (is_character_operator(sub_string[0]) && strlen(sub_string) > 1) {
+                free_string_array(strings);
                 fprintf(stderr, "Error: invalid expression\n");
                 return NULL;
             }

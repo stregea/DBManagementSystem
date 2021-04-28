@@ -1311,6 +1311,10 @@ bool record_satisfies_where(Clause where_clause, union record_item *record) {
     }
 
     StringArray boolean_expression = expression_to_string_list(boolean_string);
+    if(boolean_expression == NULL) {
+        printf("line hit\n");
+        return false;
+    }
 
     OperationTree boolean_tree = build_tree(boolean_expression);
     free_string_array(boolean_expression);
@@ -1376,6 +1380,9 @@ StringArray condition_to_expression(union record_item *record, char *condition, 
     char *temp = strdup(condition);
     int expression_array_index = 0;
     StringArray expression = expression_to_string_list(condition);
+    if(expression == NULL) {
+        return NULL;
+    }
     bool error = false;
 
     for (int i = 0; i < expression->size; i++) {
@@ -1415,7 +1422,7 @@ StringArray condition_to_expression(union record_item *record, char *condition, 
 
 bool does_record_satisfy_condition(union record_item *record, char *condition, Table table) {
     StringArray expression = condition_to_expression(record, condition, table);
-
+  
     if (expression == NULL) {
         fprintf(stderr, "Error: Bad conditional arguments\n");
         return false;
