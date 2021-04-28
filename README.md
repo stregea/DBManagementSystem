@@ -4,7 +4,7 @@ The primary objective of this project is to implement a Database Management Syst
 
 # Known Problems
 The implementation of "where" clauses in our solution has some known problems that may not 
-completely fufill the requirements for Phase 3. One known problem is that when two tables
+completely fulfill the requirements for Phase 3. One known problem is that when two tables
 that have an attribute with an identical name, you may only reference that attribute if you
 project it in the "select" clause. For example:
 > select foo.baz, bar.baz from foo, bar where foo.baz = bar.baz;
