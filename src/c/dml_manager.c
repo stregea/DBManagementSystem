@@ -1215,6 +1215,23 @@ int parse_select_statement(char *statement, union record_item ***result) {
         if (includes_where) {
             where_clause = array_of_tokens_to_string(statement_array, "where", END_OF_ARRAY, false);
             where = parse_where_clause(where_clause);
+            if(where == NULL){
+                free(result_table->name);
+
+                if (!found_star) {
+                    for (int l = 0; l < result_table->attrs_size; l++) {
+                        free(result_table->attrs[l]->name);
+                        free(result_table->attrs[l]);
+                    }
+                }
+                free(result_table->attrs);
+                free(result_table);
+
+                free(columns);
+                free(from_clause);
+                free(select_clause);
+                return -1;
+            }
             where->table = result_table;
 
             for (int i = 0; i < product_size; i++) {
