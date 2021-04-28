@@ -997,7 +997,12 @@ int parse_select_statement(char *statement, union record_item ***result) {
             if (found_star) {
                 record_lists[i] = storagemanager_table;
                 for (int l = 0; l < table->attrs_size; l++) {
-                    add_attr(result_table, table->attrs[l]);
+                    char *long_name = malloc(strlen(table->attrs[l]->name) + strlen(table->name) + 2);
+                    strcpy(long_name, table->name);
+                    strcat(long_name, ".");
+                    strcat(long_name, table->attrs[l]->name);
+                    Attr long_attr = create_attr(long_name, l, table->attrs[l]->type, table->attrs[l]->notnull);
+                    add_attr(result_table, long_attr);
                 }
                 records_per_table[table_records_index] = table_size;
 
