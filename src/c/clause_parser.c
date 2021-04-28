@@ -160,7 +160,7 @@ Clause parse_set_clause(char *clauses) {
         char *token = strtok(temp_clause, " ");
         while(token != NULL){
             if(is_keyword(token)){
-                fprintf(stderr, "Error: keyword '%s' was found within the set statement", token);
+                fprintf(stderr, "Error: keyword '%s' was found within the set statement\n", token);
                 free(temp_clause);
                 free_clause(set_clause);
                 return NULL;
@@ -249,11 +249,18 @@ Clause parse_where_clause(char *clauses) {
 
     // check for keywords
     for(int i = 0; i < where_clause->clauses->size; i++){
-        if(is_keyword(where_clause->clauses->array[i])){
-            fprintf(stderr, "Error: keyword '%s' was found within the set statement", where_clause->clauses->array[i]);
-            free_clause(where_clause);
-            return NULL;
+        char * temp_clause = strdup(where_clause->clauses->array[i]);
+        token = strtok(temp_clause, " ");
+        while(token != NULL){
+            if(is_keyword(token)){
+                fprintf(stderr, "Error: keyword '%s' was found within the where statement\n", token);
+                free(temp_clause);
+                free_clause(where_clause);
+                return NULL;
+            }
+            token = strtok(NULL, " ");
         }
+        free(temp_clause);
     }
     return where_clause;
 }

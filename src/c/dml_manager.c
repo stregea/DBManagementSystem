@@ -393,6 +393,14 @@ int parse_update_statement(char *statement) {
                         if (includes_where) {
                             where_clause = array_of_tokens_to_string(statement_array, "where", END_OF_ARRAY, false);
                             where = parse_where_clause(where_clause);
+                            if(where == NULL){
+                                free(where_clause);
+                                free_clause(where);
+                                free_clause(set);
+                                free(set_clause);
+                                free_string_array(statement_array);
+                                return INVALID;
+                            }
                             where->table = table;
                         }
 
