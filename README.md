@@ -2,6 +2,20 @@
 This project is the semester-long project required for CSCI-421 @ Rochester Institute of Technology.<br/> 
 The primary objective of this project is to implement a Database Management System.
 
+# Known Problems
+The implementation of "where" clauses in our solution has some known problems that may not 
+completely fulfill the requirements for Phase 3. One known problem is that when two tables
+that have an attribute with an identical name, you may only reference that attribute if you
+project it in the "select" clause. For example:
+> select foo.baz, bar.baz from foo, bar where foo.baz = bar.baz;
+
+works, where:
+> select bar.baz from foo, bar where foo.baz = bar.baz;
+
+will not.
+
+Attributes that do not exist in tables may not be recognized as such in the "where" clause.
+
 # Compilation
 To create the executable move to the DBManagementSystem directory and enter on commandline: 
 gcc -std=gnu99 src/drivers/database.c src/c/*.c -o database

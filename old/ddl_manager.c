@@ -14,24 +14,8 @@
 #include "../headers/ddl_manager.h"
 #include "../headers/storagemanager.h"
 #include "../headers/catalog.h"
+#include "../headers/Enums.h"
 #include <float.h>
-
-int initialize_ddl_parser(char *db_loc, bool restart) {
-    set_up_db_location(db_loc);
-
-    if (restart) {
-        read_catalog_from_disk(); // this has yet to be defined
-    };
-
-    return 0;
-}
-
-int terminate_ddl_parser() {
-    int result;
-    result = shutdown_catalog();
-    result = terminate_database();
-    return result;
-}
 
 int parseStatement(char *statement) {
     int result = 0;
@@ -245,7 +229,7 @@ int parseAlter(char *tokenizer, char **token) {
 //                        printf("a_type: %s\n", tokenizer);
                         a_type = malloc(sizeof(char) * (strlen(tokenizer) + 1));
                         strcpy(a_type, tokenizer);
-                        int check_type = get_attribute_type(a_type);
+                        int check_type = get_type(a_type);
                         if (check_type == 3 || check_type == 4) {
 //                            printf("found char or varchar\n");
                             tokenizer = strtok_r(NULL, " ()", token);
@@ -277,7 +261,7 @@ int parseAlter(char *tokenizer, char **token) {
                                 strcpy(new_attr->name, a_name);
 //                                printf("name is now %s\n", new_attr->name);
                                 new_attr->name_size = strlen(a_name) + 1;
-                                new_attr->type = get_attribute_type(a_type);
+                                new_attr->type = get_type(a_type);
                                 if (new_attr->type == 3 || new_attr->type == 4) {
                                     // TODO handle char/varchar
                                     int size = strtol(a_size, NULL, 10);
@@ -385,7 +369,7 @@ int parseAlter(char *tokenizer, char **token) {
                         new_attr->name = malloc(sizeof(char) * (strlen(a_name) + 1));
                         strcpy(new_attr->name, a_name);
                         new_attr->name_size = strlen(a_name) + 1;
-                        new_attr->type = get_attribute_type(a_type);
+                        new_attr->type = get_type(a_type);
 //                        printf("got type %d\n", new_attr->type);
 
                         if (new_attr->type == 3 || new_attr->type == 4) {
@@ -666,7 +650,7 @@ int parseAttributes(Table table, char *tokenizer) {
 
         if (tokenizer != NULL) {
             // read in column type, function returns 0-4 based on string name (integer-varchar)
-            attribute->type = get_attribute_type(tokenizer);
+            attribute->type = get_type(tokenizer);
 //            printf("type: %d\n", attribute->type);
             // check for correct attribute
             if (attribute->type == -1) {
