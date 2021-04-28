@@ -703,7 +703,10 @@ int parse_delete_from_statement(char *statement) {
 
     // expected to be existing table name
     char *table_name = strtok(NULL, " ");
-    //printf("table_name: %s\n", table_name);
+    int table_length = strlen(table_name);
+    if(table_name[table_length - 1] == ';') {
+        table_name = strtok(table_name, ";");
+    }
     Table table = get_table_by_name(table_name);
 
     if (table == NULL) { // table doesn't exist
@@ -715,8 +718,8 @@ int parse_delete_from_statement(char *statement) {
     token = strtok(NULL, " ");
     //printf("where token: %s\n", token);
 
-    if (token == NULL && strcasecmp(token, "where") != 0) {
-        fprintf(stderr, "Error: expected \"where\" got %s\n", token);
+    if (token != NULL && strcasecmp(token, "where") != 0 && strcasecmp(token, ";") != 0) {
+        fprintf(stderr, "Error: expected \"where\" got \"%s\"\n", token);
         return -1;
     }
 
@@ -728,8 +731,10 @@ int parse_delete_from_statement(char *statement) {
         return -1;
     }
 
-    // conditionals
     char *condition = strtok(NULL, ";");
+    if(condition == NULL) {
+        condition = "true";
+    }
 
     if (DEBUG == 1) {
         printf("condition: %s\n", condition);
