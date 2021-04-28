@@ -108,6 +108,7 @@ void print_record(Table table, union record_item *record) {
         }
     }
 }
+
 void print_record_as_tuple(Table table, union record_item *record) {
     printf("(");
     for (int i = 0; i < table->attrs_size; i++) {
@@ -152,6 +153,13 @@ union record_item create_record_item(int *flag, Attr attribute, char *value) {
             return recordItem;
         }
     }
+
+    if (is_keyword(value)) {
+        fprintf(stderr, "Error: cannot insert '%s' since it is a keyword.\n", value);
+        flag[0] = KEYWORD_ERROR;
+        return recordItem;
+    }
+
 
     if (attribute->notnull == true && strcasecmp(value, "null") == 0) {
         fprintf(stderr, "Error: %s cannot be null.\n", attribute->name);
@@ -244,7 +252,7 @@ union record_item *create_record_from_statement(Table table, char *tuple) {
         union record_item recordItem = create_record_item(flag, table->attrs[i], record_tuple->tuple[i]);
 
         // check for any potential errors
-        if (flag[0] == -1) {
+        if (flag[0] == -1 || flag[0] == KEYWORD_ERROR) {
             free(flag);
             free(temp);
             free_tuple(record_tuple);
@@ -334,7 +342,6 @@ void free_table_from_storagemanager(int table_size, union record_item **storagem
     }
 }
 
-// TODO
 int parse_update_statement(char *statement) {
     char *temp_statement = malloc(strlen(statement) + 1);
     strcpy(temp_statement, statement);
@@ -347,7 +354,7 @@ int parse_update_statement(char *statement) {
         fprintf(stderr, "Error: Invalid command.\n"); // missing 'update' and 'set'. 'Where' is optional.
 
         free_string_array(statement_array);
-        return -1;
+        return INVALID;
     }
 
     int index = 0;
@@ -379,14 +386,21 @@ int parse_update_statement(char *statement) {
 
                 if (set_clause != NULL) {
                     set = parse_set_clause(set_clause);
-                    set->table = table;
 
                     if (set != NULL) {
-
+                        set->table = table;
 
                         if (includes_where) {
                             where_clause = array_of_tokens_to_string(statement_array, "where", END_OF_ARRAY, false);
                             where = parse_where_clause(where_clause);
+                            if(where == NULL){
+                                free(where_clause);
+                                free_clause(where);
+                                free_clause(set);
+                                free(set_clause);
+                                free_string_array(statement_array);
+                                return INVALID;
+                            }
                             where->table = table;
                         }
 
@@ -427,14 +441,31 @@ int parse_update_statement(char *statement) {
                                     int string_size_attribute2;
 
                                     if (attribute != 0) {
-                                        int record_index = attribute->position;
-                                        if (record_index == -1) {
+                                        // check for keyword in clause
+                                        bool keyword_found = false;
+                                        for(int x = 0; x < tmp_clause->size; x++){
+                                            if(is_keyword(tmp_clause->array[i])){
+                                                keyword_found = true;
+                                            }
+                                        }
+                                        if (keyword_found) {
                                             free_string_array(tmp_clause);
                                             free_clause(set);
                                             free(set_clause);
                                             free_string_array(statement_array);
                                             free_table_from_storagemanager(table_size, storagemanager_table);
-                                            return -1;
+                                            return INVALID;
+                                        }
+
+                                        // check for a bad position
+                                        int record_index = attribute->position;
+                                        if (record_index == INVALID) {
+                                            free_string_array(tmp_clause);
+                                            free_clause(set);
+                                            free(set_clause);
+                                            free_string_array(statement_array);
+                                            free_table_from_storagemanager(table_size, storagemanager_table);
+                                            return INVALID;
                                         }
 
                                         if (strcasecmp(tmp_clause->array[2], "null") == 0 && attribute->notnull) {
@@ -446,7 +477,7 @@ int parse_update_statement(char *statement) {
                                             free(set_clause);
                                             free_string_array(statement_array);
                                             free_table_from_storagemanager(table_size, storagemanager_table);
-                                            return -1;
+                                            return INVALID;
                                         }
 
                                         if (attribute->type->type_num == CHAR || attribute->type->type_num == VARCHAR) {
@@ -458,7 +489,6 @@ int parse_update_statement(char *statement) {
                                                 string_size += 2;
                                             }
                                         }
-                                        // todo: check it primary key can be modified.
                                         switch (attribute->type->type_num) {
                                             double res;
                                             case INTEGER:
@@ -470,7 +500,7 @@ int parse_update_statement(char *statement) {
                                                     free(set_clause);
                                                     free_string_array(statement_array);
                                                     free_table_from_storagemanager(table_size, storagemanager_table);
-                                                    return -1;
+                                                    return INVALID;
                                                 }
                                                 break;
                                             case DOUBLE:
@@ -482,7 +512,7 @@ int parse_update_statement(char *statement) {
                                                     free(set_clause);
                                                     free_string_array(statement_array);
                                                     free_table_from_storagemanager(table_size, storagemanager_table);
-                                                    return -1;
+                                                    return INVALID;
                                                 }
                                                 break;
                                             case BOOL:
@@ -498,21 +528,21 @@ int parse_update_statement(char *statement) {
 
                                                     if (strcasecmp(tmp_clause->array[2], "true") == 0) {
                                                         record[record_index].b[0] = true;
-                                                    }
-                                                    else if (strcasecmp(tmp_clause->array[2], "false") == 0) {
+                                                    } else if (strcasecmp(tmp_clause->array[2], "false") == 0) {
                                                         record[record_index].b[0] = false;
                                                     } else {
                                                         record[record_index].b[0] = NULL;
                                                     }
                                                 } else {
-                                                    fprintf(stderr, "Error: Invalid value of %s passed in for attribute %s.\n",
+                                                    fprintf(stderr,
+                                                            "Error: Invalid value of %s passed in for attribute %s.\n",
                                                             tmp_clause->array[2], attribute_name);
                                                     free_string_array(tmp_clause);
                                                     free_clause(set);
                                                     free(set_clause);
                                                     free_string_array(statement_array);
                                                     free_table_from_storagemanager(table_size, storagemanager_table);
-                                                    return -1;
+                                                    return INVALID;
                                                 }
                                                 break;
                                             case CHAR:
@@ -540,7 +570,7 @@ int parse_update_statement(char *statement) {
                                                         free_string_array(statement_array);
                                                         free_table_from_storagemanager(table_size,
                                                                                        storagemanager_table);
-                                                        return -1;
+                                                        return INVALID;
                                                     }
 
                                                     strcpy(record[record_index].c, record[attribute2->position].c);
@@ -555,7 +585,7 @@ int parse_update_statement(char *statement) {
                                                     free(set_clause);
                                                     free_string_array(statement_array);
                                                     free_table_from_storagemanager(table_size, storagemanager_table);
-                                                    return -1;
+                                                    return INVALID;
                                                 }
                                                 break;
                                             case VARCHAR:
@@ -584,7 +614,7 @@ int parse_update_statement(char *statement) {
                                                         free_string_array(statement_array);
                                                         free_table_from_storagemanager(table_size,
                                                                                        storagemanager_table);
-                                                        return -1;
+                                                        return INVALID;
                                                     }
 
                                                     strcpy(record[record_index].c, record[attribute2->position].c);
@@ -600,7 +630,7 @@ int parse_update_statement(char *statement) {
                                                     free(set_clause);
                                                     free_string_array(statement_array);
                                                     free_table_from_storagemanager(table_size, storagemanager_table);
-                                                    return -1;
+                                                    return INVALID;
                                                 }
                                                 break;
                                         }
@@ -614,19 +644,19 @@ int parse_update_statement(char *statement) {
                                         free(set_clause);
                                         free_string_array(statement_array);
                                         free_table_from_storagemanager(table_size, storagemanager_table);
-                                        return -1;
+                                        return INVALID;
                                     }
 
                                     free_string_array(tmp_clause);
                                 }
 
-                                if (update_record(table->num, record) == -1) {
+                                if (update_record(table->num, record) == INVALID) {
                                     fprintf(stderr, "An error has occurred in an attempt to update a record.\n");
                                     free_clause(set);
                                     free(set_clause);
                                     free_string_array(statement_array);
                                     free_table_from_storagemanager(table_size, storagemanager_table);
-                                    return -1;
+                                    return INVALID;
                                 }
                                 printf("has been updated to: ");
                                 print_record_as_tuple(table, record);
@@ -642,7 +672,7 @@ int parse_update_statement(char *statement) {
                         free(set_clause);
                         free_string_array(statement_array);
                         free_table_from_storagemanager(table_size, storagemanager_table);
-                        return 0;
+                        return VALID;
 
                     }
                     free(set_clause);
@@ -652,7 +682,7 @@ int parse_update_statement(char *statement) {
     }
     free_string_array(statement_array);
     // bad keyword
-    return -1;
+    return INVALID;
 }
 
 // TODO
@@ -712,6 +742,14 @@ int parse_delete_from_statement(char *statement) {
 
     // parse where clause
     Clause where_clause = parse_where_clause(condition);
+
+    // keyword error
+    if(where_clause == NULL){
+        free_clause(where_clause);
+        free_table_from_storagemanager(table_size, records);
+        return INVALID;
+    }
+
     where_clause->table = table;
 
     union record_item *primary_key;
@@ -734,7 +772,7 @@ int parse_delete_from_statement(char *statement) {
                 primary_key[j] = current_record[position];
             }
 
-            if(remove_record(table->num, primary_key) == -1){
+            if (remove_record(table->num, primary_key) == -1) {
                 fprintf(stderr, "Error: An error has occurred in attempt to remove a record\n");
                 free(primary_key);
                 free_clause(where_clause);
@@ -959,7 +997,12 @@ int parse_select_statement(char *statement, union record_item ***result) {
             if (found_star) {
                 record_lists[i] = storagemanager_table;
                 for (int l = 0; l < table->attrs_size; l++) {
-                    add_attr(result_table, table->attrs[l]);
+                    char *long_name = malloc(strlen(table->attrs[l]->name) + strlen(table->name) + 2);
+                    strcpy(long_name, table->name);
+                    strcat(long_name, ".");
+                    strcat(long_name, table->attrs[l]->name);
+                    Attr long_attr = create_attr(long_name, l, table->attrs[l]->type, table->attrs[l]->notnull);
+                    add_attr(result_table, long_attr);
                 }
                 records_per_table[table_records_index] = table_size;
 
@@ -1342,10 +1385,11 @@ StringArray condition_to_expression(union record_item *record, char *condition, 
     }
     bool error = false;
 
-    for(int i = 0; i < expression->size; i++){
+    for (int i = 0; i < expression->size; i++) {
         Attr attribute = get_attr_by_name(table, expression->array[i]);
-        if(attribute != NULL){
-            char* string_record_item = record_item_to_string(get_attr_type(attribute), record[get_attr_position(attribute)]);
+        if (attribute != NULL) {
+            char *string_record_item = record_item_to_string(get_attr_type(attribute),
+                                                             record[get_attr_position(attribute)]);
             if (get_attr_type(attribute)->type_num == CHAR || get_attr_type(attribute)->type_num == VARCHAR) {
                 remove_spaces(string_record_item);
             }
@@ -1368,7 +1412,7 @@ StringArray condition_to_expression(union record_item *record, char *condition, 
     }
     free(temp);
 
-    if(error){
+    if (error) {
         free_string_array(expression);
         return NULL;
     }
@@ -1378,8 +1422,8 @@ StringArray condition_to_expression(union record_item *record, char *condition, 
 
 bool does_record_satisfy_condition(union record_item *record, char *condition, Table table) {
     StringArray expression = condition_to_expression(record, condition, table);
-    
-    if(expression == NULL){
+  
+    if (expression == NULL) {
         fprintf(stderr, "Error: Bad conditional arguments\n");
         return false;
     }
