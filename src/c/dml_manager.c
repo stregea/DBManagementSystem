@@ -737,6 +737,14 @@ int parse_delete_from_statement(char *statement) {
 
     // parse where clause
     Clause where_clause = parse_where_clause(condition);
+
+    // keyword error
+    if(where_clause == NULL){
+        free_clause(where_clause);
+        free_table_from_storagemanager(table_size, records);
+        return INVALID;
+    }
+
     where_clause->table = table;
 
     union record_item *primary_key;
