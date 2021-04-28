@@ -2,14 +2,6 @@
 This project is the semester-long project required for CSCI-421 @ Rochester Institute of Technology.<br/> 
 The primary objective of this project is to implement a Database Management System.
 
-# Compilation
-To create the executable move to the DBManagementSystem directory and enter on commandline: 
-gcc -std=gnu99 src/drivers/database.c src/c/*.c -o database
-
-# Run Program
-Once the executable is created enter:
-usage: ./database <db_loc> <page_size> <buffer_size>
-
 # Known Problems
 The implementation of "where" clauses in our solution has some known problems that may not 
 completely fufill the requirements for Phase 3. One known problem is that when two tables
@@ -23,6 +15,14 @@ works, where:
 will not.
 
 Attributes that do not exist in tables may not be recognized as such in the "where" clause.
+
+# Compilation
+To create the executable move to the DBManagementSystem directory and enter on commandline: 
+gcc -std=gnu99 src/drivers/database.c src/c/*.c -o database
+
+# Run Program
+Once the executable is created enter:
+usage: ./database <db_loc> <page_size> <buffer_size>
 
 ## Example Run:
 ./database ~/Desktop/db/ 4096 10
