@@ -2,6 +2,7 @@
 #include "../headers/arrays.h"
 #include "../headers/Enums.h"
 #include "../headers/table.h"
+#include "../headers/utils.h"
 #include <stdio.h>
 #include <float.h>
 #include <stdlib.h>
@@ -125,7 +126,6 @@ char* clean_clause(char* clause){
     return tmp;
 }
 
-// TODO - implement attributes from Clause??
 Clause parse_set_clause(char *clauses) {
     Clause set_clause = NULL;
 
@@ -153,6 +153,22 @@ Clause parse_set_clause(char *clauses) {
     }
 
     free(temp_clauses);
+
+    // check for keywords
+    for(int i = 0; i < set_clause->clauses->size; i++){
+        char * temp_clause = strdup(set_clause->clauses->array[i]);
+        char *token = strtok(temp_clause, " ");
+        while(token != NULL){
+            if(is_keyword(token)){
+                fprintf(stderr, "Error: keyword '%s' was found within the set statement", token);
+                free(temp_clause);
+                free_clause(set_clause);
+                return NULL;
+            }
+            token = strtok(NULL, " ");
+        }
+        free(temp_clause);
+    }
     return set_clause;
 }
 
@@ -231,5 +247,13 @@ Clause parse_where_clause(char *clauses) {
         //free(condition);
     }
 
+    // check for keywords
+    for(int i = 0; i < where_clause->clauses->size; i++){
+        if(is_keyword(where_clause->clauses->array[i])){
+            fprintf(stderr, "Error: keyword '%s' was found within the set statement", where_clause->clauses->array[i]);
+            free_clause(where_clause);
+            return NULL;
+        }
+    }
     return where_clause;
 }
